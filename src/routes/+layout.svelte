@@ -18,28 +18,22 @@
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				<a
-					class="btn btn-sm variant-ghost-surface"
-					href="https://discord.gg/EXqV7W8MtY"
-					target="_blank"
-					rel="noreferrer"
+					class="btn btn-sm variant-filled"
+					href="/create"
 				>
-					Discord
+					Create
 				</a>
 				<a
-					class="btn btn-sm variant-ghost-surface"
-					href="https://twitter.com/SkeletonUI"
-					target="_blank"
-					rel="noreferrer"
+					class="btn btn-sm variant-filled"
+					href="https://skeleton.dev/"
 				>
-					Twitter
+					Import
 				</a>
 				<a
-					class="btn btn-sm variant-ghost-surface"
-					href="https://github.com/skeletonlabs/skeleton"
-					target="_blank"
-					rel="noreferrer"
+					class="btn btn-sm variant-filled"
+					href="https://skeleton.dev/"
 				>
-					GitHub
+					Export
 				</a>
 			</svelte:fragment>
 		</AppBar>

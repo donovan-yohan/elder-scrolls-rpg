@@ -7,11 +7,17 @@
 		<div class="flex justify-center space-x-2">
 			<a
 				class="btn variant-filled"
+				href="/create"
+			>
+				Create
+			</a>
+			<a
+				class="btn variant-filled"
 				href="https://skeleton.dev/"
 				target="_blank"
 				rel="noreferrer"
 			>
-				Launch Documentation
+				Import
 			</a>
 		</div>
 		<div class="space-y-2">

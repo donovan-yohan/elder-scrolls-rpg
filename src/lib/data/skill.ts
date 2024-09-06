@@ -1,0 +1,43 @@
+export enum Skill {
+	OneHanded = 'One-Handed',
+	Smithing = 'Smithing',
+	Marksmanship = 'Marksmanship',
+	Speechcraft = 'Speechcraft',
+	Alteration = 'Alteration',
+	Enchanting = 'Enchanting',
+	TwoHanded = 'Two-Handed',
+	Sneak = 'Sneak',
+	Mercantilism = 'Mercantilism',
+	Destruction = 'Destruction',
+	Intuition = 'Intuition',
+	Blocking = 'Blocking',
+	Dexterity = 'Dexterity',
+	Deceive = 'Deceive',
+	Conjuration = 'Conjuration',
+	Will = 'Will',
+	HandToHand = 'Hand to Hand',
+	Mechanics = 'Mechanics',
+	Threaten = 'Threaten',
+	Restoration = 'Restoration',
+	Athletics = 'Athletics',
+	Acrobatics = 'Acrobatics',
+	Nursing = 'Nursing',
+	Illusion = 'Illusion',
+	Beastlore = 'Beastlore',
+	Naturelore = 'Naturelore',
+	Disguise = 'Disguise',
+	Mysticism = 'Mysticism',
+	Notice = 'Notice',
+	Languages = 'Languages',
+	Search = 'Search',
+	Alchemy = 'Alchemy'
+}
+
+export const SpellSkills: Skill[] = [
+	Skill.Alteration,
+	Skill.Conjuration,
+	Skill.Destruction,
+	Skill.Illusion,
+	Skill.Mysticism,
+	Skill.Restoration
+]
