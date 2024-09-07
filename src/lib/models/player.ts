@@ -1,8 +1,11 @@
 import type { BirthSignName } from '$lib/data/birthSign'
 import type { ArchetypeName } from '$lib/data/archetype'
+import type { Skill } from '$lib/data/skill'
+import type { SubSkill } from '$lib/models/subskill'
 
 export type Player = {
 	id: string
+	level: number
 	playerName: string
 	characterName: string
 	maxHealth: number
@@ -13,4 +16,7 @@ export type Player = {
 	magicka: number
 	birthSign: BirthSignName
 	archetype: ArchetypeName
+	majorSkills: Skill[]
+	minorSkills: Skill[]
+	subSkills: SubSkill[]
 }

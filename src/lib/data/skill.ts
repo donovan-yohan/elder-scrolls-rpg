@@ -1,11 +1,11 @@
 export enum Skill {
-	OneHanded = 'One-Handed',
+	OneHanded = 'OneHanded',
 	Smithing = 'Smithing',
 	Marksmanship = 'Marksmanship',
 	Speechcraft = 'Speechcraft',
 	Alteration = 'Alteration',
 	Enchanting = 'Enchanting',
-	TwoHanded = 'Two-Handed',
+	TwoHanded = 'TwoHanded',
 	Sneak = 'Sneak',
 	Mercantilism = 'Mercantilism',
 	Destruction = 'Destruction',
@@ -15,7 +15,7 @@ export enum Skill {
 	Deceive = 'Deceive',
 	Conjuration = 'Conjuration',
 	Will = 'Will',
-	HandToHand = 'Hand to Hand',
+	HandToHand = 'HandToHand',
 	Mechanics = 'Mechanics',
 	Threaten = 'Threaten',
 	Restoration = 'Restoration',
@@ -30,7 +30,13 @@ export enum Skill {
 	Notice = 'Notice',
 	Languages = 'Languages',
 	Search = 'Search',
-	Alchemy = 'Alchemy'
+	Alchemy = 'Alchemy',
+}
+
+export enum SkillLevel {
+	Major = 'Major',
+	Minor = 'Minor',
+	Untrained = 'Untrained',
 }
 
 export const SpellSkills: Skill[] = [
@@ -39,5 +45,5 @@ export const SpellSkills: Skill[] = [
 	Skill.Destruction,
 	Skill.Illusion,
 	Skill.Mysticism,
-	Skill.Restoration
+	Skill.Restoration,
 ]
