@@ -1,40 +1,38 @@
 <script lang="ts">
 	import '../app.postcss';
-	import { AppBar, AppShell, storePopup } from '@skeletonlabs/skeleton';
+	import { AppBar, AppShell, initializeStores, Modal, type ModalComponent, storePopup } from '@skeletonlabs/skeleton';
 
 	// Floating UI for Popups
 	import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom';
+	import ArchetypesModal from '$lib/modals/ArchetypesModal.svelte';
+	import RaceModal from '$lib/modals/RaceModal.svelte';
+	import BirthSignModal from '$lib/modals/BirthSignModal.svelte';
 
-	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
+	initializeStores()
+
+	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow })
+
+	const modalRegistry: Record<string, ModalComponent> = {
+		archetypesModal: { ref: ArchetypesModal },
+		raceModal: { ref: RaceModal },
+		birthSignModal: { ref: BirthSignModal },
+	}
 </script>
 
+<Modal components={modalRegistry} />
 <!-- App Shell -->
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
 		<AppBar>
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">Skyrim RPG</strong>
+				<a href="/">
+					<strong class="text-xl uppercase">Skyrim RPG</strong>
+				</a>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
-				<a
-					class="btn btn-sm variant-filled"
-					href="/create"
-				>
-					Create
-				</a>
-				<a
-					class="btn btn-sm variant-filled"
-					href="https://skeleton.dev/"
-				>
-					Import
-				</a>
-				<a
-					class="btn btn-sm variant-filled"
-					href="https://skeleton.dev/"
-				>
-					Export
-				</a>
+				<button class="btn btn-sm variant-filled" disabled> Import </button>
+				<button class="btn btn-sm variant-filled" disabled> Export </button>
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>

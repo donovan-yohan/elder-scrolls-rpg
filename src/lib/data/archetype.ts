@@ -1,5 +1,3 @@
-import type { Player } from '$lib/models/player'
-
 export enum ArchetypeName {
 	Warrior = 'Warrior',
 	Spellsword = 'Spellsword',
@@ -9,43 +7,43 @@ export enum ArchetypeName {
 	Cleric = 'Cleric',
 }
 
-type ArchetypeStat = keyof Pick<Player, 'maxHealth' | 'maxMagicka' | 'maxActionPoints'>
+type ArchetypeStat = 'highStat' | 'mediumStat' | 'lowStat'
 
 export interface Archetype {
-	highStat: ArchetypeStat
-	mediumStat: ArchetypeStat
-	lowStat: ArchetypeStat
+	maxHealth: ArchetypeStat
+	maxMagicka: ArchetypeStat
+	maxActionPoints: ArchetypeStat
 }
 
 export const Archetypes: Record<ArchetypeName, Archetype> = {
 	[ArchetypeName.Warrior]: {
-		highStat: 'maxHealth',
-		mediumStat: 'maxActionPoints',
-		lowStat: 'maxMagicka',
+		maxHealth: 'highStat',
+		maxActionPoints: 'mediumStat',
+		maxMagicka: 'lowStat',
 	},
 	[ArchetypeName.Spellsword]: {
-		highStat: 'maxHealth',
-		mediumStat: 'maxMagicka',
-		lowStat: 'maxActionPoints',
+		maxHealth: 'highStat',
+		maxMagicka: 'mediumStat',
+		maxActionPoints: 'lowStat',
 	},
 	[ArchetypeName.Thief]: {
-		highStat: 'maxActionPoints',
-		mediumStat: 'maxMagicka',
-		lowStat: 'maxHealth',
+		maxActionPoints: 'highStat',
+		maxMagicka: 'mediumStat',
+		maxHealth: 'lowStat',
 	},
 	[ArchetypeName.Scout]: {
-		highStat: 'maxActionPoints',
-		mediumStat: 'maxHealth',
-		lowStat: 'maxMagicka',
+		maxActionPoints: 'highStat',
+		maxHealth: 'mediumStat',
+		maxMagicka: 'lowStat',
 	},
 	[ArchetypeName.Mage]: {
-		highStat: 'maxMagicka',
-		mediumStat: 'maxActionPoints',
-		lowStat: 'maxHealth',
+		maxMagicka: 'highStat',
+		maxActionPoints: 'mediumStat',
+		maxHealth: 'lowStat',
 	},
 	[ArchetypeName.Cleric]: {
-		highStat: 'maxMagicka',
-		mediumStat: 'maxHealth',
-		lowStat: 'maxActionPoints',
+		maxMagicka: 'highStat',
+		maxHealth: 'mediumStat',
+		maxActionPoints: 'lowStat',
 	},
 }
