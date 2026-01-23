@@ -8,6 +8,6 @@ export interface BaseStats {
 	critical: number
 	criticalFail: number
 	subSkills: number
-	gainMinorSkill?: number
-	gainMajorSkill?: number
+	majorSkills: number
+	minorSkills: number
 }

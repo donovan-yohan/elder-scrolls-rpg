@@ -7,3 +7,70 @@ html,
 body {
 	@apply h-full overflow-hidden;
 }
+
+/* Print Styles for Character Sheet */
+@media print {
+	html,
+	body {
+		@apply h-auto overflow-visible;
+		background: white !important;
+		color: black !important;
+	}
+
+	/* Hide app shell chrome when printing */
+	header,
+	nav,
+	footer,
+	.app-bar,
+	[data-skeleton-appbar] {
+		display: none !important;
+	}
+
+	/* Adjust app shell for print */
+	.app-shell,
+	[data-skeleton-appshell] {
+		display: block !important;
+	}
+
+	/* Ensure cards don't break across pages */
+	.card {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+
+	/* Print utility class */
+	.print\:hidden {
+		display: none !important;
+	}
+
+	/* Reset backgrounds for print */
+	.variant-soft-surface,
+	.variant-soft-primary,
+	.variant-soft-secondary,
+	.variant-soft-tertiary,
+	.variant-soft-success,
+	.variant-soft-warning,
+	.variant-soft-error,
+	.variant-ghost-surface {
+		background: transparent !important;
+		border: 1px solid #ddd !important;
+	}
+
+	/* Make progress bars visible in print */
+	.progress-bar,
+	[class*="ProgressBar"] {
+		border: 1px solid #999 !important;
+	}
+
+	/* Ensure text is readable */
+	* {
+		color: black !important;
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
+
+	/* Page margins */
+	@page {
+		margin: 0.5in;
+	}
+}

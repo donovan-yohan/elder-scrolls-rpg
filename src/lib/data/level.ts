@@ -1,4 +1,4 @@
-import type { BaseStats } from '$lib/models/baseStats';
+import type { BaseStats } from '$lib/models/baseStats'
 
 export const Level: BaseStats[] = [
 	// filler block so Level can be indexed on visual value i.e. Level[1]
@@ -12,6 +12,8 @@ export const Level: BaseStats[] = [
 		critical: 0,
 		criticalFail: 0,
 		subSkills: 0,
+		minorSkills: 6,
+		majorSkills: 6,
 	},
 	{
 		level: 1,
@@ -23,6 +25,8 @@ export const Level: BaseStats[] = [
 		critical: 20,
 		criticalFail: 1,
 		subSkills: 1,
+		minorSkills: 6,
+		majorSkills: 6,
 	},
 	{
 		level: 2,
@@ -34,6 +38,8 @@ export const Level: BaseStats[] = [
 		critical: 20,
 		criticalFail: 1,
 		subSkills: 1,
+		minorSkills: 6,
+		majorSkills: 6,
 	},
 	{
 		level: 3,
@@ -45,6 +51,8 @@ export const Level: BaseStats[] = [
 		critical: 20,
 		criticalFail: 1,
 		subSkills: 1,
+		minorSkills: 6,
+		majorSkills: 6,
 	},
 	{
 		level: 4,
@@ -56,6 +64,8 @@ export const Level: BaseStats[] = [
 		critical: 19,
 		criticalFail: 1,
 		subSkills: 1,
+		minorSkills: 6,
+		majorSkills: 6,
 	},
 	{
 		level: 5,
@@ -67,6 +77,8 @@ export const Level: BaseStats[] = [
 		critical: 19,
 		criticalFail: 1,
 		subSkills: 2,
+		minorSkills: 6,
+		majorSkills: 6,
 	},
 	{
 		level: 6,
@@ -78,8 +90,8 @@ export const Level: BaseStats[] = [
 		critical: 19,
 		criticalFail: 1,
 		subSkills: 2,
-		gainMajorSkill: 1,
-		gainMinorSkill: 1,
+		minorSkills: 6,
+		majorSkills: 7,
 	},
 	{
 		level: 7,
@@ -91,6 +103,8 @@ export const Level: BaseStats[] = [
 		critical: 19,
 		criticalFail: 1,
 		subSkills: 2,
+		minorSkills: 6,
+		majorSkills: 7,
 	},
 	{
 		level: 8,
@@ -102,6 +116,8 @@ export const Level: BaseStats[] = [
 		critical: 18,
 		criticalFail: 1,
 		subSkills: 2,
+		minorSkills: 6,
+		majorSkills: 7,
 	},
 	{
 		level: 9,
@@ -113,6 +129,8 @@ export const Level: BaseStats[] = [
 		critical: 18,
 		criticalFail: 1,
 		subSkills: 2,
+		minorSkills: 6,
+		majorSkills: 7,
 	},
 	{
 		level: 10,
@@ -124,6 +142,8 @@ export const Level: BaseStats[] = [
 		critical: 18,
 		criticalFail: 2,
 		subSkills: 3,
+		minorSkills: 6,
+		majorSkills: 7,
 	},
 	{
 		level: 11,
@@ -135,8 +155,8 @@ export const Level: BaseStats[] = [
 		critical: 18,
 		criticalFail: 2,
 		subSkills: 3,
-		gainMinorSkill: 2,
-		gainMajorSkill: 1,
+		minorSkills: 7,
+		majorSkills: 8,
 	},
 	{
 		level: 12,
@@ -148,6 +168,8 @@ export const Level: BaseStats[] = [
 		critical: 17,
 		criticalFail: 2,
 		subSkills: 3,
+		minorSkills: 7,
+		majorSkills: 8,
 	},
 	{
 		level: 13,
@@ -159,6 +181,8 @@ export const Level: BaseStats[] = [
 		critical: 17,
 		criticalFail: 2,
 		subSkills: 3,
+		minorSkills: 7,
+		majorSkills: 8,
 	},
 	{
 		level: 14,
@@ -170,6 +194,8 @@ export const Level: BaseStats[] = [
 		critical: 17,
 		criticalFail: 2,
 		subSkills: 3,
+		minorSkills: 7,
+		majorSkills: 8,
 	},
 	{
 		level: 15,
@@ -181,6 +207,8 @@ export const Level: BaseStats[] = [
 		critical: 17,
 		criticalFail: 2,
 		subSkills: 4,
+		minorSkills: 7,
+		majorSkills: 8,
 	},
 	{
 		level: 16,
@@ -192,8 +220,8 @@ export const Level: BaseStats[] = [
 		critical: 16,
 		criticalFail: 2,
 		subSkills: 4,
-		gainMinorSkill: 3,
-		gainMajorSkill: 1,
+		minorSkills: 9,
+		majorSkills: 9,
 	},
 	{
 		level: 17,
@@ -205,6 +233,8 @@ export const Level: BaseStats[] = [
 		critical: 16,
 		criticalFail: 3,
 		subSkills: 4,
+		minorSkills: 9,
+		majorSkills: 9,
 	},
 	{
 		level: 18,
@@ -216,6 +246,8 @@ export const Level: BaseStats[] = [
 		critical: 16,
 		criticalFail: 3,
 		subSkills: 4,
+		minorSkills: 9,
+		majorSkills: 9,
 	},
 	{
 		level: 19,
@@ -227,6 +259,8 @@ export const Level: BaseStats[] = [
 		critical: 16,
 		criticalFail: 3,
 		subSkills: 4,
+		minorSkills: 9,
+		majorSkills: 9,
 	},
 	{
 		level: 20,
@@ -238,7 +272,7 @@ export const Level: BaseStats[] = [
 		critical: 15,
 		criticalFail: 3,
 		subSkills: 4,
-	}
-];
-
-
+		minorSkills: 9,
+		majorSkills: 9,
+	},
+]

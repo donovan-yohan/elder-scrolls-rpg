@@ -4,7 +4,19 @@ import type { Skill } from '$lib/data/skill'
 import type { SubSkill } from '$lib/models/subskill'
 import { RaceName } from '$lib/data/race'
 
-export type Player = {
+export interface InventoryItem {
+	itemId: string
+	quantity: number
+}
+
+export interface Equipment {
+	weapon: string | null
+	offhand: string | null
+	armor: string | null
+	accessories: string[]
+}
+
+export type PlayerData = {
 	id: string
 	level: number
 	playerName: string
@@ -21,9 +33,15 @@ export type Player = {
 	minorSkills: Skill[]
 	subSkills: SubSkill[]
 	race: RaceName
+	knownSpells: string[]
+	equipment: Equipment
+	inventory: InventoryItem[]
+	notes: string
+	createdAt: string
+	updatedAt: string
 }
 
-export const defaultPlayer: Omit<Player, 'id'> = {
+export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	level: 1,
 	playerName: '',
 	characterName: '',
@@ -39,4 +57,15 @@ export const defaultPlayer: Omit<Player, 'id'> = {
 	majorSkills: [],
 	minorSkills: [],
 	subSkills: [],
+	knownSpells: [],
+	equipment: {
+		weapon: null,
+		offhand: null,
+		armor: null,
+		accessories: [],
+	},
+	inventory: [],
+	notes: '',
+	createdAt: '',
+	updatedAt: '',
 }
