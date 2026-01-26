@@ -4,6 +4,19 @@ import { ActionType, ConditionType, CombatDistance } from '$lib/models/combat'
 import type { AvailableAction } from '$lib/models/combatAction'
 import { getWeaponById, type Weapon } from '$lib/data/weapons'
 import { getSpellById, type Spell } from '$lib/data/spells'
+import { type Skill } from '$lib/data/skill'
+import { Level } from '$lib/data/level'
+
+/**
+ * Get skill bonus based on player level and whether the skill is major/minor
+ */
+export function getSkillBonus(player: PlayerData, skill: Skill): number {
+  const levelData = Level[player.level]
+  if (!levelData) return 0
+  if (player.majorSkills.includes(skill)) return levelData.majorSkillBonus
+  if (player.minorSkills.includes(skill)) return levelData.minorSkillBonus
+  return 0
+}
 
 /**
  * Distance order for calculating movement costs
@@ -111,13 +124,16 @@ export function getAvailableActions(
   }
 
   // Reactions (cost initiative, not AP)
+  const hasInitiative = session.partyInitiativePool.current >= 1
+  const initiativeReason = hasInitiative ? undefined : 'Need 1 Initiative'
+
   actions.push({
     type: ActionType.Dodge,
     name: 'Dodge',
     apCost: 0,
     initiativeCost: 1,
-    isAvailable: session.partyInitiative >= 1,
-    unavailableReason: session.partyInitiative >= 1 ? undefined : 'Need 1 Initiative',
+    isAvailable: hasInitiative,
+    unavailableReason: initiativeReason,
     description: 'Use Athletics to avoid an attack'
   })
 
@@ -126,8 +142,8 @@ export function getAvailableActions(
     name: 'Block',
     apCost: 0,
     initiativeCost: 1,
-    isAvailable: session.partyInitiative >= 1,
-    unavailableReason: session.partyInitiative >= 1 ? undefined : 'Need 1 Initiative',
+    isAvailable: hasInitiative,
+    unavailableReason: initiativeReason,
     description: 'Use Blocking skill to reduce damage'
   })
 

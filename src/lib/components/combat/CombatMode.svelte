@@ -151,19 +151,6 @@
 		}
 	}
 
-	function handleAdjustPartyInit(amount: number) {
-		if (amount > 0) {
-			combatStore.gainInitiative(player.id, amount)
-		} else {
-			combatStore.spendInitiative(player.id, Math.abs(amount))
-		}
-	}
-
-	function handleAdjustEnemyInit(amount: number) {
-		// Enemy initiative is tracked but typically managed by GM
-		// Could add store method if needed
-	}
-
 	// Handle condition removal
 	function handleRemoveCondition(condition: { type: string }) {
 		combatStore.removeCondition(player.id, condition.type)
@@ -217,10 +204,16 @@
 				/>
 
 				<InitiativeTracker
-					partyInitiative={session.partyInitiative}
-					enemyInitiative={session.enemyInitiative}
-					onAdjustParty={handleAdjustPartyInit}
-					onAdjustEnemy={handleAdjustEnemyInit}
+					partyPool={session.partyInitiativePool}
+					enemyPool={session.enemyInitiativePool}
+					onAdjustParty={(delta) => {
+						if (delta > 0) {
+							combatStore.gainInitiative(player.id, delta)
+						} else {
+							combatStore.spendInitiative(player.id, Math.abs(delta))
+						}
+					}}
+					onAdjustEnemy={(delta) => combatStore.adjustEnemyInitiative(player.id, delta)}
 				/>
 
 				<div class="card p-4">

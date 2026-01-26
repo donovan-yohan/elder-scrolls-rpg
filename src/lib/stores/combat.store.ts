@@ -122,8 +122,8 @@ function createCombatStore() {
 					playerId,
 					round: 1,
 					isPlayerTurn: partyInitiative >= enemyInitiative,
-					partyInitiative,
-					enemyInitiative,
+					partyInitiativePool: { current: partyInitiative, max: partyInitiative },
+					enemyInitiativePool: { current: enemyInitiative, max: enemyInitiative },
 					currentHP: playerData.health,
 					currentMP: playerData.magicka,
 					currentAP: playerData.maxActionPoints,
@@ -218,11 +218,15 @@ function createCombatStore() {
 			update((state) => {
 				const session = state[playerId]
 				if (!session) return state
+				const newCurrent = Math.max(0, session.partyInitiativePool.current - amount)
 				return {
 					...state,
 					[playerId]: {
 						...session,
-						partyInitiative: Math.max(0, session.partyInitiative - amount)
+						partyInitiativePool: {
+							...session.partyInitiativePool,
+							current: newCurrent,
+						},
 					}
 				}
 			})
@@ -235,11 +239,42 @@ function createCombatStore() {
 			update((state) => {
 				const session = state[playerId]
 				if (!session) return state
+				const newCurrent = Math.min(
+					session.partyInitiativePool.max,
+					session.partyInitiativePool.current + amount
+				)
 				return {
 					...state,
 					[playerId]: {
 						...session,
-						partyInitiative: session.partyInitiative + amount
+						partyInitiativePool: {
+							...session.partyInitiativePool,
+							current: newCurrent,
+						},
+					}
+				}
+			})
+		},
+
+		/**
+		 * Adjust enemy initiative (can be positive or negative)
+		 */
+		adjustEnemyInitiative: (playerId: string, delta: number): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				const newCurrent = Math.max(0, Math.min(
+					session.enemyInitiativePool.max,
+					session.enemyInitiativePool.current + delta
+				))
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						enemyInitiativePool: {
+							...session.enemyInitiativePool,
+							current: newCurrent,
+						},
 					}
 				}
 			})

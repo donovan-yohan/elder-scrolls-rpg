@@ -7,8 +7,7 @@
 	import type { AvailableAction } from '$lib/models/combatAction'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
-	import { getSkillBonus } from '$lib/util/initiative.util'
-	import { calculateWeaponDamage } from '$lib/util/combat.util'
+	import { calculateWeaponDamage, getSkillBonus } from '$lib/util/combat.util'
 
 	export let player: PlayerData
 	export let action: AvailableAction

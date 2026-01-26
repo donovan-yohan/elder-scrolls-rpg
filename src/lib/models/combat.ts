@@ -84,13 +84,18 @@ export interface ActiveCondition {
   source?: string // What caused this condition
 }
 
+export interface InitiativePool {
+  current: number
+  max: number
+}
+
 export interface CombatSession {
   id: string
   playerId: string
   round: number
   isPlayerTurn: boolean
-  partyInitiative: number
-  enemyInitiative: number
+  partyInitiativePool: InitiativePool
+  enemyInitiativePool: InitiativePool
   currentHP: number
   currentMP: number
   currentAP: number

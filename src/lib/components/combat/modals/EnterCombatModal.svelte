@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte'
 	import type { PlayerData } from '$lib/models/player'
-	import { getInitiativeSkills, calculateInitiativeContribution } from '$lib/util/initiative.util'
-	import { rollD20, isCriticalSuccess } from '$lib/util/dice.util'
+	import {
+		getPlayerInitiativeModifiers,
+		calculatePlayerInitiativeContribution,
+		type InitiativeModifiers,
+		type InitiativeRollResult
+	} from '$lib/util/initiative.util'
+	import { rollD20 } from '$lib/util/dice.util'
 
 	export let player: PlayerData
 
@@ -13,20 +18,24 @@
 
 	let partyInitiative = 0
 	let enemyInitiative = 0
-	let playerGoesFirst = true
-	let rollResults: { skill: string; total: number; isCritical: boolean }[] = []
+	let playerRollResult: InitiativeRollResult | null = null
+	let enemyRoll: number | null = null
 
-	const initiativeSkills = getInitiativeSkills(player)
+	const initiativeModifiers: InitiativeModifiers = getPlayerInitiativeModifiers(player)
+
+	function rollPlayerInitiative() {
+		playerRollResult = calculatePlayerInitiativeContribution(initiativeModifiers)
+		partyInitiative = playerRollResult.total
+	}
+
+	function rollEnemyInitiative() {
+		enemyRoll = rollD20()
+		enemyInitiative = enemyRoll
+	}
 
 	function rollAllInitiative() {
-		rollResults = initiativeSkills.map((info) => {
-			const baseRoll = rollD20(info.advantageCount)
-			const total = baseRoll + info.flatBonus
-			const isCritical = isCriticalSuccess(baseRoll, player.level)
-			return { skill: info.skill, total, isCritical }
-		})
-
-		partyInitiative = calculateInitiativeContribution(rollResults)
+		rollPlayerInitiative()
+		rollEnemyInitiative()
 	}
 
 	function handleConfirm() {
@@ -45,53 +54,79 @@
 	</header>
 
 	<div class="space-y-4">
+		<!-- Initiative Modifiers Display -->
+		<div class="card variant-soft p-3">
+			<h4 class="font-semibold text-sm mb-2">Your Initiative Modifiers</h4>
+			<div class="text-sm space-y-1">
+				<div class="flex justify-between">
+					<span>Advantage Dice (d6):</span>
+					<span class="font-medium">{initiativeModifiers.d6Count}</span>
+				</div>
+				<div class="flex justify-between">
+					<span>Flat Bonus:</span>
+					<span class="font-medium">+{initiativeModifiers.flatBonus}</span>
+				</div>
+			</div>
+		</div>
+
 		<!-- Roll Initiative Button -->
 		<div class="text-center">
 			<button type="button" class="btn variant-filled-primary" on:click={rollAllInitiative}>
-				Roll All Initiative ({initiativeSkills.length} skills)
+				Roll All Initiative
 			</button>
 		</div>
 
-		<!-- Roll Results -->
-		{#if rollResults.length > 0}
-			<div class="card variant-soft p-3 max-h-40 overflow-y-auto">
-				{#each rollResults as result}
-					<div class="flex justify-between text-sm py-1">
-						<span>{result.skill}</span>
-						<span class:text-success-500={result.isCritical}>
-							{result.total} {result.isCritical ? '(CRIT!)' : ''}
-						</span>
+		<!-- Player Roll Results -->
+		{#if playerRollResult}
+			<div class="card variant-soft p-3">
+				<h4 class="font-semibold text-sm mb-2">Player Initiative Breakdown</h4>
+				<div class="text-sm space-y-1">
+					<div class="flex justify-between">
+						<span>d20 Roll:</span>
+						<span class="font-medium">{playerRollResult.d20Roll}</span>
 					</div>
-				{/each}
+					<div class="flex justify-between">
+						<span>d6 Advantage Roll:</span>
+						<span class="font-medium">+{playerRollResult.d6AdvantageRoll}</span>
+					</div>
+					<div class="flex justify-between">
+						<span>Flat Bonus:</span>
+						<span class="font-medium">+{playerRollResult.flatBonus}</span>
+					</div>
+					<div class="border-t border-surface-400-500-token pt-1 mt-1">
+						<div class="flex justify-between font-bold">
+							<span>Total:</span>
+							<span class="text-primary-500">{playerRollResult.total}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Enemy Roll Results -->
+		{#if enemyRoll !== null}
+			<div class="card variant-soft p-3">
+				<h4 class="font-semibold text-sm mb-2">Enemy Initiative</h4>
+				<div class="text-sm space-y-1">
+					<div class="flex justify-between">
+						<span>d20 Roll:</span>
+						<span class="font-medium">{enemyRoll}</span>
+					</div>
+				</div>
 			</div>
 		{/if}
 
 		<!-- Party Initiative -->
 		<label class="label">
-			<span>Party Initiative (Successes)</span>
+			<span>Party Initiative Total</span>
 			<input type="number" class="input" bind:value={partyInitiative} min="0" />
 		</label>
 
 		<!-- Enemy Initiative -->
 		<label class="label">
-			<span>Enemy Initiative</span>
+			<span>Enemy Initiative Total</span>
 			<input type="number" class="input" bind:value={enemyInitiative} min="0" />
 		</label>
-
-		<!-- Who Goes First -->
-		<div class="space-y-2">
-			<span class="text-sm font-medium">Who goes first?</span>
-			<div class="flex gap-4">
-				<label class="flex items-center gap-2">
-					<input type="radio" class="radio" bind:group={playerGoesFirst} value={true} />
-					<span>Party</span>
-				</label>
-				<label class="flex items-center gap-2">
-					<input type="radio" class="radio" bind:group={playerGoesFirst} value={false} />
-					<span>Enemy</span>
-				</label>
-			</div>
-		</div>
 	</div>
 
 	<footer class="flex justify-end gap-2 mt-6">

@@ -47,3 +47,13 @@ export const SpellSkills: Skill[] = [
 	Skill.Mysticism,
 	Skill.Restoration,
 ]
+
+export const InitiativeSkills: Skill[] = [
+	Skill.Acrobatics,
+	Skill.Athletics,
+	Skill.Deceive,
+	Skill.Dexterity,
+	Skill.Intuition,
+	Skill.Notice,
+	Skill.Sneak,
+]

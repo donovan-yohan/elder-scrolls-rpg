@@ -30,6 +30,47 @@ export function rollD20(advantageCount: number = 0): number {
 }
 
 /**
+ * Roll a single d6
+ */
+function rollSingleD6(): number {
+  return Math.floor(Math.random() * 6) + 1
+}
+
+/**
+ * Roll a d6 with exploding dice rules
+ * If a 6 is rolled, roll again and add to total
+ */
+export function rollD6Exploding(): number {
+  let total = 0
+  let roll = rollSingleD6()
+  total += roll
+
+  while (roll === 6) {
+    roll = rollSingleD6()
+    total += roll
+  }
+
+  return total
+}
+
+/**
+ * Roll multiple d6s with advantage (take highest)
+ * Uses exploding dice rules for each individual die
+ * @param count Number of d6s to roll
+ * @returns Highest result (with explosions applied)
+ */
+export function rollD6Advantage(count: number): number {
+  if (count <= 0) return 0
+
+  const rolls: number[] = []
+  for (let i = 0; i < count; i++) {
+    rolls.push(rollD6Exploding())
+  }
+
+  return Math.max(...rolls)
+}
+
+/**
  * Check if roll is a critical success based on player level
  * Level data has 'critical' field - roll >= critical is crit success
  */

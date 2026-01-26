@@ -1,6 +1,8 @@
 <script lang="ts">
-	export let partyInitiative: number
-	export let enemyInitiative: number
+	import type { InitiativePool } from '$lib/models/combat'
+
+	export let partyPool: InitiativePool
+	export let enemyPool: InitiativePool
 	export let onAdjustParty: (delta: number) => void
 	export let onAdjustEnemy: (delta: number) => void
 </script>
@@ -12,13 +14,16 @@
 		<!-- Party Initiative -->
 		<div class="text-center">
 			<div class="text-xs uppercase tracking-wide opacity-75 mb-1">Party</div>
-			<div class="text-4xl font-bold text-primary-500 mb-2">{partyInitiative}</div>
+			<div class="text-4xl font-bold text-primary-500">
+				{partyPool.current}
+			</div>
+			<div class="text-sm opacity-60 mb-2">/ {partyPool.max}</div>
 			<div class="flex justify-center gap-1">
 				<button
 					type="button"
 					class="btn btn-sm variant-ghost-error"
 					on:click={() => onAdjustParty(-1)}
-					disabled={partyInitiative <= 0}
+					disabled={partyPool.current <= 0}
 				>
 					-
 				</button>
@@ -26,6 +31,7 @@
 					type="button"
 					class="btn btn-sm variant-ghost-success"
 					on:click={() => onAdjustParty(1)}
+					disabled={partyPool.current >= partyPool.max}
 				>
 					+
 				</button>
@@ -35,13 +41,16 @@
 		<!-- Enemy Initiative -->
 		<div class="text-center">
 			<div class="text-xs uppercase tracking-wide opacity-75 mb-1">Enemy</div>
-			<div class="text-4xl font-bold text-error-500 mb-2">{enemyInitiative}</div>
+			<div class="text-4xl font-bold text-error-500">
+				{enemyPool.current}
+			</div>
+			<div class="text-sm opacity-60 mb-2">/ {enemyPool.max}</div>
 			<div class="flex justify-center gap-1">
 				<button
 					type="button"
 					class="btn btn-sm variant-ghost-error"
 					on:click={() => onAdjustEnemy(-1)}
-					disabled={enemyInitiative <= 0}
+					disabled={enemyPool.current <= 0}
 				>
 					-
 				</button>
@@ -49,6 +58,7 @@
 					type="button"
 					class="btn btn-sm variant-ghost-success"
 					on:click={() => onAdjustEnemy(1)}
+					disabled={enemyPool.current >= enemyPool.max}
 				>
 					+
 				</button>
@@ -58,12 +68,19 @@
 
 	<!-- Advantage Indicator -->
 	<div class="mt-4 pt-3 border-t border-surface-500/20 text-center text-sm">
-		{#if partyInitiative > enemyInitiative}
+		{#if partyPool.current > enemyPool.current}
 			<span class="text-primary-500 font-semibold">Party has initiative advantage!</span>
-		{:else if enemyInitiative > partyInitiative}
+		{:else if enemyPool.current > partyPool.current}
 			<span class="text-error-500 font-semibold">Enemy has initiative advantage!</span>
 		{:else}
 			<span class="opacity-75">Initiative is tied</span>
 		{/if}
 	</div>
+
+	<!-- Warning when initiative is low -->
+	{#if partyPool.current <= 2 && partyPool.current > 0}
+		<div class="mt-2 text-center text-warning-500 text-xs">
+			Warning: Low initiative! If it reaches 0, enemy gets a bonus attack.
+		</div>
+	{/if}
 </div>
