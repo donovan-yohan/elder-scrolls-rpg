@@ -253,8 +253,8 @@
 
 								<!-- Spells Grid -->
 								<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-									{#each schoolSpells as spell}
-										{@const isSelected = isSpellSelected(spell.id)}
+									{#each schoolSpells as spell (spell.id)}
+										{@const isSelected = knownSpells.includes(spell.id)}
 										{@const canSelect = remaining > 0 || isSelected}
 
 										<button

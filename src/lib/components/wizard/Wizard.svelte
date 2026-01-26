@@ -84,13 +84,18 @@
 		return true
 	}
 
-	// Get step status for styling
-	function getStepStatus(stepIndex: number): 'completed' | 'current' | 'upcoming' | 'disabled' {
-		if ($wizardStore.completedSteps.has(stepIndex)) return 'completed'
-		if (stepIndex === currentStepIndex) return 'current'
+	// Get step status for styling - made reactive by computing for all steps
+	function getStepStatus(stepIndex: number, currentIdx: number, completedSteps: Set<number>): 'completed' | 'current' | 'upcoming' | 'disabled' {
+		if (stepIndex === currentIdx) return 'current'
+		if (completedSteps.has(stepIndex)) return 'completed'
 		if (isStepAccessible(stepIndex)) return 'upcoming'
 		return 'disabled'
 	}
+
+	// Reactive array of step statuses - updates when currentStepIndex or completedSteps change
+	$: stepStatuses = visibleSteps.map((_, index) =>
+		getStepStatus(index, currentStepIndex, $wizardStore.completedSteps)
+	)
 </script>
 
 <div class="wizard-container flex flex-col lg:flex-row h-full min-h-[600px] gap-4 lg:gap-0">
@@ -140,7 +145,7 @@
 		<nav class="flex-1 overflow-y-auto p-2">
 			<ol class="space-y-1">
 				{#each visibleSteps as step, index}
-					{@const status = getStepStatus(index)}
+					{@const status = stepStatuses[index]}
 					<li>
 						<button
 							type="button"

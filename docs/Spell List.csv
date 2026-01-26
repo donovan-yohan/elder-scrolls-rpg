@@ -1,0 +1,294 @@
+I r,AP Cost,MP Cost,Sphere,Range,Shape,Power,Duration
+,1-10,1-20,"Determines it’s casting skills, and wether or not you're proficient in it.
+Alteration , Conjuration, Destruction ,Illusion , Mysticism , Restoration,","In 5ft squares. 
+PB- 0ft-5ft
+Short-6ft-15ft
+Medium-16ft-50ft
+Long-51-200ft
+Extreme-200ft+","Self,
+Singular
+Line, Cone, Radius (# feet), square (# feet)","The degree to which it heals or harms, Enhance or Detracts. This is DC to whioch yoru must roll againt to cast this spell. Novice is 10, Apprentice is 15, Adept is 20, Expert is 25, Master is 30",How long the effect lasts after it’s casting.
+Effect,"What it does specifically, and if there are special rules about it.",,,,,,
+Flames,1,1,destruction,short,cone,novice,concentration
+"1 fire damage, burn condition 1 (max 1)",,,,,,,
+Sparks,1,1,destruction,short,cone,novice,concentration
+"1 lightning damage, 1 MP",,,,,,,
+Frostbite,1,1,destruction,medium,cone,novice,concentration
+"1 frost damage, 1 AP",,,,,,,
+Sickly Touch,1,3,Restoration,–,Self,novice,two rounds
+unarmed attacks deal +2 poison damage,,,,,,,
+Healing Hands,1,1,restoration,adjacent,singular,novice,concentration
+heals target 2 HP,,,,,,,
+Healing,1,1,restoration,–,self,novice,concentration
+heals user 2 HP,,,,,,,
+Raise zombie (lesser),2,2,conjuration,short,singular,novice,three rounds
+"Rasie a medium humoand cropse as a weak zombie to briefly fight for you, and acts on your turn as you would command it. It has 4 HP, 3AP and 0MP. It has one attack, Slam. 2 AP, Unarmed +3. 4 Damage.",,,,,,,
+Summon spectral skeever (lesser),1,2,conjuration,short,singular,novice,three rounds
+"Conjure a Specrtal Skever to the designates sqaure that fight for you and act on your turn as you would command it. It has 2 HP, 4AP and 0MP. It has one attack, bite. 1 AP, Unarmed +3. 2 Damage.",,,,,,,
+Bound dagger (lesser),1,2,conjuration,-,singular,novice,three rounds
+"You Conjure a Spectral Dagger to your hands. It uses your handed skill to attack. It counts as having no material, an therefore always weaker than an enemies armour type.",,,,,,,
+Bound sword (lesser),1,2,conjuration,-,singular,novice,three rounds
+"You Conjure a Spectral Sword to your hands. It's a one handed sword, that uses your handed skill to attack. It counts as having no material, an therefore always weaker than an enemies armour type.",,,,,,,
+Candlelight,1,2,Alteration,-,self,novice,10 rounds
+"You summon a Glowing orb of light to trail around you. It casts a bright cool light, with the strength of a torch, but does not take up your hands.",,,,,,,
+Oakflesh (lesser),2,2,alteration,-,self,novice,six rounds
+"You quickly invigorite your clothing, skin and/ or worn armour with the power of your magika, granting you Damage resistance of 2, against all attacks (unless otherwise specified ) until the effect wears of.
+
+When you roll alteration vs the spellcasting DC of this spell, you may add the value of your roll, minus the DC, to the spells base damage reduction. You may not increase the value of your spells DR higher than your maximum magica. If you are struck by a damage source of apprentice quality or greater, halve the value of your DR for that attack. ",,,,,,,
+Clairvoyance,1,2,illusion,-,self,novice,concentration
+"Roll a Illusion check DC 15, for every one you succeed by you may add half that any Search chek you are making.",,,,,,,
+Calm (lesser),2,2,illusion,short,?,novice,five rounds
+"You attempt to cast of haze of complacency amongst a targets mind, ceasing hostile action against any and all creatures temporarily.You must roll an Illusion check with disadvantage, vs. the target who rolls 1d20 plus their will and half their level. If you fail, they know someone attempted this spell on them immediately, though not your identity or location. After a success, assuming they are alive, they will also recognize a spell had been cast upon them.",,,,,,,
+Fury (lesser),2,2,illusion,short,?,novice,five rounds
+"You attempt to cast a haze of anger amongst a targets mind, causing them to take hostile action against any and all Creatures temporarily. You must roll an Illusion check with disadvantage, vs. the target who rolls 1d20 plus their will and half their level. If you fail, they know someone attempted this spell on them immediately, though not your identity or location. After a success assuming they are alive, they will also recognize a spell had been cast upon them.",,,,,,,
+Demoralize (lesser),,,,,,,
+,,,,,,,
+Charm (lesser),,,,,,,
+,,,,,,,
+Ward (lesser),2,2,mysticism,-,self,novice,until next round
+"You May roll a contested mysticism skill vs any Target Novice magical spell you take until the next round. if you succeed, it is negated. After the first spell countered this way, all other check are made at another level of disadvantage. at 4 level of disadvantage, the ward breaks.",,,,,,,
+Bound armour (lesser),1,3,conjuration,-,self,novice,five rounds
+Conjures a suit of Elvish light armour on the caster,,,,,,,
+Soul trap,2,2,conjuration,short,singular,apprentice,until end of next turn
+soul trapped,,,,,,,
+Chameleon (lesser),2,3,illusion,pb,Self or Singular,apprentice,3
+you gain concealment +1,,,,,,,
+Fortify health (lesser),2,2,restoration,Pb,Self or Singular,apprentice,2
+gain +6 to max health,,,,,,,
+Fortify magicka (lesser),2,4,restoration,pb,Self or Singular,apprentice,2
+gain +5 to max MP,,,,,,,
+Fortify stamina (lesser),4,2,restoration,pb,Self or Singular,apprentice,2
+gain +4 to max AP,,,,,,,
+Fortify skill (lesser) *,2,4,restoration,pb,Self or Singular,apprentice,5
+"you gain +1 advantage on associated skill checks
+
+*A separate version of this spell exists for each skill.",,,,,,,
+Divine intervention,4,5,mysticism,-,self,adept,instantaneous
+"you and 5 allies within short range teleport to nearest holy sight of the last aedra or daedra to hear yoru prayers, that you ahve previously prayed",,,,,,,
+Mage Light,1,1,alteration,medium,singular,novice,10
+"send a ball of light to targeted location, acting as a torch. when cast, briefly illuminates space between castor and target.",,,,,,,
+Arcane shield (lesser),2,2,alteration,-,self,novice,5
+"a shield of air hardens around you, increasing AC +2 until the effect wears off",,,,,,,
+"Fenrick’s doorjamb
+(Lesser lock)",4,1,alteration,pb,singular,apprentice,10 minutes
+"When targeting a door or container, the target becomes ”locked” for the spells duration, requiring DC 10 dexterity or athletics check to open. If the target also has a mechanical lock, the mechanical lock engages and stays locked after the spell expires.",,,,,,,
+"ondusi’s locksplitter
+(Lesser open)",4,1,alteration,pb,singular,apprentice,-
+"unlocks any magically or mechanically sealed door or container, If the DC to pick it would be 10 or lower.",,,,,,,
+Aryons invisible stair (lesser levitation),2,3,alterations,-,self,apprentice,5
+"rings of vapour surround you, as the air hardens beneath your feet. You gain 1 level of levitation.",,,,,,,
+Earwig (sound lesser),3,2,illusion,short,singular,apprentice,1
+"you conjure three motes of explosive sound, primed to go off in an enemies ear. When an enemy within range would take an action requiring a skill check, you may expend one mote, and force them to make a DC 10 will check. On a failure, they lose the action and it’s associated AP. You may spend additional motes to add +1 difficulty to the role.",,,,,,,
+Crassus’ executive hush (lesser silence),,,illusion,short,10 ft shere,apprentice,
+,,,,,,,
+Water walking,2,3,alteration,-,self,apprentice,6
+"you may walk across water, or a similar liquid, as if it were a solid surface",,,,,,,
+Water breathing,2,1,alteration,-,self,novice,5
+you may breathe normally while submerged in water or a similar liquid,,,,,,,
+Karsus’ library aid,3,5,alteration,pb,target,novice,1 hour
+"you touch an object weighing 8 pounds or less, and grant it slowfall 3 for the spells duration. 
+
+This spell cannot be used to target creatures.",,,,,,,
+Gerions assault glide,4,6,alteration,pb,radius,adept,3
+yourself and affected creatures gain slowfall 2 for the spells duration.,,,,,,,
+Tolfdir’s breakfall,1,3,alteration,-,self,apprentice,1
+"hurdling downwards, you desperately prepare for impact.
+
+Grants slowfall 1 for the spells duration",,,,,,,
+Cliff racer’s shuffle,4,6,alteration,-,self,adept,6
+"you glide peak to peak, gaining slowfall 2 for the spell duration.",,,,,,,
+Stairs of the student ,4,2,Mysticism ￼,-,Self,Apprentice,Five minutes ￼
+You gain one level of levitation ,,,,,,,
+Levitation ,2,4,Mysticism,-,Targeted,Adept,6
+You gain levitation level 2.,,,,,,,
+Greater levitation ,2,8,Mysticism,Short,Targeted ,Expert.,6
+"You gain levitation level 3, or apply it to a targeted object weighing no more than your own body. On your turn, you may move the object as if it were your body, as long as it remains within line of sight.",,,,,,,
+Wings of the War-Magi,4,10,Mysticism,Short,Targeted,Master,10 minutes 
+Target yourself and up to five other people. Each of you gain levitation 4 for the spells duration. The spell effect can end early for targeted persons if they get to extreme range or further from the caster.,,,,,,,
+Shalidore's Slip-Stream,4,10,Mysticism ,-,Self,Master,4hours
+"Through a complex working of mysticism and alteration, grant yourself levitation 4, shed your body weights, make yourself immune to air friction, and launch yourself over the horizon.
+
+Immediately after casting the spell, you pick a direction and launch yourself as far as you can in that direction on this turn. On subsequent turns, you must spend at least half of your AP that round to move in that direction. While the spell remains in effect, on your turn you may spend 2 AP to attempt a DC 15 acrobatics check to pick a new direction.
+
+If you were not in combat, and have time to build a momentum, you will eventually build up enough momentum to fly 5 km (a little over one league) In a minute, or 300km/hr. It takes about 10 minutes to hit maximum speed.",,,,,,,
+Levitation rune,3,3,Mysticism,Short,5 foot radius ,Apprentice,1 hour
+"You cast a rune onto the ground which quickly fades from visibility, unless you decide otherwise. The rune projects an invisible column of magica up from its face, 60 feet high. Typically this column is vertical, but it may be horizontal if the rune itself is placed on a vertical surface. 
+
+While inside this column, sentient beings gain levitation 2. Effect en immediately if you exit the area of the spell.",,,,,,,
+Karsus' levitation master rune,3,3,Mysticism ,Short,Targeted ,Adept,1 hour
+"You cast a magenta rune onto an object which (unless you decide otherwise) quickly fades from visibility. 
+
+While the spell persists, the rune (and the object attached to it) is considered to have two levels of the flight condition. You may spend AP on your turn to move the object using the normal movement rules. The rune may not travel further from you than the spells maximum range, and may not support more than 250 pounds. 
+
+When you increase this spells DC by focusing, you gain an additional optional effect to empower the spell with. For every +1 to the spell DC, the rune may lift an additional 100 pounds.
+",,,,,,,
+Slippers of Tellvanus,2,3,alteration,-,self,apprentice,1 hour
+"the soles of your feet lift off the ground, safe from the snow and filth below. 
+
+You gain flight 3 for the spells duration, but may not fly higher than 8 inches from the ground.",,,,,,,
+Fire rune,2,3,destruction,short,5ft square,apprentice,4 hours
+"casts a rune on the ground that quickly fades from visibility, requiring a dc 15 notice check to perceive. 
+
+stepping in PB vicinity of the rune detonates it, dealing 4 fire damage and 1 ( max 3) level of burning to anyone within the same vicinity. 
+
+Dealing damage to a rune will detonate it early. The Runes creator stepping in its vicinity will not.",,,,,,,
+Frost rune,2,3,destruction,short,5ft square,apprentice,4 hours
+"casts a rune on the ground that quickly fades from visibility, requiring a dc 15 notice check to perceive. 
+
+stepping in PB vicinity of the rune detonates it, dealing 4 frost damage and the chilled condition to anyone within the same vicinity. 
+
+Dealing damage to a rune will detonate it early. The Runes creator stepping in its vicinity will not",,,,,,,
+Lightning rune,2,5,destruction,short,5ft Square,apprentice,4 hours
+"casts a rune on the ground that quickly fades from visibility, requiring a dc 15 notice check to perceive. 
+
+stepping in PB vicinity of the rune detonates it, dealing 4 lightning damage and draining 2 magica from anyone within the same vicinity.
+
+Characters enhanced by temporary spell effects (e.g. an oakflesh spell) Who are in the runes blast radius make a DC 10 will check For each effect. Failing a will check ends the spell effect early if its power is less than that of the rune. 
+
+Dealing damage to a rune will detonate it early. The Runes creator stepping in its vicinity will not",,,,,,,
+Fire bolt,1,2,destruction,short,singular,apprentice,-
+deals 6 fire damage and inflicts burning 2 (max 2),,,,,,,
+Ice spike,2,2,destruction,Short,singular,apprentice,-
+"deals 3 frost and 3 piercings damage, inflicts chilled condition",,,,,,,
+Lightning bolt,1,2,destruction,medium,singular,apprentice,-
+"deals 5 lightning damage, and drains 4 magica.",,,,,,,
+Harvest moisture,3,4,alteration,short,targeted,apprentice,concentration
+"while in a moist or temperate environment, casting this spell draws water out of the air and creates a 5ft radius of clean water. The water then pores down as appropriate for the space it’s conjured into. Casting the spell repeatedly in the same space increases the volume of water created.
+This spell may inflict the wet condition if a creature is inside the space the water is conjured into.
+If this spell is cast in an area of especially dense fog, that fog is destroyed within 15 feet of the casting area.",,,,,,,
+Create fog,2,2,alteration,short,15 ft radius,apprentice,4 hours
+"you target a quantity of water no larger than 5 square feet and destroy it, creating a 15 foot radius of fog in its place. The fog inflicts +2 concealment creatures attempting to see in or out of it. Casting the spell on a body of water inside of a pre-existing fog cloud creates a new fog cloud anywhere on the perimeter of the existing one.
+If left undisturbed The fog lingers for four hours. Direct sunlight or wind may disperse it more quickly.",,,,,,,
+Cyrodiils Socialite Song,4,6,Illusion,short,targeted,adept,1 minute
+"A sourceless pleasant tune begins to play, as the target's face takes on a look of blank naivete. The GM is advised to play “Harvest Dawn” from the Oblivion OST for the duration of the spell. 
+
+You must roll an Illusion check with disadvantage, vs. the target who rolls 1d20 plus their will and half their level. If you fail, they know someone attempted this spell on them immediately, though not your identity or location.
+
+All speechcraft, deceive, and threaten checks made against the target gain three levels of advantage. Whenever one of these three skill checks are successfully made against the target, their response will always be more extreme than expected, sometimes to absurd effect. For example, successfully threatening a merchant into giving you a discount may also cause them to break down crying and poop themselves.
+
+If speechcraft, deceive, or threaten check against the target is critically successful, the target reacts as if they were under the effect of a mind altering condition, determined by which skill was used. 
+Speechcraft: The target becomes calmed, ceasing hostile action against any and all creatures. 
+Deceive: the target becomes enraged, causing them to take hostile action against any and all Creatures nearby, or a specific creature if they were the subject of your deception. 
+Threaten: The target becomes demoralized, attempting to flee from any and all creatures nearby, or a specific creature if they were the object of your threaten check. 
+
+As long as a target if affected by this spell, repeated successful social skill checks may cause them to whiplash their behavior back and forth. The same weeping shit-smeared merchant from earlier may suddenly be willing the fist fight the guards, if you convince them the guards called their mother fat. 
+
+When the spell ends, the affected character may attempt an insight check vs the spell’s DC to recognise what has happened.",,,,,,,
+body horror,,,illusion,short,singular,,1 hour
+"You make an observational comment about some horrible thing happenning to the targets body, and they percieve it to be so. you might say, for example, ""Oh dear, your bones seem to be melting"" or ""I cant help but notice your sweat is VERY acidic"" or ""why have you flayed all your own skin just now?"". 
+
+Effects to be written...",,,,,,,
+burden,,,alteration,short,singular,apprentice,10 minutes
+inflicts 1 [max 2] levels of encumbrance,,,,,,,
+crippling burden,,,alteration,short,singular,adept,1 week
+inflicts 1 [max 3] levels of encumbrance,,,,,,,
+stumbling burden,,,alteration,medium,singular,expert,2 rounds
+deal 3 (max 4) levels of encumbrance,,,,,,,
+weight of your sins,,,illusion,short,radius 20ft,master,5 rounds
+"your heart feels physical heavy in your chest and drags you to the ground. You suffer 4 levles of encumbrance, rolling will instead of athletics to attempt to stand up. As long as you retain 4 lvls of encumbrance, you suffer 4 points of mental damage whenever you preform an action while standing, or end your turn standig. ",,,,,,,
+feather,,,alteration,pb,singular,apprentice,10 minutes
+"your encumbrance lvl is reduced by 1 for the spells duration. if your encumbrance level is reduced to 0 after casting this spell, gain +1 advantage on skill checks to traverse weight sensitive terrain (such as a frozen lake or pressure plates) and +1 advantage on athletics checks to swim or climb. ",,,,,,,
+greater feather,,,alteration,pb,singular,adept,10 minutes
+"youre encumbrance lvl is reduced by 2 for the spells duration. if your encumbrance lvl is 0 after casting this spell, you gain +3 advantage on athletics checks to swim or climb, and you automaticly succeed and skill checks to traverse weight sensitive terrain (such as a frozen lake or a floor with pressure plates). ",,,,,,,
+restore strength,,,restoration,pb,radius 10ft,adept,instantaneous
+removes up to three levels of supernatural encumbrance. ,,,,,,,
+jump,,,,,,,
+,,,,,,,
+tinur's hoptoad,,,,,,,
+,,,,,,,
+Icarian Flight,,,,,,expert,
+,,,,,,,
+Imbue Arrows,2,3,Alteration,Immediate,,apprentice,10 rounds
+"You take hold of up to 10 arrows, Imbuing them for +2 Damage.",,,,,,,
+Detect enchantment,,,,,,,
+,,,,,,,
+Detect life,,,,,,,
+,,,,,,,
+Detect death,,,,,,,
+,,,,,,,
+stoneflesh,,,,,,apprentice,
+"You quickly invigorite your clothing, skin and/ or worn armour with the power of your magika, granting you Damage resistance of 5, against all attacks (unless otherwise specified ) until the effect wears of.  
+
+When you roll alteration vs the spellcasting DC of this spell, you may add the value of your roll, minus the DC, to the spells base damage reduction. You may not increase the value of your spells DR higher than your maximum magica. If you are struck by a damage source of adept quality or greater, halve the value of your DR for that attack. ",,,,,,,
+ironflesh,,,,,,adept,
+"You quickly invigorite your clothing, skin and/ or worn armour with the power of your magika, granting you Damage resistance of 8, against all attacks (unless otherwise specified ) until the effect wears of.
+
+When you roll alteration vs the spellcasting DC of this spell, you may add the value of your roll, minus the DC, to the spells base damage reduction. You may not increase the value of your spells DR higher than your maximum magica. If you are struck by a damage source of expert quality or greater, halve the value of your DR for that attack. ",,,,,,,
+ebonyflesh,,,,,,expert,
+"You quickly invigorite your clothing, skin and/ or worn armour with the power of your magika, granting you Damage resistance of 12, against all attacks (unless otherwise specified ) until the effect wears of.
+
+When you roll alteration vs the spellcasting DC of this spell, you may add the value of your roll, minus the DC, to the spells base damage reduction. You may not increase the value of your spells DR higher than your maximum magica. If you are struck by a damage source of master quality or greater, halve the value of your DR for that attack. ",,,,,,,
+dragonhide,,,,,,master,
+,,,,,,,
+shape earth,4,8,Alteration,,,adept,1 hour
+Extrude soil and stone into any simple shape within a 30foot by 30foot by 30 foort  cube . This structure has 1 HP per foot of thickness in the area attacked.,,,,,,,
+chain lightning,2,5,destruction,pb(it can chain between people further then this range),line,adept,
+"Deal 4 dmage, and 4 MP damage. on hit, you maye roll again to hit another target in range withought risking losing the spell. You take 1 disadagvet on each attack after the first.",,,,,,,
+war circit,2,3,destruction,short,targeted,adept,instantanious
+"6 shock damage, 4 magica damage
+If you hit a target with this spell, and then hit it again with this spell on your immediate next action, a “circuit” is created between you and the target. With The circuit created, the spell’s duration changes to concentration, and you gain back 1mp every two your target loses to magica damage.
+While the circuit is established, Your target may attempt a destruction saving throw to escape it each time they take damage from it, Against your last destruction spellcheck. Saving throws to escape the circuit start at +2 difficulty, but the target receives a cumulative +1 advantage each time they fail, to a maximum of +2 advantage.￼",,,,,,,
+cutting flame,2,3,destruction,medium,line,adept,concentration
+"You conjure a vortex of wind around a Powerful jet of flame, building a long cutting spear of oxidizing fire.  it deals 8 points fire damage, 1 lvl (max 3) burning. the cutting flame will pierce through hard terrain (typicly stone or wood) up to 1 foot thick",,,,,,,
+displace perception,3,2,illusion,long,,,concentration
+"you shift your perspective whilst your body stands still. while this spell persists, your sense of  sight, hearing, and smell are transfered to an ethereal sensor, called a “sense-self”, well the same senses are disabled for your physical body. 
+The sense-self only exists in your mind, so it has no physical form, and can only be detected through mind reading effects targeting you. 
+The sense-self Can fly at the same speed as you walking. ",,,,,,,
+vertigo,4,1,illusion,short,targeted,adept,1 minute
+"you sabotage the targets sense of balance and inertia. Target suffers three levels of disadvantage on acrobatics checks, and must roll an acrobatics check against the DC 15 if they take a move action on their turn.
+If the afflicted target rolls 10 or lower on an acrobatics check,  they immediately fall prone and vomit, gaining the poison (nausia) condition until the start of their next turn.",,,,,,,
+Inflict life,2,5,restoration,touch,targeted,adept,1 hour
+"The body is not a temple, but a forest. A carefully balanced biome, brimming with life. You empower but one part of the body, and watch the forest fall into discord.
+with your touch You empower your targets bodily functions in a way that brings them great pain or discomfort. your target may resist this spell with an opposed athletcs save. on a faliure, Choose one of the following afflictions for your target to siffer for the spell duration. at the end of a targets turn, they may attempt another athletcs check against your own restoration roll to end the spell effect. 
+
+Empowerd stomach acid: victim suffers 6 acid damage immediately and at the start of targets turn. Due to the intense pain, target also suffers +1 difficulty on all skill checks.
+Anaphylactic swelling: Target suffers blindness lvl 2, loses their sense of smell/taste, and suffers +2 difficulty on all social or spoken spellcraft checks. 
+Fevered shits: target gains the wet condition and SLOWED 1. whenever they take damage they are highly likley to shit themselves.  
+Explosive blood pressure: Sources of slashing or piercing damage deal 4 additional points to the target, as the blood bursts from the wound. If the target is below full health they also accrue X?X lvls of bleeding. 
+",,,,,,,
+ignition,2,3,destruction,medium,targeted,apprentice,concentration
+"1 fire damage, 0.5 (max 3) levels of burning. 
+You draw invisible currents of energy into the target of your choice, causing it to heat from within and burst into flames if it is flammable. If they are able, the spells target may oppose your destruction skill check with their own destruction or mysticism check. 
+Ignition can target any object or creature within line of sight. Alternately, you may choose a target that is enclosed in another object and therefore not visible, but you must know exactly what it is, where it is inside the object, and it must be materialy simple. For example you could heat  water inside of an enclosed barrel, but not specific components inside a dweamer lock, or a piece of armor in a dragons stomach. 
+
+Creatures react to the burning condition as normal, but inanimate objects will go through different physical changes depending on how hot you’ve made them.
+Burning 1: Water boils, wood warps and turns brittle, stone and metal are too hot to comfortably touch. Skill checks requiring contact with these materials are made with +2 difficulty.
+Burning 2: water turns to steam and may burst containment vessels or create fog conditions, wood ignites, stone cracks and becomes unstable, metal objects lose a level of quality until repaired.
+Burning 3: boil a pond sized quantity of water. Metal objects of adept quality or lesser Melt, while higher quality objects permanently lose two levels of quality. Wood disintigrates. Stone Detonates throwing shrapnel.
+
+If you stop focusing on ignition, you target loses heat at 1lvl/ round. because the ignition spell does not procuce actual fire, it is not effected by the wet condition. ",,,,,,,
+Stun,1,2,Illusion ,Close,Targeted,Novice,Instantaneous
+"Target resists spellcheck with an opposed will saving throw. On failure, target gains slowed (4) until the beginning of their next turn. ",,,,,,,
+Paralyze,1,4,Illusion,Close,Targeted,Apprentice,Three rounds
+"Target resist spellcheck with opposing will saving throw.  On failure, the target gains slowed (4) for the duration of the spell effect. at the beginning of their turn, the subject may reattempt the will saving to end the effect early.",,,,,,,
+shocking grasp,1,3,Destruction ,Pb,Singular,Apprentice,Instantaneous
+"Target resists spellcheck with opposed athletics saving throw.
+Deals 3 shock damage, 3 magica drain, and target gains slowed (4) until end of their next turn.",,,,,,,
+Sleep paralysis,2,5,Illusion ,Close,Singular,Adept ,Five minutes
+"Target resists spellcheck with opposed will saving throw. On failure target receives slowed (4), fall prone, and hallucinate suffocation. As long as the effect persists, at the end of the targets turn they receive eight mental damage.
+At the beginning of the affected target turn, They may re-attempts their will saving throw to end the spell effect at +2 difficulty. On a failed roll of 10 or less, the target perceives a creature of nightmare sitting on their chest and take an additional four points mental damage immediately.
+When the spell is cast on a creature who is sleeping, they do not automatically wake up, and make all will saves at an additional +2 difficulty. ",,,,,,,
+Petrified delusions,4,5,Illusion,Close,singular,Expert,Permanent
+"Your target feels your joints eyes and skin turns gray as they rapidly turn to stone. Or so they believe.
+This spell is resisted by an will saving throw.
+While the spell persists, target receives slowed (4), and all bludgioning damage delt to them as multiplied by three as if they were frozen. At the beginning of the target turn, they may re-attempt the will saving throw to end the effect at +2 disadvantage. If the target fails there will saving throw, they suffer 10 mental damage in panic, as they have no mouth but need to scream.
+When a Characters dies from panic under the effects of the spell, their body stays standing permanently, as their panicked final moments linger into death. ",,,,,,,
+Garden of Stone and glory,12,15,Illusion ,Medium,Radius 50ft,Master,Perminant
+"A wave of awe and terror overcome your enemies, as they experience their joints locking still in a reverant pose, and their flesh turning to stone.
+Characters in your AOE resist the spell craft check with an opposed will saving through. on a failure, afflicted creatures receive slowed (4) and believe they have turned a stone. While in the state, alluding damage dealt to afflicted creatures are multiplied by three, as if they were frozen. When you cast the spell, you may choose a pose for each afflicted creature to adopt, and decide how the crowd will perceive you.  You may force the afflicted crowd to love you, as if they were charmed, or fear you as if they were terrified.
+Afflicted creatures may re-attempt their wheel saving through at +3 difficulty to escape the effect every 10 minutes. On a role of 10 or lower, they may no longer attempt their saving, as the effect becomes permanent until ended by other means.
+Creatures who expire under the effects of the spell do not have their bodies collapse when they die, and instead maintain their pose indefinitely.",,,,,,,
+Feast of mayhem,12,10,Illusion ,Close,Radius 50ft,Master,3 days
+"You cry pandemonium, and the masses answer, Reaching for weapons or wine as their hearts desire.
+Affected creatures resist your spell craft check with an opposed will saving throw. On a failure, the afflicted creatures flip a coin, and experience either ""wrath"", or ""hedonism"".
+Creatures experiencing wrath become frenzied, using whatever weapons they can to kill whatever they can, without regard for prior allegiances. A character experiencing wrath may reattempt their will saving through to escape the effect anytime they kill someone.
+Characters experiencing hedonism drop everything and engage in an orgy of food, wine, music, dancing and fornication with anyone else afflicted by hedonism. Non-pleasurable sensations are either filtered out or experienced as being pleasurable. A hedonist character may re-attempts their will saving through to escape the effect anytime they are physically harmed. If a hedonist character escapes the spell effect, they immediately become a prime target to any wrath afflicted characters who can see them.",,,,,,,
+Crippling delusion,2,4,Illusion,Close,Singular ,Adept,One minute
+Spell Absorbtion,2,1,Mysticisim,Close,Targeted,Adept,"Reaction, one round."
+"While this spell persists you are able to take a reaction, costing 1 initiative and 1 MP, In response to a spell affecting, or being cast by, a target within range. You target the spell itself, and attempt to nullify the effect by syphoning off its magica.
+
+When you take your reaction, roll a mystcism check. You may choose to spend additional MP and gain an equal amount of advantage. If your role meets or exceeds the spell craft check which produced the targeted spell, then the effect of the spell is halved, and you regain MP equal to half (min 1) the value of the targeted spell. If you beat the opposed spell craft check by more than 10 or CRIT, the targeted spell has no effect, and you Regain the full Magica value of the targeted spell and the magica you spent. 
+
+If the targeted spell is of lower or higher quality than your casting of spell absorption,  you gain advatge for each power level you supercede theires, and taken disadvantge for each level they supersede you.",,,,,,,
+Adept's Absorb Magika,2,2,Mysticisim,Medium,Targeted,Adept,concentration
+"you make a spell attack, targeting a Person or an enchated Item with charges. on a hit, you may absorb 5 MP or two item charge. If a targets magica is drained to zero, you may continue the attack and instead deal one level of magica burn per casting. similarly, If an item is reduced to 0 Charges and damaged again, the item becomes Discharged.",,,,,,,

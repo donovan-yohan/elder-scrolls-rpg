@@ -9,10 +9,15 @@ export interface InventoryItem {
 	quantity: number
 }
 
+export interface EquipmentSlot {
+	id: string | null
+	materialId: string | null
+}
+
 export interface Equipment {
-	weapon: string | null
-	offhand: string | null
-	armor: string | null
+	weapon: EquipmentSlot
+	offhand: EquipmentSlot
+	armor: EquipmentSlot
 	accessories: string[]
 }
 
@@ -59,9 +64,9 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	subSkills: [],
 	knownSpells: [],
 	equipment: {
-		weapon: null,
-		offhand: null,
-		armor: null,
+		weapon: { id: null, materialId: null },
+		offhand: { id: null, materialId: null },
+		armor: { id: null, materialId: null },
 		accessories: [],
 	},
 	inventory: [],

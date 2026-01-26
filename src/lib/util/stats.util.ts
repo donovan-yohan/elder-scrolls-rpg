@@ -1,10 +1,26 @@
 import type { PlayerData } from '$lib/models/player'
-import type { Skill } from '$lib/data/skill'
+import { Skill } from '$lib/data/skill'
 import { SpellSkills } from '$lib/data/skill'
 import { Archetypes } from '$lib/data/archetype'
 import { BirthSigns } from '$lib/data/birthSign'
 import { RaceName } from '$lib/data/race'
 import { Level } from '$lib/data/level'
+
+/**
+ * Calculate subskill bonus based on player level.
+ * Formula: floor(level / 2), minimum 1
+ */
+export function getSubskillBonus(level: number): number {
+	return Math.max(1, Math.floor(level / 2))
+}
+
+/**
+ * Get the number of subskill slots available at a given level.
+ * Uses Level data as single source of truth.
+ */
+export function getSubskillSlots(level: number): number {
+	return (Level[level] ?? Level[1])?.subSkillSlots ?? 1
+}
 
 /**
  * Racial stat bonuses parsed from race descriptions.
@@ -81,29 +97,110 @@ export function calculateMaxAP(player: PlayerData): number {
 
 /**
  * Calculate skill bonus for a specific skill.
- * Formula: level scaling bonus + major/minor bonus + subskill bonus
+ * Formula: level scaling bonus based on major/minor status
  *
  * - Major skills get majorSkillBonus from level data
  * - Minor skills get minorSkillBonus from level data
  * - Untrained skills get 0 base bonus
- * - Each matching subskill adds +1 (or configured bonus)
+ *
+ * Note: Subskill bonuses are now applied separately during rolls via SubskillPicker
+ * when the player invokes a subskill and the GM agrees it applies.
  */
 export function calculateSkillBonus(player: PlayerData, skill: Skill): number {
 	const levelData = Level[player.level] ?? Level[1]!
 
 	// Determine if skill is major, minor, or untrained
-	let baseBonus = 0
 	if (player.majorSkills.includes(skill)) {
-		baseBonus = levelData.majorSkillBonus
+		return levelData.majorSkillBonus
 	} else if (player.minorSkills.includes(skill)) {
-		baseBonus = levelData.minorSkillBonus
+		return levelData.minorSkillBonus
 	}
 	// Untrained skills get 0 base bonus
+	return 0
+}
 
-	// Count subskill bonuses for this skill
-	const subskillBonus = player.subSkills.filter((sub) => sub.parentSkill === skill).length
+/**
+ * Get all skills organized by their level (Major, Minor, Untrained)
+ * along with their calculated bonuses for a player.
+ */
+export function getSkillsWithLevels(player: PlayerData): {
+	major: { skill: Skill; bonus: number }[]
+	minor: { skill: Skill; bonus: number }[]
+	untrained: { skill: Skill; bonus: number }[]
+} {
+	const levelData = Level[player.level] ?? Level[1]!
+	const allSkills = Object.values(Skill)
 
-	return baseBonus + subskillBonus
+	const major = player.majorSkills.map((skill) => ({
+		skill,
+		bonus: levelData.majorSkillBonus,
+	}))
+
+	const minor = player.minorSkills.map((skill) => ({
+		skill,
+		bonus: levelData.minorSkillBonus,
+	}))
+
+	const untrained = allSkills
+		.filter(
+			(skill) =>
+				!player.majorSkills.includes(skill) && !player.minorSkills.includes(skill)
+		)
+		.map((skill) => ({ skill, bonus: 0 }))
+
+	return { major, minor, untrained }
+}
+
+/**
+ * Calculate what changes need to happen when leveling up.
+ * Returns null if no choices needed (just stat changes).
+ */
+export function getLevelUpChanges(
+	currentLevel: number,
+	targetLevel: number
+): {
+	majorSlotsGained: number
+	minorSlotsGained: number
+	subskillSlotsGained: number
+	hasChoices: boolean
+} | null {
+	if (targetLevel <= currentLevel) return null
+	if (targetLevel > 20) return null
+
+	const currentData = Level[currentLevel] ?? Level[1]!
+	const targetData = Level[targetLevel] ?? Level[20]!
+
+	const majorSlotsGained = targetData.majorSkills - currentData.majorSkills
+	const minorSlotsGained = targetData.minorSkills - currentData.minorSkills
+	const subskillSlotsGained = targetData.subSkillSlots - currentData.subSkillSlots
+
+	const hasChoices = majorSlotsGained > 0 || minorSlotsGained > 0 || subskillSlotsGained > 0
+
+	if (!hasChoices) return null
+
+	return {
+		majorSlotsGained,
+		minorSlotsGained,
+		subskillSlotsGained,
+		hasChoices,
+	}
+}
+
+/**
+ * Get the available skills that can be promoted.
+ */
+export function getPromotableSkills(player: PlayerData): {
+	minorToMajor: Skill[]
+	untrainedToMinor: Skill[]
+} {
+	const allSkills = Object.values(Skill)
+
+	const minorToMajor = player.minorSkills.filter(s => !player.majorSkills.includes(s))
+	const untrainedToMinor = allSkills.filter(
+		s => !player.majorSkills.includes(s) && !player.minorSkills.includes(s)
+	)
+
+	return { minorToMajor, untrainedToMinor }
 }
 
 /**

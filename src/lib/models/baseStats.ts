@@ -7,7 +7,7 @@ export interface BaseStats {
 	minorSkillBonus: number
 	critical: number
 	criticalFail: number
-	subSkills: number
+	subSkillSlots: number
 	majorSkills: number
 	minorSkills: number
 }

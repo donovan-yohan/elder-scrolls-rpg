@@ -4,10 +4,9 @@ import { ArchetypeName } from '$lib/data/archetype'
 import { BirthSignName } from '$lib/data/birthSign'
 import { Skill } from '$lib/data/skill'
 
-// Subskill schema
+// Subskill schema - standalone character traits (Lancer-style triggers)
 export const subSkillSchema = z.object({
 	name: z.string().min(1),
-	parentSkill: z.nativeEnum(Skill),
 	description: z.string(),
 })
 
@@ -17,11 +16,17 @@ export const inventoryItemSchema = z.object({
 	quantity: z.number().int().positive(),
 })
 
+// Equipment slot schema (for weapon, offhand, armor with material support)
+const equipmentSlotSchema = z.object({
+	id: z.string().nullable(),
+	materialId: z.string().nullable(),
+})
+
 // Equipment schema
 export const equipmentSchema = z.object({
-	weapon: z.string().nullable(),
-	offhand: z.string().nullable(),
-	armor: z.string().nullable(),
+	weapon: equipmentSlotSchema,
+	offhand: equipmentSlotSchema,
+	armor: equipmentSlotSchema,
 	accessories: z.array(z.string()),
 })
 
@@ -39,9 +44,9 @@ export const playerSchema = z
 		knownSpells: z.array(z.string()).default([]),
 		// Equipment
 		equipment: equipmentSchema.default({
-			weapon: null,
-			offhand: null,
-			armor: null,
+			weapon: { id: null, materialId: null },
+			offhand: { id: null, materialId: null },
+			armor: { id: null, materialId: null },
 			accessories: [],
 		}),
 		// Inventory

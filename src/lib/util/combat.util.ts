@@ -38,8 +38,8 @@ export function getAvailableActions(
   const actions: AvailableAction[] = []
 
   // Weapon attacks
-  if (player.equipment.weapon) {
-    const weapon = getWeaponById(player.equipment.weapon)
+  if (player.equipment.weapon.id) {
+    const weapon = getWeaponById(player.equipment.weapon.id)
     if (weapon) {
       const canAfford = session.currentAP >= weapon.apCost
       actions.push({

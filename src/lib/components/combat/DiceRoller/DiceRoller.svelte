@@ -1,23 +1,44 @@
 <script lang="ts">
 	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton'
 	import type { DiceRoll, DiceRollBonus } from '$lib/models/combat'
+	import type { SubSkill } from '$lib/models/subskill'
 	import { rollD20, isCriticalSuccess, isCriticalFailure, performSkillCheck } from '$lib/util/dice.util'
+	import { getSubskillBonus } from '$lib/util/stats.util'
 	import RollResult from './RollResult.svelte'
 	import ManualEntry from './ManualEntry.svelte'
+	import SubskillPicker from '$lib/components/subskills/SubskillPicker.svelte'
 
-	export let onRoll: (roll: DiceRoll, success: boolean, margin: number) => void
-	export let skillBonus: number = 0
-	export let bonuses: DiceRollBonus[] = []
-	export let targetDC: number | undefined = undefined
-	export let advantageCount: number = 0
-	export let playerLevel: number = 1
-	export let disabled: boolean = false
-	export let label: string = 'Roll'
+	interface Props {
+		onRoll: (roll: DiceRoll, success: boolean, margin: number) => void
+		skillBonus?: number
+		bonuses?: DiceRollBonus[]
+		targetDC?: number
+		advantageCount?: number
+		playerLevel?: number
+		disabled?: boolean
+		label?: string
+		subSkills?: SubSkill[]
+	}
 
-	let mode: 'digital' | 'manual' = 'digital'
-	let lastRoll: DiceRoll | undefined = undefined
-	let lastSuccess: boolean | undefined = undefined
-	let isRolling: boolean = false
+	let {
+		onRoll,
+		skillBonus = 0,
+		bonuses = [],
+		targetDC,
+		advantageCount = 0,
+		playerLevel = 1,
+		disabled = false,
+		label = 'Roll',
+		subSkills = [],
+	}: Props = $props()
+
+	let mode: 'digital' | 'manual' = $state('digital')
+	let lastRoll: DiceRoll | undefined = $state(undefined)
+	let lastSuccess: boolean | undefined = $state(undefined)
+	let isRolling: boolean = $state(false)
+	let selectedSubskill: SubSkill | null = $state(null)
+
+	let subskillBonus = $derived(selectedSubskill ? getSubskillBonus(playerLevel) : 0)
 
 	async function handleDigitalRoll() {
 		if (disabled || isRolling) return
@@ -28,8 +49,14 @@
 		// Brief animation delay
 		await new Promise(r => setTimeout(r, 500))
 
+		// Combine bonuses with subskill bonus if selected
+		const allBonuses: DiceRollBonus[] = [
+			...bonuses,
+			...(selectedSubskill ? [{ source: selectedSubskill.name, value: subskillBonus }] : []),
+		]
+
 		const baseRoll = rollD20(advantageCount)
-		const result = performSkillCheck(baseRoll, skillBonus, bonuses, targetDC ?? 0, playerLevel, advantageCount)
+		const result = performSkillCheck(baseRoll, skillBonus, allBonuses, targetDC ?? 0, playerLevel, advantageCount)
 
 		lastRoll = result.roll
 		lastSuccess = targetDC !== undefined ? result.success : undefined
@@ -41,7 +68,8 @@
 	function handleManualRoll(value: number) {
 		const allBonuses: DiceRollBonus[] = [
 			{ source: 'Skill', value: skillBonus },
-			...bonuses
+			...bonuses,
+			...(selectedSubskill ? [{ source: selectedSubskill.name, value: subskillBonus }] : []),
 		]
 		const total = value + allBonuses.reduce((sum, b) => sum + b.value, 0)
 
@@ -98,13 +126,20 @@
 		</div>
 	{/if}
 
+	<!-- Subskill Picker -->
+	{#if subSkills.length > 0}
+		<div class="mb-4">
+			<SubskillPicker {subSkills} {playerLevel} bind:selectedSubskill />
+		</div>
+	{/if}
+
 	<!-- Roll Controls -->
 	<div class="flex justify-center mb-4">
 		{#if mode === 'digital'}
 			<button
 				type="button"
 				class="btn variant-filled-primary"
-				on:click={handleDigitalRoll}
+				onclick={handleDigitalRoll}
 				disabled={disabled || isRolling}
 			>
 				{#if isRolling}
@@ -122,7 +157,7 @@
 	{#if lastRoll}
 		<RollResult roll={lastRoll} {targetDC} />
 		<div class="text-center mt-2">
-			<button type="button" class="btn btn-sm variant-ghost" on:click={reset}>
+			<button type="button" class="btn btn-sm variant-ghost" onclick={reset}>
 				Roll Again
 			</button>
 		</div>

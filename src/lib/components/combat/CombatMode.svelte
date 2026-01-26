@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte'
 	import { getModalStore } from '@skeletonlabs/skeleton'
 	import type { PlayerData } from '$lib/models/player'
 	import type { AvailableAction } from '$lib/models/combatAction'
@@ -18,6 +19,10 @@
 	import { ActionType } from '$lib/models/combat'
 
 	export let player: PlayerData
+
+	const dispatch = createEventDispatcher<{
+		combatEnded: { health: number; magicka: number }
+	}>()
 
 	const modalStore = getModalStore()
 
@@ -46,9 +51,11 @@
 			player.id,
 			partyInit,
 			enemyInit,
-			player.health,
-			player.magicka,
-			player.actionPoints
+			{
+				health: player.health,
+				magicka: player.magicka,
+				maxActionPoints: player.maxActionPoints,
+			}
 		)
 		showEnterCombatModal = false
 	}
@@ -59,8 +66,12 @@
 	}
 
 	function handleCombatEnded() {
-		combatStore.endCombat(player.id)
+		const finalState = combatStore.endCombat(player.id)
 		showEndCombatModal = false
+
+		if (finalState) {
+			dispatch('combatEnded', finalState)
+		}
 	}
 
 	// Handle turn management

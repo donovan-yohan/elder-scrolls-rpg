@@ -2,6 +2,7 @@ import { fail, message, superValidate } from 'sveltekit-superforms'
 import { zod } from 'sveltekit-superforms/adapters'
 import type { PlayerData } from '$lib/models/player'
 import { playerSchema } from '$lib/schema/player.schema'
+import { createEmptySlot } from '$lib/util/equipment.util'
 
 export const load = async () => {
 	const form = await superValidate(zod(playerSchema))
@@ -37,9 +38,9 @@ export const actions = {
 			maxMagicka: 0,
 			knownSpells: form.data.knownSpells ?? [],
 			equipment: form.data.equipment ?? {
-				weapon: null,
-				offhand: null,
-				armor: null,
+				weapon: createEmptySlot(),
+				offhand: createEmptySlot(),
+				armor: createEmptySlot(),
 				accessories: [],
 			},
 			inventory: form.data.inventory ?? [],

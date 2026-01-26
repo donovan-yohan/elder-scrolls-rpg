@@ -114,9 +114,7 @@ function createCombatStore() {
 			playerId: string,
 			partyInitiative: number,
 			enemyInitiative: number,
-			initialHP: number,
-			initialMP: number,
-			initialAP: number
+			playerData: { health: number; magicka: number; maxActionPoints: number }
 		): void => {
 			update((state) => {
 				const session: CombatSession = {
@@ -126,10 +124,10 @@ function createCombatStore() {
 					isPlayerTurn: partyInitiative >= enemyInitiative,
 					partyInitiative,
 					enemyInitiative,
-					currentHP: initialHP,
-					currentMP: initialMP,
-					currentAP: initialAP,
-					maxAP: initialAP,
+					currentHP: playerData.health,
+					currentMP: playerData.magicka,
+					currentAP: playerData.maxActionPoints,
+					maxAP: playerData.maxActionPoints,
 					conditions: [],
 					log: [createCombatLogEntry('system', 'Combat started!')],
 					distance: CombatDistance.Medium,
@@ -143,11 +141,23 @@ function createCombatStore() {
 		/**
 		 * End combat session for a player
 		 */
-		endCombat: (playerId: string): void => {
+		endCombat: (playerId: string): { health: number; magicka: number } | null => {
+			let finalState: { health: number; magicka: number } | null = null
+
 			update((state) => {
-				const { [playerId]: removed, ...rest } = state
-				return rest
+				const session = state[playerId]
+				if (session) {
+					finalState = {
+						health: session.currentHP,
+						magicka: session.currentMP,
+					}
+				}
+				const newState = { ...state }
+				delete newState[playerId]
+				return newState
 			})
+
+			return finalState
 		},
 
 		/**

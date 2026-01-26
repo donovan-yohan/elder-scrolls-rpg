@@ -1,58 +1,129 @@
 <script lang="ts">
 	import { Accordion, AccordionItem, ProgressBar, getToastStore } from '@skeletonlabs/skeleton'
-	import type { PlayerData } from '$lib/models/player'
-	import { type Skill } from '$lib/data/skill'
-	import { Archetypes } from '$lib/data/archetype'
+	import type { PlayerData, Equipment, InventoryItem } from '$lib/models/player'
+	import { Skill } from '$lib/data/skill'
 	import { BirthSigns } from '$lib/data/birthSign'
-	import { Race, RaceName } from '$lib/data/race'
+	import { Race } from '$lib/data/race'
 	import { Level } from '$lib/data/level'
 	import {
 		calculateMaxHealth,
 		calculateMaxMagicka,
 		calculateMaxAP,
-		calculateSkillBonus,
-		RacialStatBonuses,
 		getStatBreakdown,
+		getSubskillBonus,
+		getSkillsWithLevels,
+		getLevelUpChanges,
 	} from '$lib/util/stats.util'
 	import { camelToTitleCase } from '$lib/util/string.util'
 	import { getSpellById, SpellSchool, type Spell } from '$lib/data/spells'
-	import { getWeaponById } from '$lib/data/weapons'
 	import { ArmorTypes } from '$lib/data/armor'
 	import { getItemById } from '$lib/data/items'
 	import { exportCharacter } from '$lib/util/export.util'
+	import { SkillRollModal } from '$lib/components/skills'
+	import { LevelUpWizard } from '$lib/components/levelup'
+	import { EquipmentEditor } from '$lib/components/equipment'
+	import {
+		getEquippedWeapon,
+		getEquippedArmor,
+		getWeaponMaterialProperties,
+		getArmorMaterialProperties,
+	} from '$lib/util/equipment.util'
+	import type { SubSkill } from '$lib/models/subskill'
 
-	export let player: PlayerData
-	export let editMode: boolean = false
-	export let onUpdate: ((player: PlayerData) => void) | undefined = undefined
+	interface Props {
+		player: PlayerData
+		editMode?: boolean
+		onUpdate?: (player: PlayerData) => void
+		showResourceControls?: boolean
+	}
+
+	let { player, editMode = false, onUpdate, showResourceControls = false }: Props = $props()
 
 	const toastStore = getToastStore()
 
 	// Computed stats
-	$: maxHealth = calculateMaxHealth(player)
-	$: maxMagicka = calculateMaxMagicka(player)
-	$: maxAP = calculateMaxAP(player)
-	$: levelData = Level[player.level] ?? Level[1]!
+	let maxHealth = $derived(calculateMaxHealth(player))
+	let maxMagicka = $derived(calculateMaxMagicka(player))
+	let maxAP = $derived(calculateMaxAP(player))
+	let levelData = $derived(Level[player.level] ?? Level[1]!)
 
 	// Stat breakdowns using shared utility
-	$: healthBreakdown = getStatBreakdown(player, 'health')
-	$: magickaBreakdown = getStatBreakdown(player, 'magicka')
-	$: apBreakdown = getStatBreakdown(player, 'actionPoints')
+	let healthBreakdown = $derived(getStatBreakdown(player, 'health'))
+	let magickaBreakdown = $derived(getStatBreakdown(player, 'magicka'))
+	let apBreakdown = $derived(getStatBreakdown(player, 'actionPoints'))
 
-	// Skills grouped by type
-	$: majorSkillsWithBonus = player.majorSkills.map((skill) => ({
-		skill,
-		bonus: calculateSkillBonus(player, skill),
-		subskills: player.subSkills.filter((sub) => sub.parentSkill === skill),
-	}))
+	// Skill roll modal state
+	let showSkillRollModal = $state(false)
+	let selectedSkill: Skill | null = $state(null)
 
-	$: minorSkillsWithBonus = player.minorSkills.map((skill) => ({
-		skill,
-		bonus: calculateSkillBonus(player, skill),
-		subskills: player.subSkills.filter((sub) => sub.parentSkill === skill),
-	}))
+	// All skills organized by level
+	let skillsByLevel = $derived(getSkillsWithLevels(player))
+
+	// Birth sign skill modifiers for display
+	let birthSignAdvantages = $derived(BirthSigns[player.birthSign]?.skillAdvantages ?? [])
+	let birthSignDisadvantages = $derived(BirthSigns[player.birthSign]?.skillDisadvantages ?? [])
+
+	function openSkillRoll(skill: Skill) {
+		selectedSkill = skill
+		showSkillRollModal = true
+	}
+
+	function closeSkillRoll() {
+		showSkillRollModal = false
+		selectedSkill = null
+	}
+
+	// Level up wizard state
+	let showLevelUpWizard = $state(false)
+
+	// Check if level up has choices
+	let canLevelUp = $derived(player.level < 20)
+	let levelUpChanges = $derived(canLevelUp ? getLevelUpChanges(player.level, player.level + 1) : null)
+
+	function openLevelUpWizard() {
+		showLevelUpWizard = true
+	}
+
+	function closeLevelUpWizard() {
+		showLevelUpWizard = false
+	}
+
+	function handleLevelUpComplete(data: {
+		newLevel: number
+		promotedToMajor: Skill[]
+		promotedToMinor: Skill[]
+		newSubskills: SubSkill[]
+	}) {
+		const { newLevel, promotedToMajor, promotedToMinor, newSubskills } = data
+
+		// Build updated skill arrays
+		const newMajorSkills = [...player.majorSkills, ...promotedToMajor]
+		const newMinorSkills = [
+			...player.minorSkills.filter(s => !promotedToMajor.includes(s)),
+			...promotedToMinor
+		]
+		const updatedSubskills = [...(player.subSkills ?? []), ...newSubskills]
+
+		// Apply all changes
+		if (onUpdate) {
+			onUpdate({
+				...player,
+				level: newLevel,
+				majorSkills: newMajorSkills,
+				minorSkills: newMinorSkills,
+				subSkills: updatedSubskills,
+			})
+		}
+
+		showLevelUpWizard = false
+	}
+
+	// Character traits (subskills) - apply to any skill roll
+	let hasTraits = $derived(player.subSkills && player.subSkills.length > 0)
+	let traitBonus = $derived(getSubskillBonus(player.level))
 
 	// Spells grouped by school
-	$: spellsBySchool = player.knownSpells.reduce(
+	let spellsBySchool = $derived(player.knownSpells.reduce(
 		(acc, spellId) => {
 			const spell = getSpellById(spellId)
 			if (spell) {
@@ -62,24 +133,45 @@
 			return acc
 		},
 		{} as Record<SpellSchool, Spell[]>,
-	)
+	))
 
-	$: hasSpells = player.knownSpells.length > 0
+	let hasSpells = $derived(player.knownSpells.length > 0)
 
-	// Equipment helpers
-	$: equippedWeapon = player.equipment.weapon ? getWeaponById(player.equipment.weapon) : null
-	$: equippedOffhand = player.equipment.offhand ? getWeaponById(player.equipment.offhand) : null
-	$: equippedArmor = player.equipment.armor
-		? ArmorTypes.find((a) => a.id === player.equipment.armor)
-		: null
+	// Equipment helpers - using new EquipmentSlot structure with material support
+	let equippedWeapon = $derived(getEquippedWeapon(player.equipment.weapon))
+	let equippedOffhand = $derived(getEquippedWeapon(player.equipment.offhand))
+	let equippedArmor = $derived(getEquippedArmor(player.equipment.armor))
+
+	// Equipment change handlers
+	function handleEquipmentChange(newEquipment: Equipment) {
+		if (onUpdate) {
+			onUpdate({ ...player, equipment: newEquipment })
+		}
+	}
+
+	function handleInventoryChange(newInventory: InventoryItem[]) {
+		if (onUpdate) {
+			onUpdate({ ...player, inventory: newInventory })
+		}
+	}
 
 	// Inventory items
-	$: inventoryItems = player.inventory
+	let inventoryItems = $derived(player.inventory
 		.map((inv) => ({
 			item: getItemById(inv.itemId),
 			quantity: inv.quantity,
 		}))
-		.filter((i) => i.item !== undefined)
+		.filter((i) => i.item !== undefined))
+
+	// Consolidated resource adjustment function (DRY)
+	function adjustResource(stat: 'health' | 'magicka', delta: number) {
+		const maxValue = stat === 'health' ? maxHealth : maxMagicka
+		const currentValue = player[stat]
+		const newValue = Math.max(0, Math.min(maxValue, currentValue + delta))
+		if (newValue !== currentValue && onUpdate) {
+			onUpdate({ ...player, [stat]: newValue })
+		}
+	}
 
 	// Handle current stat updates
 	function updateCurrentStat(stat: 'health' | 'magicka' | 'actionPoints', value: number) {
@@ -120,10 +212,6 @@
 		}
 	}
 
-	function handlePrint() {
-		window.print()
-	}
-
 	function handleExport() {
 		try {
 			exportCharacter(player)
@@ -160,10 +248,19 @@
 							min="1"
 							max="20"
 							value={player.level}
-							on:change={(e) => updateLevel(parseInt(e.currentTarget.value) || 1)}
+							onchange={(e) => updateLevel(parseInt(e.currentTarget.value) || 1)}
 						/>
 					{:else}
 						Level {player.level}
+						{#if canLevelUp}
+							<button
+								type="button"
+								class="ml-2 btn btn-sm variant-filled-success"
+								onclick={openLevelUpWizard}
+							>
+								Level Up
+							</button>
+						{/if}
 					{/if}
 				</span>
 				<span class="badge variant-soft-tertiary text-base px-3 py-1.5">{player.race}</span>
@@ -171,14 +268,8 @@
 				<span class="badge variant-soft-warning text-base px-3 py-1.5">{player.birthSign}</span>
 			</div>
 		</div>
-		<div class="mt-4 flex gap-2 print:hidden">
-			<button class="btn btn-sm variant-ghost-surface" on:click={handlePrint}>
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-				</svg>
-				Print Character Sheet
-			</button>
-			<button class="btn btn-sm variant-ghost-surface" on:click={handleExport}>
+		<div class="mt-4 flex gap-2">
+			<button class="btn btn-sm variant-ghost-surface" onclick={handleExport}>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
 				</svg>
@@ -201,11 +292,29 @@
 							min="0"
 							max={maxHealth}
 							value={player.health}
-							on:change={(e) => updateCurrentStat('health', parseInt(e.currentTarget.value) || 0)}
+							onchange={(e) => updateCurrentStat('health', parseInt(e.currentTarget.value) || 0)}
 						/>
 						<span class="text-xl font-bold">/ {maxHealth}</span>
 					{:else}
-						<span class="text-2xl font-bold">{player.health} / {maxHealth}</span>
+						<div class="flex items-center gap-2">
+							{#if showResourceControls}
+								<button
+									type="button"
+									class="btn-icon btn-icon-sm variant-soft-error"
+									onclick={() => adjustResource('health', -1)}
+									disabled={player.health <= 0}
+								>-</button>
+							{/if}
+							<span class="text-2xl font-bold">{player.health} / {maxHealth}</span>
+							{#if showResourceControls}
+								<button
+									type="button"
+									class="btn-icon btn-icon-sm variant-soft-error"
+									onclick={() => adjustResource('health', 1)}
+									disabled={player.health >= maxHealth}
+								>+</button>
+							{/if}
+						</div>
 					{/if}
 				</div>
 			</div>
@@ -242,11 +351,29 @@
 							min="0"
 							max={maxMagicka}
 							value={player.magicka}
-							on:change={(e) => updateCurrentStat('magicka', parseInt(e.currentTarget.value) || 0)}
+							onchange={(e) => updateCurrentStat('magicka', parseInt(e.currentTarget.value) || 0)}
 						/>
 						<span class="text-xl font-bold">/ {maxMagicka}</span>
 					{:else}
-						<span class="text-2xl font-bold">{player.magicka} / {maxMagicka}</span>
+						<div class="flex items-center gap-2">
+							{#if showResourceControls}
+								<button
+									type="button"
+									class="btn-icon btn-icon-sm variant-soft-primary"
+									onclick={() => adjustResource('magicka', -1)}
+									disabled={player.magicka <= 0}
+								>-</button>
+							{/if}
+							<span class="text-2xl font-bold">{player.magicka} / {maxMagicka}</span>
+							{#if showResourceControls}
+								<button
+									type="button"
+									class="btn-icon btn-icon-sm variant-soft-primary"
+									onclick={() => adjustResource('magicka', 1)}
+									disabled={player.magicka >= maxMagicka}
+								>+</button>
+							{/if}
+						</div>
 					{/if}
 				</div>
 			</div>
@@ -283,7 +410,7 @@
 							min="0"
 							max={maxAP}
 							value={player.actionPoints}
-							on:change={(e) => updateCurrentStat('actionPoints', parseInt(e.currentTarget.value) || 0)}
+							onchange={(e) => updateCurrentStat('actionPoints', parseInt(e.currentTarget.value) || 0)}
 						/>
 						<span class="text-xl font-bold">/ {maxAP}</span>
 					{:else}
@@ -337,32 +464,31 @@
 	</section>
 
 	<!-- Skills Section -->
-	<section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+	<section class="grid grid-cols-1 md:grid-cols-3 gap-4">
 		<!-- Major Skills -->
 		<div class="card p-4 variant-soft-primary">
 			<h3 class="h4 font-bold mb-3 text-primary-700 dark:text-primary-300">
 				Major Skills
-				<span class="text-sm font-normal text-surface-600-300-token">(+{levelData.majorSkillBonus} base)</span>
+				<span class="text-sm font-normal text-surface-600-300-token">(+{levelData.majorSkillBonus})</span>
 			</h3>
-			{#if majorSkillsWithBonus.length > 0}
-				<div class="space-y-2">
-					{#each majorSkillsWithBonus as { skill, bonus, subskills }}
-						<div class="flex flex-col">
-							<div class="flex justify-between items-center py-1 border-b border-surface-300-600-token">
-								<span class="font-medium">{camelToTitleCase(skill)}</span>
-								<span class="badge variant-filled-primary">+{bonus}</span>
-							</div>
-							{#if subskills.length > 0}
-								<div class="pl-4 mt-1 space-y-1">
-									{#each subskills as subskill}
-										<div class="flex justify-between items-center text-sm text-surface-600-300-token">
-											<span>{subskill.name}</span>
-											<span class="badge variant-soft-success text-xs">+1</span>
-										</div>
-									{/each}
-								</div>
-							{/if}
-						</div>
+			{#if skillsByLevel.major.length > 0}
+				<div class="space-y-1">
+					{#each skillsByLevel.major as { skill, bonus }}
+						<button
+							type="button"
+							class="w-full flex justify-between items-center py-2 px-2 rounded hover:bg-primary-500/10 transition-colors text-left"
+							onclick={() => openSkillRoll(skill)}
+						>
+							<span class="font-medium text-primary-700 dark:text-primary-300">
+								{camelToTitleCase(skill)}
+								{#if birthSignAdvantages.includes(skill)}
+									<span class="text-success-500" title="Advantage from Birth Sign">▲</span>
+								{:else if birthSignDisadvantages.includes(skill)}
+									<span class="text-error-500" title="Disadvantage from Birth Sign">▼</span>
+								{/if}
+							</span>
+							<span class="badge variant-filled-primary">+{bonus}</span>
+						</button>
 					{/each}
 				</div>
 			{:else}
@@ -374,34 +500,90 @@
 		<div class="card p-4 variant-soft-secondary">
 			<h3 class="h4 font-bold mb-3 text-secondary-700 dark:text-secondary-300">
 				Minor Skills
-				<span class="text-sm font-normal text-surface-600-300-token">(+{levelData.minorSkillBonus} base)</span>
+				<span class="text-sm font-normal text-surface-600-300-token">(+{levelData.minorSkillBonus})</span>
 			</h3>
-			{#if minorSkillsWithBonus.length > 0}
-				<div class="space-y-2">
-					{#each minorSkillsWithBonus as { skill, bonus, subskills }}
-						<div class="flex flex-col">
-							<div class="flex justify-between items-center py-1 border-b border-surface-300-600-token">
-								<span class="font-medium">{camelToTitleCase(skill)}</span>
-								<span class="badge variant-filled-secondary">+{bonus}</span>
-							</div>
-							{#if subskills.length > 0}
-								<div class="pl-4 mt-1 space-y-1">
-									{#each subskills as subskill}
-										<div class="flex justify-between items-center text-sm text-surface-600-300-token">
-											<span>{subskill.name}</span>
-											<span class="badge variant-soft-success text-xs">+1</span>
-										</div>
-									{/each}
-								</div>
-							{/if}
-						</div>
+			{#if skillsByLevel.minor.length > 0}
+				<div class="space-y-1">
+					{#each skillsByLevel.minor as { skill, bonus }}
+						<button
+							type="button"
+							class="w-full flex justify-between items-center py-2 px-2 rounded hover:bg-secondary-500/10 transition-colors text-left"
+							onclick={() => openSkillRoll(skill)}
+						>
+							<span class="font-medium text-secondary-700 dark:text-secondary-300">
+								{camelToTitleCase(skill)}
+								{#if birthSignAdvantages.includes(skill)}
+									<span class="text-success-500" title="Advantage from Birth Sign">▲</span>
+								{:else if birthSignDisadvantages.includes(skill)}
+									<span class="text-error-500" title="Disadvantage from Birth Sign">▼</span>
+								{/if}
+							</span>
+							<span class="badge variant-filled-secondary">+{bonus}</span>
+						</button>
 					{/each}
 				</div>
 			{:else}
 				<p class="text-surface-500">No minor skills selected</p>
 			{/if}
 		</div>
+
+		<!-- Untrained Skills -->
+		<div class="card p-4 variant-soft-surface">
+			<h3 class="h4 font-bold mb-3 text-surface-700 dark:text-surface-300">
+				Untrained
+				<span class="text-sm font-normal text-surface-600-300-token">(+0)</span>
+			</h3>
+			{#if skillsByLevel.untrained.length > 0}
+				<div class="space-y-1 max-h-64 overflow-y-auto">
+					{#each skillsByLevel.untrained as { skill, bonus }}
+						<button
+							type="button"
+							class="w-full flex justify-between items-center py-2 px-2 rounded hover:bg-surface-500/10 transition-colors text-left"
+							onclick={() => openSkillRoll(skill)}
+						>
+							<span class="font-medium text-surface-700 dark:text-surface-300">
+								{camelToTitleCase(skill)}
+								{#if birthSignAdvantages.includes(skill)}
+									<span class="text-success-500" title="Advantage from Birth Sign">▲</span>
+								{:else if birthSignDisadvantages.includes(skill)}
+									<span class="text-error-500" title="Disadvantage from Birth Sign">▼</span>
+								{/if}
+							</span>
+							<span class="badge variant-soft-surface">+{bonus}</span>
+						</button>
+					{/each}
+				</div>
+			{:else}
+				<p class="text-surface-500">All skills are trained</p>
+			{/if}
+		</div>
 	</section>
+
+	<!-- Character Traits Section -->
+	{#if hasTraits}
+		<section class="card p-4 variant-soft-success">
+			<h3 class="h4 font-bold mb-3 text-success-700 dark:text-success-300">
+				Character Traits
+				<span class="text-sm font-normal text-surface-600-300-token">(+{traitBonus} when invoked)</span>
+			</h3>
+			<p class="text-sm text-surface-500 mb-3">
+				Invoke a trait on any skill roll if the GM agrees it applies.
+			</p>
+			<div class="space-y-2">
+				{#each player.subSkills as trait}
+					<div class="flex flex-col py-2 border-b border-surface-300-600-token">
+						<div class="flex justify-between items-center">
+							<span class="font-medium">{trait.name}</span>
+							<span class="badge variant-filled-success">+{traitBonus}</span>
+						</div>
+						{#if trait.description}
+							<p class="text-sm text-surface-500 mt-1">{trait.description}</p>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</section>
+	{/if}
 
 	<!-- Spells Section -->
 	{#if hasSpells}
@@ -457,98 +639,175 @@
 	<!-- Equipment Section -->
 	<section class="card p-4 variant-soft-surface">
 		<h3 class="h4 font-bold mb-3">Equipment</h3>
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-			<!-- Weapon -->
-			<div class="card p-3 variant-ghost-surface">
-				<h4 class="font-semibold text-sm text-surface-600-300-token mb-2">Weapon</h4>
-				{#if equippedWeapon}
-					<div class="font-bold">{equippedWeapon.name}</div>
-					<div class="text-sm space-y-1 mt-2">
-						<div class="flex justify-between">
-							<span>Damage:</span>
-							<span>{equippedWeapon.baseDamageLethal ?? equippedWeapon.baseDamageBlunted}</span>
+		{#if editMode}
+			<!-- Edit Mode: Show EquipmentEditor -->
+			<EquipmentEditor
+				equipment={player.equipment}
+				inventory={player.inventory}
+				onEquipmentChange={handleEquipmentChange}
+				onInventoryChange={handleInventoryChange}
+			/>
+		{:else}
+			<!-- View Mode: Show equipment with material info -->
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<!-- Weapon -->
+				<div class="card p-3 variant-ghost-surface">
+					<h4 class="font-semibold text-sm text-surface-600-300-token mb-2">Weapon</h4>
+					{#if equippedWeapon}
+						<div class="font-bold">
+							{#if equippedWeapon.material}
+								{equippedWeapon.material.name} {equippedWeapon.weapon.name}
+							{:else}
+								{equippedWeapon.weapon.name}
+							{/if}
 						</div>
-						<div class="flex justify-between">
-							<span>AP Cost:</span>
-							<span>{equippedWeapon.apCost}</span>
-						</div>
-						<div class="flex justify-between">
-							<span>Range:</span>
-							<span>{equippedWeapon.range}</span>
-						</div>
-						{#if equippedWeapon.maxBonusDamage > 0}
-							<div class="flex justify-between">
-								<span>Max Bonus Dmg:</span>
-								<span>+{equippedWeapon.maxBonusDamage}</span>
-							</div>
-						{/if}
-					</div>
-				{:else}
-					<span class="text-surface-500">Unarmed</span>
-				{/if}
-			</div>
-
-			<!-- Offhand -->
-			<div class="card p-3 variant-ghost-surface">
-				<h4 class="font-semibold text-sm text-surface-600-300-token mb-2">Off-Hand</h4>
-				{#if equippedOffhand}
-					<div class="font-bold">{equippedOffhand.name}</div>
-					<div class="text-sm space-y-1 mt-2">
-						{#if equippedOffhand.isShield}
-							<div class="flex justify-between">
-								<span>Block Bonus:</span>
-								<span>+{equippedOffhand.baseDamageBlunted}</span>
-							</div>
-						{:else}
+						<div class="text-sm space-y-1 mt-2">
 							<div class="flex justify-between">
 								<span>Damage:</span>
-								<span>{equippedOffhand.baseDamageLethal ?? equippedOffhand.baseDamageBlunted}</span>
+								<span>{equippedWeapon.weapon.baseDamageLethal ?? equippedWeapon.weapon.baseDamageBlunted}</span>
 							</div>
-						{/if}
-						<div class="flex justify-between">
-							<span>AP Cost:</span>
-							<span>{equippedOffhand.apCost}</span>
-						</div>
-					</div>
-				{:else}
-					<span class="text-surface-500">Empty</span>
-				{/if}
-			</div>
-
-			<!-- Armor -->
-			<div class="card p-3 variant-ghost-surface">
-				<h4 class="font-semibold text-sm text-surface-600-300-token mb-2">Armor</h4>
-				{#if equippedArmor}
-					<div class="font-bold">{equippedArmor.name}</div>
-					<div class="text-sm space-y-1 mt-2">
-						<div class="flex justify-between">
-							<span>AC Bonus:</span>
-							<span>+{equippedArmor.acBonus}</span>
-						</div>
-						<div class="flex justify-between">
-							<span>Dodge Bonus:</span>
-							<span class={equippedArmor.dodgeBonus < 0 ? 'text-error-500' : ''}>
-								{equippedArmor.dodgeBonus >= 0 ? '+' : ''}{equippedArmor.dodgeBonus}
-							</span>
-						</div>
-						{#if equippedArmor.magickaCastModifier !== 'none'}
 							<div class="flex justify-between">
-								<span>Spellcasting:</span>
-								<span class="capitalize">{equippedArmor.magickaCastModifier}</span>
+								<span>AP Cost:</span>
+								<span>{equippedWeapon.weapon.apCost}</span>
+							</div>
+							<div class="flex justify-between">
+								<span>Range:</span>
+								<span>{equippedWeapon.weapon.range}</span>
+							</div>
+							{#if equippedWeapon.weapon.maxBonusDamage > 0}
+								<div class="flex justify-between">
+									<span>Max Bonus Dmg:</span>
+									<span>+{equippedWeapon.weapon.maxBonusDamage}</span>
+								</div>
+							{/if}
+							<div class="flex justify-between">
+								<span>Value:</span>
+								<span>{equippedWeapon.adjustedValue}g</span>
+							</div>
+							<div class="flex justify-between">
+								<span>Weight:</span>
+								<span>{equippedWeapon.adjustedWeight} lbs</span>
+							</div>
+						</div>
+						{#if equippedWeapon.material}
+							<div class="mt-3 pt-2 border-t border-surface-300-600-token">
+								<div class="text-xs text-surface-500 mb-1">Material Properties:</div>
+								{#each getWeaponMaterialProperties(equippedWeapon.material) as prop}
+									<div class="text-xs text-tertiary-600 dark:text-tertiary-400">{prop}</div>
+								{/each}
 							</div>
 						{/if}
-					</div>
-				{:else}
-					<span class="text-surface-500">Unarmored</span>
-					<div class="text-sm mt-2">
-						<div class="flex justify-between">
-							<span>Dodge Bonus:</span>
-							<span class="text-success-500">+10</span>
+					{:else}
+						<span class="text-surface-500">Unarmed</span>
+					{/if}
+				</div>
+
+				<!-- Offhand -->
+				<div class="card p-3 variant-ghost-surface">
+					<h4 class="font-semibold text-sm text-surface-600-300-token mb-2">Off-Hand</h4>
+					{#if equippedOffhand}
+						<div class="font-bold">
+							{#if equippedOffhand.material}
+								{equippedOffhand.material.name} {equippedOffhand.weapon.name}
+							{:else}
+								{equippedOffhand.weapon.name}
+							{/if}
 						</div>
-					</div>
-				{/if}
+						<div class="text-sm space-y-1 mt-2">
+							{#if equippedOffhand.weapon.isShield}
+								<div class="flex justify-between">
+									<span>Block Bonus:</span>
+									<span>+{equippedOffhand.weapon.baseDamageBlunted}</span>
+								</div>
+							{:else}
+								<div class="flex justify-between">
+									<span>Damage:</span>
+									<span>{equippedOffhand.weapon.baseDamageLethal ?? equippedOffhand.weapon.baseDamageBlunted}</span>
+								</div>
+							{/if}
+							<div class="flex justify-between">
+								<span>AP Cost:</span>
+								<span>{equippedOffhand.weapon.apCost}</span>
+							</div>
+							<div class="flex justify-between">
+								<span>Value:</span>
+								<span>{equippedOffhand.adjustedValue}g</span>
+							</div>
+							<div class="flex justify-between">
+								<span>Weight:</span>
+								<span>{equippedOffhand.adjustedWeight} lbs</span>
+							</div>
+						</div>
+						{#if equippedOffhand.material}
+							<div class="mt-3 pt-2 border-t border-surface-300-600-token">
+								<div class="text-xs text-surface-500 mb-1">Material Properties:</div>
+								{#each getWeaponMaterialProperties(equippedOffhand.material) as prop}
+									<div class="text-xs text-tertiary-600 dark:text-tertiary-400">{prop}</div>
+								{/each}
+							</div>
+						{/if}
+					{:else}
+						<span class="text-surface-500">Empty</span>
+					{/if}
+				</div>
+
+				<!-- Armor -->
+				<div class="card p-3 variant-ghost-surface">
+					<h4 class="font-semibold text-sm text-surface-600-300-token mb-2">Armor</h4>
+					{#if equippedArmor}
+						<div class="font-bold">
+							{#if equippedArmor.material}
+								{equippedArmor.material.name} {equippedArmor.armor.name}
+							{:else}
+								{equippedArmor.armor.name}
+							{/if}
+						</div>
+						<div class="text-sm space-y-1 mt-2">
+							<div class="flex justify-between">
+								<span>AC Bonus:</span>
+								<span>+{equippedArmor.armor.acBonus}</span>
+							</div>
+							<div class="flex justify-between">
+								<span>Dodge Bonus:</span>
+								<span class={equippedArmor.armor.dodgeBonus < 0 ? 'text-error-500' : ''}>
+									{equippedArmor.armor.dodgeBonus >= 0 ? '+' : ''}{equippedArmor.armor.dodgeBonus}
+								</span>
+							</div>
+							{#if equippedArmor.armor.magickaCastModifier !== 'none'}
+								<div class="flex justify-between">
+									<span>Spellcasting:</span>
+									<span class="capitalize">{equippedArmor.armor.magickaCastModifier}</span>
+								</div>
+							{/if}
+							<div class="flex justify-between">
+								<span>Value:</span>
+								<span>{equippedArmor.adjustedValue}g</span>
+							</div>
+							<div class="flex justify-between">
+								<span>Weight:</span>
+								<span>{equippedArmor.adjustedWeight} lbs</span>
+							</div>
+						</div>
+						{#if equippedArmor.material}
+							<div class="mt-3 pt-2 border-t border-surface-300-600-token">
+								<div class="text-xs text-surface-500 mb-1">Material Properties:</div>
+								{#each getArmorMaterialProperties(equippedArmor.material) as prop}
+									<div class="text-xs text-tertiary-600 dark:text-tertiary-400">{prop}</div>
+								{/each}
+							</div>
+						{/if}
+					{:else}
+						<span class="text-surface-500">Unarmored</span>
+						<div class="text-sm mt-2">
+							<div class="flex justify-between">
+								<span>Dodge Bonus:</span>
+								<span class="text-success-500">+10</span>
+							</div>
+						</div>
+					{/if}
+				</div>
 			</div>
-		</div>
+		{/if}
 	</section>
 
 	<!-- Inventory Section -->
@@ -623,7 +882,7 @@
 				class="textarea w-full h-32"
 				placeholder="Add notes about your character, backstory, or session details..."
 				value={player.notes}
-				on:input={(e) => updateNotes(e.currentTarget.value)}
+				oninput={(e) => updateNotes(e.currentTarget.value)}
 			></textarea>
 		{:else if player.notes}
 			<p class="whitespace-pre-wrap text-surface-600-300-token">{player.notes}</p>
@@ -631,6 +890,28 @@
 			<p class="text-surface-500 italic">No notes yet</p>
 		{/if}
 	</section>
+
+	<!-- Skill Roll Modal -->
+	{#if showSkillRollModal && selectedSkill}
+		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
+			<SkillRollModal
+				{player}
+				skill={selectedSkill}
+				onClose={closeSkillRoll}
+			/>
+		</div>
+	{/if}
+
+	<!-- Level Up Wizard Modal -->
+	{#if showLevelUpWizard}
+		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
+			<LevelUpWizard
+				{player}
+				onComplete={handleLevelUpComplete}
+				onCancel={closeLevelUpWizard}
+			/>
+		</div>
+	{/if}
 </div>
 
 <style>

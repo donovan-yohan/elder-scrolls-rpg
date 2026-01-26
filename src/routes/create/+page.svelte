@@ -3,6 +3,7 @@
 	import { playersStore } from '$lib/stores/persisted.store'
 	import { wizardStore } from '$lib/stores/wizard.store'
 	import { hasMagicSkills, calculateMaxHealth, calculateMaxMagicka, calculateMaxAP } from '$lib/util/stats.util'
+	import { createEmptySlot } from '$lib/util/equipment.util'
 	import type { PlayerData } from '$lib/models/player'
 	import type { WizardStepConfig } from '$lib/components/wizard/types'
 
@@ -82,9 +83,9 @@
 			subSkills: formData.subSkills || [],
 			knownSpells: formData.knownSpells || [],
 			equipment: formData.equipment || {
-				weapon: null,
-				offhand: null,
-				armor: null,
+				weapon: createEmptySlot(),
+				offhand: createEmptySlot(),
+				armor: createEmptySlot(),
 				accessories: [],
 			},
 			inventory: formData.inventory || [],

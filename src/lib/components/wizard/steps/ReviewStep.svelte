@@ -125,13 +125,13 @@
 			</div>
 		</section>
 
-		<!-- Subskills -->
+		<!-- Character Traits (Subskills) -->
 		{#if formData.subSkills && formData.subSkills.length > 0}
 			<section class="card p-6 variant-ghost">
-				<h3 class="h3 font-bold mb-4">Subskills</h3>
+				<h3 class="h3 font-bold mb-4">Character Traits</h3>
 				<div class="flex flex-wrap gap-2">
 					{#each formData.subSkills as subskill}
-						<span class="badge variant-soft">{subskill.name} ({camelToTitleCase(subskill.parentSkill)})</span>
+						<span class="badge variant-soft" title={subskill.description}>{subskill.name}</span>
 					{/each}
 				</div>
 			</section>

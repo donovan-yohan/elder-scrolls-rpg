@@ -6,25 +6,30 @@
 	import { Skill, SkillLevel } from '$lib/data/skill'
 	import type { PlayerData } from '$lib/models/player'
 	import CharacterSheet from '$lib/components/CharacterSheet.svelte'
-	import { CombatMode } from '$lib/components/combat'
-	import { getIsInCombatStore } from '$lib/stores/combat.store'
+	import { CombatMode, EnterCombatModal } from '$lib/components/combat'
+	import { getIsInCombatStore, combatStore } from '$lib/stores/combat.store'
 	import classNames from 'classnames'
 
-	export let data
+	interface Props {
+		data: { id: string }
+	}
+
+	let { data }: Props = $props()
 
 	const modalStore = getModalStore()
 
-	// View mode: 'playing' | 'editing' | 'combat'
-	type ViewMode = 'playing' | 'editing' | 'combat'
-	let viewMode: ViewMode = 'playing'
+	// View mode: 'playing' | 'editing' (GM Mode)
+	type ViewMode = 'playing' | 'editing'
+	let viewMode: ViewMode = $state('playing')
 
 	// Legacy compatibility
-	$: editMode = viewMode === 'editing'
+	let editMode = $derived(viewMode === 'editing')
 
 	// Check if player is in combat
-	$: isInCombatStore = getIsInCombatStore(data.id)
-	$: isInCombat = $isInCombatStore
-	let showDeleteConfirm = false
+	let isInCombatStore = $derived(getIsInCombatStore(data.id))
+	let isInCombat = $derived($isInCombatStore)
+	let showDeleteConfirm = $state(false)
+	let showEnterCombatModal = $state(false)
 
 	// Helper function to update player safely
 	function updatePlayer(updates: Partial<PlayerData>) {
@@ -41,6 +46,31 @@
 	// Handle player updates from CharacterSheet
 	function handlePlayerUpdate(updatedPlayer: PlayerData) {
 		updatePlayer(updatedPlayer)
+	}
+
+	// Handle combat ended event from CombatMode
+	function handleCombatEnded(event: CustomEvent<{ health: number; magicka: number }>) {
+		const { health, magicka } = event.detail
+		updatePlayer({ health, magicka })
+	}
+
+	// Handle entering combat from page
+	function handleEnterCombatFromPage(event: CustomEvent<{ partyInit: number; enemyInit: number }>) {
+		const currentPlayer = $playersStore[data.id]
+		if (!currentPlayer) return
+
+		const { partyInit, enemyInit } = event.detail
+		combatStore.startCombat(
+			currentPlayer.id,
+			partyInit,
+			enemyInit,
+			{
+				health: currentPlayer.health,
+				magicka: currentPlayer.magicka,
+				maxActionPoints: currentPlayer.maxActionPoints,
+			}
+		)
+		showEnterCombatModal = false
 	}
 
 	// Delete character with confirmation
@@ -80,12 +110,11 @@
 		)
 	}
 
-	let skillGroups = initializeSkillGroups()
+	let skillGroups = $state(initializeSkillGroups())
 
 	// Update skills when skill groups change (only in edit mode)
 	function handleSkillChange(skill: Skill, level: SkillLevel) {
 		skillGroups[skill] = level
-		skillGroups = skillGroups // Trigger reactivity
 
 		const majorSkills = Object.entries(skillGroups)
 			.filter(([_, lvl]) => lvl === SkillLevel.Major)
@@ -99,11 +128,11 @@
 	}
 
 	// Reactive getters
-	$: currentPlayer = $playersStore[data.id]
-	$: totalMajorSkills = currentPlayer ? Level[currentPlayer.level]?.majorSkills ?? 0 : 0
-	$: totalMinorSkills = currentPlayer ? Level[currentPlayer.level]?.minorSkills ?? 0 : 0
-	$: selectedMajorSkills = currentPlayer?.majorSkills?.length ?? 0
-	$: selectedMinorSkills = currentPlayer?.minorSkills?.length ?? 0
+	let currentPlayer = $derived($playersStore[data.id])
+	let totalMajorSkills = $derived(currentPlayer ? Level[currentPlayer.level]?.majorSkills ?? 0 : 0)
+	let totalMinorSkills = $derived(currentPlayer ? Level[currentPlayer.level]?.minorSkills ?? 0 : 0)
+	let selectedMajorSkills = $derived(currentPlayer?.majorSkills?.length ?? 0)
+	let selectedMinorSkills = $derived(currentPlayer?.minorSkills?.length ?? 0)
 </script>
 
 <svelte:head>
@@ -122,25 +151,18 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
 						</svg>
 						Playing
+						{#if isInCombat}
+							<span class="badge variant-filled-warning text-xs">In Combat</span>
+						{/if}
 					</span>
 				</RadioItem>
 				<RadioItem name="editing" bind:group={viewMode} value="editing">
 					<span class="flex items-center gap-2">
 						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
 						</svg>
-						Editing
-					</span>
-				</RadioItem>
-				<RadioItem name="combat" bind:group={viewMode} value="combat">
-					<span class="flex items-center gap-2">
-						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-						</svg>
-						Combat
-						{#if isInCombat}
-							<span class="badge variant-filled-error text-xs ml-1">Active</span>
-						{/if}
+						GM Mode
 					</span>
 				</RadioItem>
 			</RadioGroup>
@@ -153,7 +175,7 @@
 					Back to Characters
 				</a>
 				{#if editMode}
-					<button class="btn variant-filled-error" on:click={confirmDelete}>
+					<button class="btn variant-filled-error" onclick={confirmDelete}>
 						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
 						</svg>
@@ -172,10 +194,10 @@
 						Are you sure you want to delete <strong>{currentPlayer.characterName}</strong>? This action cannot be undone.
 					</p>
 					<div class="flex justify-end gap-3">
-						<button class="btn variant-ghost-surface" on:click={cancelDelete}>
+						<button class="btn variant-ghost-surface" onclick={cancelDelete}>
 							Cancel
 						</button>
-						<button class="btn variant-filled-error" on:click={deleteCharacter}>
+						<button class="btn variant-filled-error" onclick={deleteCharacter}>
 							Delete Forever
 						</button>
 					</div>
@@ -183,11 +205,35 @@
 			</div>
 		{/if}
 
-		<!-- Combat Mode or Character Sheet -->
-		{#if viewMode === 'combat'}
-			<CombatMode player={currentPlayer} />
-		{:else}
-			<CharacterSheet player={currentPlayer} {editMode} onUpdate={handlePlayerUpdate} />
+		<!-- Main Content -->
+		{#if viewMode === 'playing'}
+			{#if isInCombat}
+				<CombatMode player={currentPlayer} on:combatEnded={handleCombatEnded} />
+			{:else}
+				<CharacterSheet player={currentPlayer} onUpdate={handlePlayerUpdate} showResourceControls={true} />
+
+				<!-- Enter Combat Button -->
+				<div class="mt-6">
+					<button
+						type="button"
+						class="btn variant-filled-warning w-full"
+						onclick={() => showEnterCombatModal = true}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+						</svg>
+						Enter Combat
+					</button>
+				</div>
+			{/if}
+		{:else if viewMode === 'editing'}
+			<!-- GM Mode info banner -->
+			<div class="card p-4 variant-soft-warning mb-4">
+				<p class="text-sm">
+					<strong>GM Mode:</strong> Use this mode to manually adjust character stats for homebrew rules or to fix mistakes.
+				</p>
+			</div>
+			<CharacterSheet player={currentPlayer} onUpdate={handlePlayerUpdate} editMode={true} />
 		{/if}
 
 		<!-- Advanced Edit Mode: Skills Selection -->
@@ -237,7 +283,7 @@
 										type="radio"
 										checked={skillGroups[skill] === SkillLevel.Major}
 										disabled={skillGroups[skill] !== SkillLevel.Major && selectedMajorSkills >= totalMajorSkills}
-										on:change={() => handleSkillChange(skill, SkillLevel.Major)}
+										onchange={() => handleSkillChange(skill, SkillLevel.Major)}
 									/>
 									<span class="text-xs">Major</span>
 								</label>
@@ -247,7 +293,7 @@
 										type="radio"
 										checked={skillGroups[skill] === SkillLevel.Minor}
 										disabled={skillGroups[skill] !== SkillLevel.Minor && selectedMinorSkills >= totalMinorSkills}
-										on:change={() => handleSkillChange(skill, SkillLevel.Minor)}
+										onchange={() => handleSkillChange(skill, SkillLevel.Minor)}
 									/>
 									<span class="text-xs">Minor</span>
 								</label>
@@ -256,7 +302,7 @@
 										class="radio"
 										type="radio"
 										checked={skillGroups[skill] === SkillLevel.Untrained}
-										on:change={() => handleSkillChange(skill, SkillLevel.Untrained)}
+										onchange={() => handleSkillChange(skill, SkillLevel.Untrained)}
 									/>
 									<span class="text-xs">Untrained</span>
 								</label>
@@ -276,7 +322,7 @@
 							class="input"
 							type="text"
 							value={currentPlayer.characterName}
-							on:input={(e) => updatePlayer({ characterName: e.currentTarget.value })}
+							oninput={(e) => updatePlayer({ characterName: e.currentTarget.value })}
 						/>
 					</label>
 					<label class="label">
@@ -285,14 +331,14 @@
 							class="input"
 							type="text"
 							value={currentPlayer.playerName}
-							on:input={(e) => updatePlayer({ playerName: e.currentTarget.value })}
+							oninput={(e) => updatePlayer({ playerName: e.currentTarget.value })}
 						/>
 					</label>
 					<label class="label">
 						<span>Archetype</span>
 						<button
 							class="btn variant-soft-surface w-full justify-between"
-							on:click={() =>
+							onclick={() =>
 								modalStore.trigger({
 									type: 'component',
 									component: 'archetypesModal',
@@ -312,7 +358,7 @@
 						<span>Race</span>
 						<button
 							class="btn variant-soft-surface w-full justify-between"
-							on:click={() =>
+							onclick={() =>
 								modalStore.trigger({
 									type: 'component',
 									component: 'raceModal',
@@ -332,7 +378,7 @@
 						<span>Birth Sign</span>
 						<button
 							class="btn variant-soft-surface w-full justify-between"
-							on:click={() =>
+							onclick={() =>
 								modalStore.trigger({
 									type: 'component',
 									component: 'birthSignModal',
@@ -350,6 +396,17 @@
 					</label>
 				</div>
 			</section>
+		{/if}
+
+		<!-- Enter Combat Modal -->
+		{#if showEnterCombatModal}
+			<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
+				<EnterCombatModal
+					player={currentPlayer}
+					on:start={handleEnterCombatFromPage}
+					on:cancel={() => showEnterCombatModal = false}
+				/>
+			</div>
 		{/if}
 	{:else}
 		<!-- Player Not Found State -->

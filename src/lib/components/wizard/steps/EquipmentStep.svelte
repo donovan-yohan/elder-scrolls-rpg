@@ -2,7 +2,7 @@
 	import WizardStep from '../WizardStep.svelte'
 	import { wizardStore } from '$lib/stores/wizard.store'
 	import { onMount } from 'svelte'
-	import type { Equipment, InventoryItem } from '$lib/models/player'
+	import type { Equipment, InventoryItem, EquipmentSlot } from '$lib/models/player'
 	import { TabGroup, Tab } from '@skeletonlabs/skeleton'
 	import classNames from 'classnames'
 	import {
@@ -14,24 +14,30 @@
 	} from '$lib/data/weapons'
 	import { ArmorTypes, ArmorCategory, type ArmorType } from '$lib/data/armor'
 	import { Items, ItemType, getItemById, type Item } from '$lib/data/items'
+	import { MaterialSelector } from '$lib/components/equipment'
+	import { createEmptySlot, createEquipmentSlot } from '$lib/util/equipment.util'
 
-	export let stepIndex: number = 4
+	interface Props {
+		stepIndex?: number
+	}
+
+	let { stepIndex = 4 }: Props = $props()
 
 	// Maximum starting items
 	const MAX_STARTING_ITEMS = 5
 
 	// Initialize equipment from store
-	let equipment: Equipment = $wizardStore.formData.equipment || {
-		weapon: null,
-		offhand: null,
-		armor: null,
+	let equipment: Equipment = $state($wizardStore.formData.equipment || {
+		weapon: createEmptySlot(),
+		offhand: createEmptySlot(),
+		armor: createEmptySlot(),
 		accessories: [],
-	}
+	})
 
-	let inventory: InventoryItem[] = $wizardStore.formData.inventory || []
+	let inventory: InventoryItem[] = $state($wizardStore.formData.inventory || [])
 
 	// Tab tracking
-	let selectedTabIndex: number = 0
+	let selectedTabIndex: number = $state(0)
 
 	// Get weapons by skill category (excluding ammunition)
 	function getWeaponsByCategory(skill: WeaponSkill): Weapon[] {
@@ -59,11 +65,11 @@
 	}
 
 	// Check if selected weapon is one-handed
-	$: selectedWeapon = equipment.weapon ? getWeaponById(equipment.weapon) : null
-	$: isOneHandedWeapon = selectedWeapon && !selectedWeapon.isTwoHanded && !selectedWeapon.isShield
+	let selectedWeapon = $derived(equipment.weapon.id ? getWeaponById(equipment.weapon.id) : null)
+	let isOneHandedWeapon = $derived(selectedWeapon && !selectedWeapon.isTwoHanded && !selectedWeapon.isShield)
 
 	// Can select offhand only if main weapon is one-handed
-	$: canSelectOffhand = isOneHandedWeapon
+	let canSelectOffhand = $derived(isOneHandedWeapon)
 
 	// Get offhand options (shields + one-handed weapons for dual wield)
 	function getOffhandOptions(): Weapon[] {
@@ -72,25 +78,37 @@
 
 	// Select weapon
 	function selectWeapon(weaponId: string | null): void {
-		equipment.weapon = weaponId
+		equipment.weapon = weaponId ? createEquipmentSlot(weaponId) : createEmptySlot()
 		// Clear offhand if switching to two-handed or no weapon
 		const weapon = weaponId ? getWeaponById(weaponId) : null
 		if (!weapon || weapon.isTwoHanded) {
-			equipment.offhand = null
+			equipment.offhand = createEmptySlot()
 		}
-		equipment = equipment
+	}
+
+	// Update weapon material
+	function updateWeaponMaterial(materialId: string | null): void {
+		equipment.weapon = { ...equipment.weapon, materialId }
 	}
 
 	// Select offhand
 	function selectOffhand(weaponId: string | null): void {
-		equipment.offhand = weaponId
-		equipment = equipment
+		equipment.offhand = weaponId ? createEquipmentSlot(weaponId) : createEmptySlot()
+	}
+
+	// Update offhand material
+	function updateOffhandMaterial(materialId: string | null): void {
+		equipment.offhand = { ...equipment.offhand, materialId }
 	}
 
 	// Select armor
 	function selectArmor(armorId: string | null): void {
-		equipment.armor = armorId
-		equipment = equipment
+		equipment.armor = armorId ? createEquipmentSlot(armorId) : createEmptySlot()
+	}
+
+	// Update armor material
+	function updateArmorMaterial(materialId: string | null): void {
+		equipment.armor = { ...equipment.armor, materialId }
 	}
 
 	// Get starting consumables (potions and basic items)
@@ -109,7 +127,7 @@
 	}
 
 	// Get total items count
-	$: totalItemsCount = inventory.reduce((sum, item) => sum + item.quantity, 0)
+	let totalItemsCount = $derived(inventory.reduce((sum, item) => sum + item.quantity, 0))
 
 	// Add item to inventory
 	function addItem(itemId: string): void {
@@ -124,10 +142,9 @@
 			const maxStack = item.maxStack || 1
 			if (existingItem.quantity < maxStack) {
 				existingItem.quantity++
-				inventory = [...inventory]
 			}
 		} else {
-			inventory = [...inventory, { itemId, quantity: 1 }]
+			inventory.push({ itemId, quantity: 1 })
 		}
 	}
 
@@ -138,9 +155,8 @@
 		if (existingIndex >= 0 && existingItem) {
 			if (existingItem.quantity > 1) {
 				existingItem.quantity--
-				inventory = [...inventory]
 			} else {
-				inventory = inventory.filter((i) => i.itemId !== itemId)
+				inventory.splice(existingIndex, 1)
 			}
 		}
 	}
@@ -214,21 +230,21 @@
 	}
 
 	// Get selected armor type
-	$: selectedArmorType = equipment.armor
-		? ArmorTypes.find((a) => a.id === equipment.armor)
-		: null
+	let selectedArmorType = $derived(
+		equipment.armor.id ? ArmorTypes.find((a) => a.id === equipment.armor.id) : null
+	)
 
 	// Get selected offhand weapon
-	$: selectedOffhand = equipment.offhand ? getWeaponById(equipment.offhand) : null
+	let selectedOffhand = $derived(equipment.offhand.id ? getWeaponById(equipment.offhand.id) : null)
 
 	// This step is always valid (equipment is optional for character creation)
-	$: {
+	$effect(() => {
 		wizardStore.updateFormData({
 			equipment,
 			inventory,
 		})
 		wizardStore.setStepValid(stepIndex, true)
-	}
+	})
 
 	onMount(() => {
 		wizardStore.setStepValid(stepIndex, true)
@@ -261,8 +277,8 @@
 		<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
 			<!-- Weapon Slot -->
 			<div class={classNames('p-3 rounded-lg border-2 text-center', {
-				'border-primary-500 bg-primary-500/10': equipment.weapon,
-				'border-surface-600 bg-surface-700/50': !equipment.weapon,
+				'border-primary-500 bg-primary-500/10': equipment.weapon.id,
+				'border-surface-600 bg-surface-700/50': !equipment.weapon.id,
 			})}>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto mb-1 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -275,8 +291,8 @@
 
 			<!-- Offhand Slot -->
 			<div class={classNames('p-3 rounded-lg border-2 text-center', {
-				'border-secondary-500 bg-secondary-500/10': equipment.offhand,
-				'border-surface-600 bg-surface-700/50': !equipment.offhand,
+				'border-secondary-500 bg-secondary-500/10': equipment.offhand.id,
+				'border-surface-600 bg-surface-700/50': !equipment.offhand.id,
 				'opacity-50': !canSelectOffhand,
 			})}>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto mb-1 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -290,8 +306,8 @@
 
 			<!-- Armor Slot -->
 			<div class={classNames('p-3 rounded-lg border-2 text-center', {
-				'border-tertiary-500 bg-tertiary-500/10': equipment.armor,
-				'border-surface-600 bg-surface-700/50': !equipment.armor,
+				'border-tertiary-500 bg-tertiary-500/10': equipment.armor.id,
+				'border-surface-600 bg-surface-700/50': !equipment.armor.id,
 			})}>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto mb-1 text-tertiary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -322,7 +338,7 @@
 			<Tab bind:group={selectedTabIndex} name="weapons" value={0}>
 				<span class="flex items-center gap-2">
 					<span>Weapons</span>
-					{#if equipment.weapon}
+					{#if equipment.weapon.id}
 						<span class="badge variant-filled-primary text-xs">1</span>
 					{/if}
 				</span>
@@ -330,7 +346,7 @@
 			<Tab bind:group={selectedTabIndex} name="offhand" value={1}>
 				<span class="flex items-center gap-2">
 					<span>Offhand</span>
-					{#if equipment.offhand}
+					{#if equipment.offhand.id}
 						<span class="badge variant-filled-secondary text-xs">1</span>
 					{/if}
 					{#if !canSelectOffhand}
@@ -341,7 +357,7 @@
 			<Tab bind:group={selectedTabIndex} name="armor" value={2}>
 				<span class="flex items-center gap-2">
 					<span>Armor</span>
-					{#if equipment.armor}
+					{#if equipment.armor.id}
 						<span class="badge variant-filled-tertiary text-xs">1</span>
 					{/if}
 				</span>
@@ -360,17 +376,29 @@
 				{#if selectedTabIndex === 0}
 					<div class="flex flex-col gap-6 mt-4">
 						<!-- Clear Selection Button -->
-						{#if equipment.weapon}
-							<button
-								type="button"
-								class="btn variant-soft-error self-start"
-								on:click={() => selectWeapon(null)}
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-								<span>Clear Weapon Selection</span>
-							</button>
+						{#if equipment.weapon.id}
+							<div class="flex flex-col gap-4">
+								<button
+									type="button"
+									class="btn variant-soft-error self-start"
+									onclick={() => selectWeapon(null)}
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+									</svg>
+									<span>Clear Weapon Selection</span>
+								</button>
+								<!-- Material Selector for Weapon -->
+								{#if selectedWeapon}
+									<div class="max-w-sm">
+										<MaterialSelector
+											selectedMaterialId={equipment.weapon.materialId}
+											onSelect={(materialId) => updateWeaponMaterial(materialId)}
+											excludeArmorOnly={true}
+										/>
+									</div>
+								{/if}
+							</div>
 						{/if}
 
 						<!-- One-Handed Weapons -->
@@ -381,14 +409,14 @@
 							</h4>
 							<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 								{#each getOneHandedWeapons() as weapon}
-									{@const isSelected = equipment.weapon === weapon.id}
+									{@const isSelected = equipment.weapon.id === weapon.id}
 									<button
 										type="button"
 										class={classNames('card p-4 text-left transition-all', {
 											'ring-2 ring-primary-500 bg-primary-500/10': isSelected,
 											'hover:bg-surface-600/50': !isSelected,
 										})}
-										on:click={() => selectWeapon(isSelected ? null : weapon.id)}
+										onclick={() => selectWeapon(isSelected ? null : weapon.id)}
 									>
 										<div class="flex items-start justify-between gap-2 mb-2">
 											<h5 class="font-semibold">{weapon.name}</h5>
@@ -425,14 +453,14 @@
 							</h4>
 							<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 								{#each getTwoHandedWeapons() as weapon}
-									{@const isSelected = equipment.weapon === weapon.id}
+									{@const isSelected = equipment.weapon.id === weapon.id}
 									<button
 										type="button"
 										class={classNames('card p-4 text-left transition-all', {
 											'ring-2 ring-secondary-500 bg-secondary-500/10': isSelected,
 											'hover:bg-surface-600/50': !isSelected,
 										})}
-										on:click={() => selectWeapon(isSelected ? null : weapon.id)}
+										onclick={() => selectWeapon(isSelected ? null : weapon.id)}
 									>
 										<div class="flex items-start justify-between gap-2 mb-2">
 											<h5 class="font-semibold">{weapon.name}</h5>
@@ -469,14 +497,14 @@
 							</h4>
 							<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 								{#each getRangedWeapons() as weapon}
-									{@const isSelected = equipment.weapon === weapon.id}
+									{@const isSelected = equipment.weapon.id === weapon.id}
 									<button
 										type="button"
 										class={classNames('card p-4 text-left transition-all', {
 											'ring-2 ring-success-500 bg-success-500/10': isSelected,
 											'hover:bg-surface-600/50': !isSelected,
 										})}
-										on:click={() => selectWeapon(isSelected ? null : weapon.id)}
+										onclick={() => selectWeapon(isSelected ? null : weapon.id)}
 									>
 										<div class="flex items-start justify-between gap-2 mb-2">
 											<div class="flex-1">
@@ -525,7 +553,7 @@
 								</svg>
 								<p class="font-semibold">Offhand Slot Locked</p>
 								<p class="text-sm text-surface-400 mt-2">
-									{#if !equipment.weapon}
+									{#if !equipment.weapon.id}
 										Select a one-handed weapon first to unlock the offhand slot.
 									{:else}
 										Two-handed weapons require both hands. Select a one-handed weapon to use an offhand.
@@ -534,17 +562,29 @@
 							</div>
 						{:else}
 							<!-- Clear Selection Button -->
-							{#if equipment.offhand}
-								<button
-									type="button"
-									class="btn variant-soft-error self-start"
-									on:click={() => selectOffhand(null)}
-								>
-									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-									</svg>
-									<span>Clear Offhand Selection</span>
-								</button>
+							{#if equipment.offhand.id}
+								<div class="flex flex-col gap-4">
+									<button
+										type="button"
+										class="btn variant-soft-error self-start"
+										onclick={() => selectOffhand(null)}
+									>
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+										</svg>
+										<span>Clear Offhand Selection</span>
+									</button>
+									<!-- Material Selector for Offhand -->
+									{#if selectedOffhand}
+										<div class="max-w-sm">
+											<MaterialSelector
+												selectedMaterialId={equipment.offhand.materialId}
+												onSelect={(materialId) => updateOffhandMaterial(materialId)}
+												excludeArmorOnly={true}
+											/>
+										</div>
+									{/if}
+								</div>
 							{/if}
 
 							<!-- Shields -->
@@ -555,14 +595,14 @@
 								</h4>
 								<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 									{#each getShields() as shield}
-										{@const isSelected = equipment.offhand === shield.id}
+										{@const isSelected = equipment.offhand.id === shield.id}
 										<button
 											type="button"
 											class={classNames('card p-4 text-left transition-all', {
 												'ring-2 ring-warning-500 bg-warning-500/10': isSelected,
 												'hover:bg-surface-600/50': !isSelected,
 											})}
-											on:click={() => selectOffhand(isSelected ? null : shield.id)}
+											onclick={() => selectOffhand(isSelected ? null : shield.id)}
 										>
 											<div class="flex items-start justify-between gap-2 mb-2">
 												<h5 class="font-semibold">{shield.name}</h5>
@@ -600,8 +640,8 @@
 								</p>
 								<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 									{#each getOneHandedWeapons() as weapon}
-										{@const isSelected = equipment.offhand === weapon.id}
-										{@const isSameAsMain = equipment.weapon === weapon.id}
+										{@const isSelected = equipment.offhand.id === weapon.id}
+										{@const isSameAsMain = equipment.weapon.id === weapon.id}
 										<button
 											type="button"
 											class={classNames('card p-4 text-left transition-all', {
@@ -610,7 +650,7 @@
 												'opacity-50': isSameAsMain,
 											})}
 											disabled={isSameAsMain}
-											on:click={() => selectOffhand(isSelected ? null : weapon.id)}
+											onclick={() => selectOffhand(isSelected ? null : weapon.id)}
 										>
 											<div class="flex items-start justify-between gap-2 mb-2">
 												<h5 class="font-semibold">{weapon.name}</h5>
@@ -653,29 +693,40 @@
 						</p>
 
 						<!-- Clear Selection Button -->
-						{#if equipment.armor}
-							<button
-								type="button"
-								class="btn variant-soft-error self-start"
-								on:click={() => selectArmor(null)}
-							>
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-								<span>Clear Armor Selection</span>
-							</button>
+						{#if equipment.armor.id}
+							<div class="flex flex-col gap-4">
+								<button
+									type="button"
+									class="btn variant-soft-error self-start"
+									onclick={() => selectArmor(null)}
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+									</svg>
+									<span>Clear Armor Selection</span>
+								</button>
+								<!-- Material Selector for Armor -->
+								{#if selectedArmorType}
+									<div class="max-w-sm">
+										<MaterialSelector
+											selectedMaterialId={equipment.armor.materialId}
+											onSelect={(materialId) => updateArmorMaterial(materialId)}
+										/>
+									</div>
+								{/if}
+							</div>
 						{/if}
 
 						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{#each ArmorTypes as armor}
-								{@const isSelected = equipment.armor === armor.id}
+								{@const isSelected = equipment.armor.id === armor.id}
 								<button
 									type="button"
 									class={classNames('card p-4 text-left transition-all', {
 										'ring-2 ring-tertiary-500 bg-tertiary-500/10': isSelected,
 										'hover:bg-surface-600/50': !isSelected,
 									})}
-									on:click={() => selectArmor(isSelected ? null : armor.id)}
+									onclick={() => selectArmor(isSelected ? null : armor.id)}
 								>
 									<div class="flex items-start justify-between gap-2 mb-3">
 										<div>
@@ -771,7 +822,7 @@
 							<button
 								type="button"
 								class="btn variant-soft-error self-start"
-								on:click={() => inventory = []}
+								onclick={() => inventory.length = 0}
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -813,7 +864,7 @@
 												<button
 													type="button"
 													class="btn-icon btn-icon-sm variant-soft-error"
-													on:click={() => removeItem(item.id)}
+													onclick={() => removeItem(item.id)}
 												>
 													<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
@@ -832,7 +883,7 @@
 												type="button"
 												class="btn-icon btn-icon-sm variant-soft-success"
 												disabled={!canAdd}
-												on:click={() => addItem(item.id)}
+												onclick={() => addItem(item.id)}
 											>
 												<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -849,7 +900,7 @@
 		</TabGroup>
 
 		<!-- Selected Equipment Summary -->
-		{#if equipment.weapon || equipment.offhand || equipment.armor || inventory.length > 0}
+		{#if equipment.weapon.id || equipment.offhand.id || equipment.armor.id || inventory.length > 0}
 			<div class="card p-4 variant-soft">
 				<h4 class="font-semibold mb-3">Selected Equipment</h4>
 				<div class="flex flex-wrap gap-2">
@@ -859,7 +910,7 @@
 							<button
 								type="button"
 								class="ml-1 hover:text-error-300"
-								on:click={() => selectWeapon(null)}
+								onclick={() => selectWeapon(null)}
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -873,7 +924,7 @@
 							<button
 								type="button"
 								class="ml-1 hover:text-error-300"
-								on:click={() => selectOffhand(null)}
+								onclick={() => selectOffhand(null)}
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -887,7 +938,7 @@
 							<button
 								type="button"
 								class="ml-1 hover:text-error-300"
-								on:click={() => selectArmor(null)}
+								onclick={() => selectArmor(null)}
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -903,8 +954,9 @@
 								<button
 									type="button"
 									class="ml-1 hover:text-error-300"
-									on:click={() => {
-										inventory = inventory.filter((i) => i.itemId !== invItem.itemId)
+									onclick={() => {
+										const index = inventory.findIndex((i) => i.itemId === invItem.itemId)
+										if (index >= 0) inventory.splice(index, 1)
 									}}
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
