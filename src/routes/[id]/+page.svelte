@@ -210,10 +210,8 @@
 			{#if isInCombat}
 				<CombatMode player={currentPlayer} on:combatEnded={handleCombatEnded} />
 			{:else}
-				<CharacterSheet player={currentPlayer} onUpdate={handlePlayerUpdate} showResourceControls={true} />
-
 				<!-- Enter Combat Button -->
-				<div class="mt-6">
+				<div class="mb-6">
 					<button
 						type="button"
 						class="btn variant-filled-warning w-full"
@@ -225,6 +223,8 @@
 						Enter Combat
 					</button>
 				</div>
+
+				<CharacterSheet player={currentPlayer} onUpdate={handlePlayerUpdate} showResourceControls={true} />
 			{/if}
 		{:else if viewMode === 'editing'}
 			<!-- GM Mode info banner -->
