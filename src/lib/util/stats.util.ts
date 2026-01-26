@@ -131,15 +131,19 @@ export function getSkillsWithLevels(player: PlayerData): {
 	const levelData = Level[player.level] ?? Level[1]!
 	const allSkills = Object.values(Skill)
 
-	const major = player.majorSkills.map((skill) => ({
-		skill,
-		bonus: levelData.majorSkillBonus,
-	}))
+	const major = player.majorSkills
+		.map((skill) => ({
+			skill,
+			bonus: levelData.majorSkillBonus,
+		}))
+		.sort((a, b) => a.skill.localeCompare(b.skill))
 
-	const minor = player.minorSkills.map((skill) => ({
-		skill,
-		bonus: levelData.minorSkillBonus,
-	}))
+	const minor = player.minorSkills
+		.map((skill) => ({
+			skill,
+			bonus: levelData.minorSkillBonus,
+		}))
+		.sort((a, b) => a.skill.localeCompare(b.skill))
 
 	const untrained = allSkills
 		.filter(
@@ -147,6 +151,7 @@ export function getSkillsWithLevels(player: PlayerData): {
 				!player.majorSkills.includes(skill) && !player.minorSkills.includes(skill)
 		)
 		.map((skill) => ({ skill, bonus: 0 }))
+		.sort((a, b) => a.skill.localeCompare(b.skill))
 
 	return { major, minor, untrained }
 }
