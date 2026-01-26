@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Accordion, AccordionItem, ProgressBar, getToastStore } from '@skeletonlabs/skeleton'
-	import type { PlayerData, Equipment, InventoryItem } from '$lib/models/player'
+	import type { PlayerData, Equipment, InventoryItem, OwnedWeapon } from '$lib/models/player'
 	import { Skill } from '$lib/data/skill'
 	import { BirthSigns } from '$lib/data/birthSign'
 	import { Race } from '$lib/data/race'
@@ -152,6 +152,12 @@
 	function handleInventoryChange(newInventory: InventoryItem[]) {
 		if (onUpdate) {
 			onUpdate({ ...player, inventory: newInventory })
+		}
+	}
+
+	function handleOwnedWeaponsChange(newOwnedWeapons: OwnedWeapon[]) {
+		if (onUpdate) {
+			onUpdate({ ...player, ownedWeapons: newOwnedWeapons })
 		}
 	}
 
@@ -646,6 +652,8 @@
 				inventory={player.inventory}
 				onEquipmentChange={handleEquipmentChange}
 				onInventoryChange={handleInventoryChange}
+				ownedWeapons={player.ownedWeapons}
+				onOwnedWeaponsChange={handleOwnedWeaponsChange}
 			/>
 		{:else}
 			<!-- View Mode: Show equipment with material info -->

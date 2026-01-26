@@ -22,6 +22,12 @@ const equipmentSlotSchema = z.object({
 	materialId: z.string().nullable(),
 })
 
+// Owned weapon schema (weapons in player's inventory)
+const ownedWeaponSchema = z.object({
+	weaponId: z.string(),
+	materialId: z.string().nullable()
+})
+
 // Equipment schema
 export const equipmentSchema = z.object({
 	weapon: equipmentSlotSchema,
@@ -51,6 +57,8 @@ export const playerSchema = z
 		}),
 		// Inventory
 		inventory: z.array(inventoryItemSchema).default([]),
+		// Owned weapons (weapons player can equip in combat)
+		ownedWeapons: z.array(ownedWeaponSchema).default([]),
 		// Meta
 		notes: z.string().default(''),
 	})

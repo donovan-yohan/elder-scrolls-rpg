@@ -9,6 +9,11 @@ export interface InventoryItem {
 	quantity: number
 }
 
+export interface OwnedWeapon {
+	weaponId: string
+	materialId: string | null
+}
+
 export interface EquipmentSlot {
 	id: string | null
 	materialId: string | null
@@ -41,6 +46,7 @@ export type PlayerData = {
 	knownSpells: string[]
 	equipment: Equipment
 	inventory: InventoryItem[]
+	ownedWeapons: OwnedWeapon[]
 	notes: string
 	createdAt: string
 	updatedAt: string
@@ -70,6 +76,7 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 		accessories: [],
 	},
 	inventory: [],
+	ownedWeapons: [],
 	notes: '',
 	createdAt: '',
 	updatedAt: '',

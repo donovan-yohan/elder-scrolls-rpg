@@ -1,3 +1,5 @@
+import type { Equipment } from './player'
+
 export enum CombatDistance {
   Immediate = 'Immediate', // Same space
   Adjacent = 'Adjacent', // 1-5 feet
@@ -105,6 +107,7 @@ export interface CombatSession {
   distance: CombatDistance
   concentrationSpellId?: string
   isConcentrationBroken: boolean
+  combatEquipment: Equipment
 }
 
 export function createCombatLogEntry(

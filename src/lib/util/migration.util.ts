@@ -43,8 +43,15 @@ export function migratePlayerEquipment(equipment: Equipment | LegacyEquipment): 
 
 // Migrate full player data
 export function migratePlayerData(player: PlayerData): PlayerData {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const playerAny = player as any
+
+	// Migrate ownedWeapons - add empty array if missing
+	const ownedWeapons = playerAny.ownedWeapons ?? []
+
 	return {
 		...player,
 		equipment: migratePlayerEquipment(player.equipment as Equipment | LegacyEquipment),
+		ownedWeapons,
 	}
 }

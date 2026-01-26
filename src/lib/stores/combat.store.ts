@@ -10,7 +10,7 @@ import {
 } from '$lib/services/effectAggregator'
 import type { EffectResult } from '$lib/models/effect'
 import { EffectActionType } from '$lib/models/effect'
-import type { PlayerData } from '$lib/models/player'
+import type { PlayerData, Equipment } from '$lib/models/player'
 
 const COMBAT_STORAGE_KEY = 'combat-sessions'
 
@@ -114,9 +114,24 @@ function createCombatStore() {
 			playerId: string,
 			partyInitiative: number,
 			enemyInitiative: number,
-			playerData: { health: number; magicka: number; maxActionPoints: number }
+			playerData: { health: number; magicka: number; maxActionPoints: number; equipment?: Equipment }
 		): void => {
 			update((state) => {
+				// Create a deep copy of equipment to avoid mutations
+				const equipmentSnapshot: Equipment = playerData.equipment
+					? {
+							weapon: { ...playerData.equipment.weapon },
+							offhand: { ...playerData.equipment.offhand },
+							armor: { ...playerData.equipment.armor },
+							accessories: [...playerData.equipment.accessories],
+						}
+					: {
+							weapon: { id: null, materialId: null },
+							offhand: { id: null, materialId: null },
+							armor: { id: null, materialId: null },
+							accessories: [],
+						}
+
 				const session: CombatSession = {
 					id: crypto.randomUUID(),
 					playerId,
@@ -132,7 +147,8 @@ function createCombatStore() {
 					log: [createCombatLogEntry('system', 'Combat started!')],
 					distance: CombatDistance.Medium,
 					concentrationSpellId: undefined,
-					isConcentrationBroken: false
+					isConcentrationBroken: false,
+					combatEquipment: equipmentSnapshot,
 				}
 				return { ...state, [playerId]: session }
 			})
@@ -141,8 +157,8 @@ function createCombatStore() {
 		/**
 		 * End combat session for a player
 		 */
-		endCombat: (playerId: string): { health: number; magicka: number } | null => {
-			let finalState: { health: number; magicka: number } | null = null
+		endCombat: (playerId: string): { health: number; magicka: number; equipment: Equipment } | null => {
+			let finalState: { health: number; magicka: number; equipment: Equipment } | null = null
 
 			update((state) => {
 				const session = state[playerId]
@@ -150,6 +166,7 @@ function createCombatStore() {
 					finalState = {
 						health: session.currentHP,
 						magicka: session.currentMP,
+						equipment: session.combatEquipment,
 					}
 				}
 				const newState = { ...state }
@@ -535,6 +552,45 @@ function createCombatStore() {
 						concentrationSpellId: spellId,
 						isConcentrationBroken: false
 					}
+				}
+			})
+		},
+
+		/**
+		 * Swap weapon during combat (costs 1 AP)
+		 */
+		swapWeapon: (
+			playerId: string,
+			data: { weaponId: string; materialId: string | null; slot: 'weapon' | 'offhand' }
+		): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+
+				const SWAP_COST = 1
+				if (session.currentAP < SWAP_COST) return state
+
+				const newEquipment: Equipment = {
+					...session.combatEquipment,
+					[data.slot]: {
+						id: data.weaponId,
+						materialId: data.materialId,
+					},
+				}
+
+				const slotLabel = data.slot === 'weapon' ? 'main hand' : 'off-hand'
+
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentAP: session.currentAP - SWAP_COST,
+						combatEquipment: newEquipment,
+						log: [
+							...session.log,
+							createCombatLogEntry('action', `Swapped ${slotLabel} weapon`),
+						],
+					},
 				}
 			})
 		},

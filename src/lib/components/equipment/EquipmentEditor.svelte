@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { TabGroup, Tab } from '@skeletonlabs/skeleton'
 	import classNames from 'classnames'
-	import type { Equipment, InventoryItem, EquipmentSlot } from '$lib/models/player'
+	import type { Equipment, InventoryItem, EquipmentSlot, OwnedWeapon } from '$lib/models/player'
+	import OwnedWeaponsEditor from './OwnedWeaponsEditor.svelte'
 	import {
 		Weapons,
 		WeaponSkill,
@@ -27,9 +28,11 @@
 		inventory: InventoryItem[]
 		onEquipmentChange: (equipment: Equipment) => void
 		onInventoryChange: (inventory: InventoryItem[]) => void
+		ownedWeapons: OwnedWeapon[]
+		onOwnedWeaponsChange: (weapons: OwnedWeapon[]) => void
 	}
 
-	let { equipment, inventory, onEquipmentChange, onInventoryChange }: Props = $props()
+	let { equipment, inventory, onEquipmentChange, onInventoryChange, ownedWeapons, onOwnedWeaponsChange }: Props = $props()
 
 	// Tab tracking
 	let selectedTabIndex = $state(0)
@@ -256,6 +259,14 @@
 				<span>Items</span>
 				{#if totalItemsCount > 0}
 					<span class="badge variant-filled-success text-xs">{totalItemsCount}</span>
+				{/if}
+			</span>
+		</Tab>
+		<Tab bind:group={selectedTabIndex} name="owned" value={3}>
+			<span class="flex items-center gap-2">
+				<span>Owned</span>
+				{#if ownedWeapons.length > 0}
+					<span class="badge variant-filled-warning text-xs">{ownedWeapons.length}</span>
 				{/if}
 			</span>
 		</Tab>
@@ -830,6 +841,16 @@
 							</div>
 						{/each}
 					</div>
+				</div>
+			{/if}
+
+			<!-- Owned Weapons Panel -->
+			{#if selectedTabIndex === 3}
+				<div class="mt-4">
+					<OwnedWeaponsEditor
+						{ownedWeapons}
+						{onOwnedWeaponsChange}
+					/>
 				</div>
 			{/if}
 		</svelte:fragment>

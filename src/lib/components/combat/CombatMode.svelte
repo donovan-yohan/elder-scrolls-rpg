@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
 	import { getModalStore } from '@skeletonlabs/skeleton'
-	import type { PlayerData } from '$lib/models/player'
+	import type { PlayerData, Equipment } from '$lib/models/player'
 	import type { AvailableAction } from '$lib/models/combatAction'
 	import { combatStore, getCombatSessionStore } from '$lib/stores/combat.store'
 	import { getAvailableActions } from '$lib/util/combat.util'
@@ -10,35 +9,58 @@
 	import InitiativeTracker from './InitiativeTracker.svelte'
 	import ConditionTracker from './ConditionTracker.svelte'
 	import CombatLog from './CombatLog.svelte'
-	import ActionPanel from './ActionPanel.svelte'
+	import ActionsPanel, { type ActionType as ActionsPanelActionType } from './ActionsPanel.svelte'
 	import DiceRoller from './DiceRoller/DiceRoller.svelte'
 	import EnterCombatModal from './modals/EnterCombatModal.svelte'
 	import EndCombatModal from './modals/EndCombatModal.svelte'
 	import AttackResolverModal from './modals/AttackResolverModal.svelte'
 	import SpellResolverModal from './modals/SpellResolverModal.svelte'
+	import MoveModal from './modals/MoveModal.svelte'
+	import SwapWeaponModal from './modals/SwapWeaponModal.svelte'
 	import { ActionType } from '$lib/models/combat'
 
-	export let player: PlayerData
+	interface Props {
+		player: PlayerData
+		onCombatEnded?: (data: { health: number; magicka: number; equipment: Equipment }) => void
+	}
 
-	const dispatch = createEventDispatcher<{
-		combatEnded: { health: number; magicka: number }
-	}>()
+	let { player, onCombatEnded }: Props = $props()
 
 	const modalStore = getModalStore()
 
 	// Subscribe to combat session for this player
-	$: sessionStore = getCombatSessionStore(player.id)
-	$: session = $sessionStore
+	let sessionStore = $derived(getCombatSessionStore(player.id))
+	let session = $derived($sessionStore)
 
 	// Compute available actions based on current state
-	$: availableActions = session ? getAvailableActions(player, session) : []
+	let availableActions = $derived(session ? getAvailableActions(player, session) : [])
 
 	// Modal states
-	let showEnterCombatModal = false
-	let showEndCombatModal = false
-	let showAttackResolver = false
-	let showSpellResolver = false
-	let selectedAction: AvailableAction | null = null
+	let showEnterCombatModal = $state(false)
+	let showEndCombatModal = $state(false)
+	let showAttackResolver = $state(false)
+	let showSpellResolver = $state(false)
+	let selectedAction = $state<AvailableAction | null>(null)
+	let activeModal = $state<ActionsPanelActionType | null>(null)
+
+	// Handle ActionsPanel action selection
+	function handleActionSelect(action: ActionsPanelActionType) {
+		activeModal = action
+	}
+
+	function handleCloseModal() {
+		activeModal = null
+	}
+
+	function handleMove(apCost: number) {
+		combatStore.spendAP(player.id, apCost)
+		activeModal = null
+	}
+
+	function handleSwapWeapon(data: { weaponId: string; materialId: string | null; slot: 'weapon' | 'offhand' }) {
+		combatStore.swapWeapon(player.id, data)
+		activeModal = null
+	}
 
 	// Handle entering combat
 	function handleEnterCombat() {
@@ -69,8 +91,8 @@
 		const finalState = combatStore.endCombat(player.id)
 		showEndCombatModal = false
 
-		if (finalState) {
-			dispatch('combatEnded', finalState)
+		if (finalState && onCombatEnded) {
+			onCombatEnded(finalState)
 		}
 	}
 
@@ -227,11 +249,12 @@
 
 			<!-- Center Column: Actions -->
 			<div class="space-y-4">
-				<ActionPanel
-					{player}
-					{session}
-					{availableActions}
-					onSelectAction={handleSelectAction}
+				<ActionsPanel
+					currentAP={session.currentAP}
+					currentMP={session.currentMP}
+					currentInitiative={session.partyInitiativePool.current}
+					hasHeftedShield={false}
+					onActionSelect={handleActionSelect}
 				/>
 
 				<div class="card p-4">
@@ -291,5 +314,24 @@
 				on:cancel={() => { showSpellResolver = false; selectedAction = null; }}
 			/>
 		</div>
+	{/if}
+
+	<!-- ActionsPanel modals -->
+	{#if session}
+		<MoveModal
+			isOpen={activeModal === 'move'}
+			currentAP={session.currentAP}
+			onMove={handleMove}
+			onClose={handleCloseModal}
+		/>
+
+		<SwapWeaponModal
+			isOpen={activeModal === 'swapWeapon'}
+			ownedWeapons={player.ownedWeapons}
+			currentEquipment={session.combatEquipment}
+			currentAP={session.currentAP}
+			onSwap={handleSwapWeapon}
+			onClose={handleCloseModal}
+		/>
 	{/if}
 </div>

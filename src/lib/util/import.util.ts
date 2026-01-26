@@ -51,6 +51,73 @@ const REQUIRED_PLAYER_FIELDS: (keyof PlayerData)[] = [
 ]
 
 /**
+ * Result of ownedWeapons validation
+ */
+interface OwnedWeaponsValidationResult {
+	valid: boolean
+	error?: string
+}
+
+/**
+ * Validate ownedWeapons structure and return any validation errors.
+ * Does not modify the player data - just validates.
+ */
+function validateOwnedWeapons(
+	ownedWeapons: unknown,
+	playerIndex?: number
+): OwnedWeaponsValidationResult {
+	const prefix = playerIndex !== undefined ? `Character ${playerIndex + 1}: ` : ''
+
+	// ownedWeapons must be an array if present
+	if (ownedWeapons !== undefined && !Array.isArray(ownedWeapons)) {
+		return {
+			valid: false,
+			error: `${prefix}ownedWeapons must be an array`,
+		}
+	}
+
+	// Validate each item in the array
+	if (Array.isArray(ownedWeapons)) {
+		for (let i = 0; i < ownedWeapons.length; i++) {
+			const ow = ownedWeapons[i]
+			if (typeof ow !== 'object' || ow === null) {
+				return {
+					valid: false,
+					error: `${prefix}ownedWeapons[${i}] must be an object`,
+				}
+			}
+
+			if (typeof ow.weaponId !== 'string') {
+				return {
+					valid: false,
+					error: `${prefix}ownedWeapons[${i}].weaponId must be a string`,
+				}
+			}
+
+			if (ow.materialId !== null && typeof ow.materialId !== 'string') {
+				return {
+					valid: false,
+					error: `${prefix}ownedWeapons[${i}].materialId must be a string or null`,
+				}
+			}
+		}
+	}
+
+	return { valid: true }
+}
+
+/**
+ * Normalize player data by ensuring ownedWeapons exists.
+ * For legacy imports that don't have ownedWeapons, adds an empty array.
+ */
+function normalizePlayerData(player: PlayerData): PlayerData {
+	return {
+		...player,
+		ownedWeapons: player.ownedWeapons ?? [],
+	}
+}
+
+/**
  * Validate that a value is a valid PlayerData object
  */
 function isValidPlayerData(data: unknown): data is PlayerData {
@@ -158,9 +225,23 @@ export function validateImport(data: unknown): ImportResult {
 			}
 		}
 
+		// Validate ownedWeapons structure
+		const ownedWeaponsValidation = validateOwnedWeapons(
+			(exportData.player as Record<string, unknown>).ownedWeapons
+		)
+		if (!ownedWeaponsValidation.valid) {
+			return {
+				success: false,
+				error: ownedWeaponsValidation.error,
+			}
+		}
+
+		// Normalize player data (add default ownedWeapons if missing)
+		const normalizedPlayer = normalizePlayerData(exportData.player)
+
 		return {
 			success: true,
-			player: exportData.player,
+			player: normalizedPlayer,
 			isMultiple: false,
 		}
 	}
@@ -185,9 +266,27 @@ export function validateImport(data: unknown): ImportResult {
 			}
 		}
 
+		// Validate ownedWeapons for each player
+		for (let i = 0; i < exportData.players.length; i++) {
+			const player = exportData.players[i]
+			const ownedWeaponsValidation = validateOwnedWeapons(
+				(player as Record<string, unknown>).ownedWeapons,
+				i
+			)
+			if (!ownedWeaponsValidation.valid) {
+				return {
+					success: false,
+					error: ownedWeaponsValidation.error,
+				}
+			}
+		}
+
+		// Normalize all players (add default ownedWeapons if missing)
+		const normalizedPlayers = exportData.players.map(normalizePlayerData)
+
 		return {
 			success: true,
-			players: exportData.players,
+			players: normalizedPlayers,
 			isMultiple: true,
 		}
 	}

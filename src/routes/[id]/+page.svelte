@@ -4,7 +4,8 @@
 	import { Level } from '$lib/data/level'
 	import { playersStore } from '$lib/stores/persisted.store'
 	import { Skill, SkillLevel } from '$lib/data/skill'
-	import type { PlayerData } from '$lib/models/player'
+	import type { PlayerData, Equipment } from '$lib/models/player'
+	import { syncCombatResultToPlayer } from '$lib/util/combatSync.util'
 	import CharacterSheet from '$lib/components/CharacterSheet.svelte'
 	import { CombatMode, EnterCombatModal } from '$lib/components/combat'
 	import { getIsInCombatStore, combatStore } from '$lib/stores/combat.store'
@@ -49,9 +50,19 @@
 	}
 
 	// Handle combat ended event from CombatMode
-	function handleCombatEnded(event: CustomEvent<{ health: number; magicka: number }>) {
-		const { health, magicka } = event.detail
-		updatePlayer({ health, magicka })
+	function handleCombatEnded(combatResult: { health: number; magicka: number; equipment: Equipment }) {
+		// The CombatMode component calls combatStore.endCombat and passes the result
+		// We sync health, magicka, and equipment changes back to the player
+		playersStore.update(players => {
+			const player = players[data.id]
+			if (player && combatResult) {
+				return {
+					...players,
+					[data.id]: syncCombatResultToPlayer(player, combatResult)
+				}
+			}
+			return players
+		})
 	}
 
 	// Handle entering combat from page
@@ -208,7 +219,7 @@
 		<!-- Main Content -->
 		{#if viewMode === 'playing'}
 			{#if isInCombat}
-				<CombatMode player={currentPlayer} on:combatEnded={handleCombatEnded} />
+				<CombatMode player={currentPlayer} onCombatEnded={handleCombatEnded} />
 			{:else}
 				<!-- Enter Combat Button -->
 				<div class="mb-6">
