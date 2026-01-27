@@ -3,6 +3,7 @@ import { ArchetypeName } from '$lib/data/archetype'
 import type { Skill } from '$lib/data/skill'
 import type { SubSkill } from '$lib/models/subskill'
 import { RaceName } from '$lib/data/race'
+import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 
 export interface InventoryItem {
 	itemId: string
@@ -28,6 +29,7 @@ export interface Equipment {
 
 export type PlayerData = {
 	id: string
+	schemaVersion: string
 	level: number
 	playerName: string
 	characterName: string
@@ -53,6 +55,7 @@ export type PlayerData = {
 }
 
 export const defaultPlayerData: Omit<PlayerData, 'id'> = {
+	schemaVersion: CHARACTER_SCHEMA_VERSION,
 	level: 1,
 	playerName: '',
 	characterName: '',

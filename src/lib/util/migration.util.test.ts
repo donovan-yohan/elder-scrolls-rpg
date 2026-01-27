@@ -4,11 +4,13 @@ import type { PlayerData } from '$lib/models/player'
 import { BirthSignName } from '$lib/data/birthSign'
 import { ArchetypeName } from '$lib/data/archetype'
 import { RaceName } from '$lib/data/race'
+import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 
 // Helper to create minimal valid player data for testing
 function createTestPlayerData(overrides: Partial<PlayerData> = {}): PlayerData {
 	return {
 		id: 'test-id',
+		schemaVersion: CHARACTER_SCHEMA_VERSION,
 		level: 1,
 		playerName: 'Test Player',
 		characterName: 'Test Character',
@@ -32,6 +34,7 @@ function createTestPlayerData(overrides: Partial<PlayerData> = {}): PlayerData {
 			accessories: [],
 		},
 		inventory: [],
+		ownedWeapons: [],
 		notes: '',
 		createdAt: '2024-01-01',
 		updatedAt: '2024-01-01',
@@ -78,8 +81,7 @@ describe('migratePlayerData', () => {
 			// Create player data without ownedWeapons property
 			const playerWithoutOwnedWeapons = createTestPlayerData()
 			// Explicitly remove ownedWeapons to simulate legacy data
-			delete (playerWithoutOwnedWeapons as Partial<PlayerData> & { ownedWeapons?: string[] })
-				.ownedWeapons
+			delete (playerWithoutOwnedWeapons as Partial<PlayerData>).ownedWeapons
 
 			const result = migratePlayerData(playerWithoutOwnedWeapons)
 
@@ -87,10 +89,14 @@ describe('migratePlayerData', () => {
 		})
 
 		it('preserves existing ownedWeapons array', () => {
-			const existingWeapons = ['iron-sword', 'steel-dagger', 'ebony-bow']
+			const existingWeapons = [
+				{ weaponId: 'iron-sword', materialId: null },
+				{ weaponId: 'steel-dagger', materialId: 'steel' },
+				{ weaponId: 'ebony-bow', materialId: 'ebony' },
+			]
 			const playerWithOwnedWeapons = createTestPlayerData({
 				ownedWeapons: existingWeapons,
-			} as Partial<PlayerData>)
+			})
 
 			const result = migratePlayerData(playerWithOwnedWeapons)
 

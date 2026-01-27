@@ -3,6 +3,7 @@ import { zod } from 'sveltekit-superforms/adapters'
 import type { PlayerData } from '$lib/models/player'
 import { playerSchema } from '$lib/schema/player.schema'
 import { createEmptySlot } from '$lib/util/equipment.util'
+import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 
 export const load = async () => {
 	const form = await superValidate(zod(playerSchema))
@@ -27,6 +28,7 @@ export const actions = {
 			...form.data,
 			// Then override with computed/default values
 			id: crypto.randomUUID(),
+			schemaVersion: CHARACTER_SCHEMA_VERSION,
 			level: 1,
 			playerName: 'Real John Scrolls',
 			subSkills: form.data.subSkills ?? [],

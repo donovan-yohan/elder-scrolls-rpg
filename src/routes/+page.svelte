@@ -1,7 +1,21 @@
 <script lang="ts">
-	import { playersStore } from '$lib/stores/persisted.store'
+	import { playersStore, versionResetOccurred } from '$lib/stores/persisted.store'
 	import { getModalStore, getToastStore } from '@skeletonlabs/skeleton'
 	import { createImportHandler, createExportHandler } from '$lib/util/importExportHandlers'
+	import { onMount } from 'svelte'
+
+	let showVersionWarning = false
+
+	onMount(() => {
+		if ($versionResetOccurred) {
+			showVersionWarning = true
+		}
+	})
+
+	function dismissVersionWarning() {
+		showVersionWarning = false
+		versionResetOccurred.set(false)
+	}
 
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()
@@ -99,4 +113,25 @@
 			<p class="text-surface-500">No characters yet. Create one to get started!</p>
 		{/if}
 	</div>
+
+	<!-- Version Reset Warning Modal -->
+	{#if showVersionWarning}
+		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
+			<div class="card p-6 max-w-md w-full space-y-4 variant-filled-warning">
+				<h3 class="h3">Characters Reset</h3>
+				<p>
+					Your saved characters were created with an older version and have been removed.
+					Please create new characters.
+				</p>
+				<div class="flex justify-end">
+					<button
+						class="btn variant-filled"
+						on:click={dismissVersionWarning}
+					>
+						OK
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>

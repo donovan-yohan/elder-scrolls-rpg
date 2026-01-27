@@ -3,6 +3,7 @@ import { RaceName } from '$lib/data/race'
 import { ArchetypeName } from '$lib/data/archetype'
 import { BirthSignName } from '$lib/data/birthSign'
 import { Skill } from '$lib/data/skill'
+import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 
 // Subskill schema - standalone character traits (Lancer-style triggers)
 export const subSkillSchema = z.object({
@@ -61,6 +62,7 @@ export const playerSchema = z
 		ownedWeapons: z.array(ownedWeaponSchema).default([]),
 		// Meta
 		notes: z.string().default(''),
+		schemaVersion: z.string().default(CHARACTER_SCHEMA_VERSION),
 	})
 	.refine((data) => {
 		const majorSkills = new Set(data.majorSkills)

@@ -1,9 +1,10 @@
 import type { PlayerData } from '$lib/models/player'
+import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 
 /**
  * Current app version for export format migration support
  */
-export const APP_VERSION = '1.0.0'
+export const APP_VERSION = CHARACTER_SCHEMA_VERSION
 
 /**
  * Exported character structure for single character exports

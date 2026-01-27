@@ -4,11 +4,13 @@ import { BirthSignName } from '$lib/data/birthSign'
 import { ArchetypeName } from '$lib/data/archetype'
 import { RaceName } from '$lib/data/race'
 import type { PlayerData } from '$lib/models/player'
+import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 
 // Helper to create minimal valid player data for testing
 function createValidPlayerData(overrides: Partial<PlayerData> = {}): PlayerData {
 	return {
 		id: 'test-id',
+		schemaVersion: CHARACTER_SCHEMA_VERSION,
 		level: 5,
 		playerName: 'Test Player',
 		characterName: 'Test Hero',
@@ -44,7 +46,7 @@ describe('Import validation - ownedWeapons', () => {
 	describe('single character import', () => {
 		it('should accept import with valid ownedWeapons field', () => {
 			const importData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				player: createValidPlayerData({
 					ownedWeapons: [
@@ -69,7 +71,7 @@ describe('Import validation - ownedWeapons', () => {
 			delete (playerWithoutOwnedWeapons as Partial<PlayerData>).ownedWeapons
 
 			const legacyImportData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				player: playerWithoutOwnedWeapons,
 			}
@@ -84,7 +86,7 @@ describe('Import validation - ownedWeapons', () => {
 
 		it('should reject import when ownedWeapons is not an array', () => {
 			const importData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				player: {
 					...createValidPlayerData(),
@@ -100,7 +102,7 @@ describe('Import validation - ownedWeapons', () => {
 
 		it('should reject import when ownedWeapons item has invalid weaponId', () => {
 			const importData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				player: {
 					...createValidPlayerData(),
@@ -116,7 +118,7 @@ describe('Import validation - ownedWeapons', () => {
 
 		it('should reject import when ownedWeapons item has invalid materialId', () => {
 			const importData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				player: {
 					...createValidPlayerData(),
@@ -134,7 +136,7 @@ describe('Import validation - ownedWeapons', () => {
 	describe('multiple character import (backup)', () => {
 		it('should accept backup import with valid ownedWeapons', () => {
 			const importData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				players: [
 					createValidPlayerData({
@@ -165,7 +167,7 @@ describe('Import validation - ownedWeapons', () => {
 			delete (player2 as Partial<PlayerData>).ownedWeapons
 
 			const importData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				players: [player1, player2],
 			}
@@ -179,7 +181,7 @@ describe('Import validation - ownedWeapons', () => {
 
 		it('should reject backup import when any player has invalid ownedWeapons', () => {
 			const importData = {
-				version: '1.0.0',
+				version: '0.1.0',
 				exportedAt: new Date().toISOString(),
 				players: [
 					createValidPlayerData({

@@ -164,7 +164,9 @@ function isValidPlayerData(data: unknown): data is PlayerData {
 
 /**
  * Validate version compatibility
- * Currently accepts version 1.x.x
+ * Currently accepts version 0.x.x (pre-release)
+ *
+ * TODO [v1.0.0]: Update to accept 1.x.x when releasing
  */
 function isCompatibleVersion(version: string): boolean {
 	if (typeof version !== 'string') {
@@ -172,8 +174,8 @@ function isCompatibleVersion(version: string): boolean {
 	}
 
 	const [major] = version.split('.')
-	// Accept version 1.x.x for now
-	return major === '1'
+	// Accept version 0.x.x for pre-release
+	return major === '0'
 }
 
 /**
@@ -202,7 +204,7 @@ export function validateImport(data: unknown): ImportResult {
 	if (!isCompatibleVersion(obj.version)) {
 		return {
 			success: false,
-			error: `Incompatible version: ${obj.version}. Expected version 1.x.x`,
+			error: `Incompatible version: ${obj.version}. Expected version 0.x.x`,
 		}
 	}
 

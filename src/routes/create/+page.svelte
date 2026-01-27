@@ -5,6 +5,7 @@
 	import { hasMagicSkills, calculateMaxHealth, calculateMaxMagicka, calculateMaxAP } from '$lib/util/stats.util'
 	import { createEmptySlot } from '$lib/util/equipment.util'
 	import type { PlayerData } from '$lib/models/player'
+	import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 	import type { WizardStepConfig } from '$lib/components/wizard/types'
 
 	import {
@@ -72,6 +73,7 @@
 		const newPlayer: PlayerData = {
 			// Spread form data
 			id: formData.characterName || 'unnamed',
+			schemaVersion: CHARACTER_SCHEMA_VERSION,
 			level: 1,
 			playerName: '',
 			characterName: formData.characterName || 'Unnamed Hero',
@@ -89,6 +91,7 @@
 				accessories: [],
 			},
 			inventory: formData.inventory || [],
+			ownedWeapons: formData.ownedWeapons || [],
 			notes: formData.notes || '',
 			// Calculated stats
 			maxHealth,

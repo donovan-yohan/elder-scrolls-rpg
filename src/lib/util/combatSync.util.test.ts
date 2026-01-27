@@ -4,11 +4,13 @@ import type { PlayerData } from '$lib/models/player'
 import { BirthSignName } from '$lib/data/birthSign'
 import { ArchetypeName } from '$lib/data/archetype'
 import { RaceName } from '$lib/data/race'
+import { CHARACTER_SCHEMA_VERSION } from '$lib/version'
 
 // Helper to create minimal valid player data for testing
 function createTestPlayerData(overrides: Partial<PlayerData> = {}): PlayerData {
 	return {
 		id: 'test-id',
+		schemaVersion: CHARACTER_SCHEMA_VERSION,
 		level: 1,
 		playerName: 'Test Player',
 		characterName: 'Test Character',
