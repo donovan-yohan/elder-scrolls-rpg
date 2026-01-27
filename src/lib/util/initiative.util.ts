@@ -1,15 +1,18 @@
 import type { PlayerData } from '$lib/models/player'
-import { InitiativeSkills } from '$lib/data/skill'
-import { rollD20, rollD6Advantage } from '$lib/util/dice.util'
+import { InitiativeSkills, type Skill } from '$lib/data/skill'
+import { rollD20, rollD6AdvantageWithDetails } from '$lib/util/dice.util'
 
 export interface InitiativeModifiers {
   d6Count: number    // Number of d6 advantage dice (from major skills)
   flatBonus: number  // Flat bonus (from minor skills)
+  d6Skills: Skill[]      // Skills contributing d6 advantage dice
+  flatBonusSkills: Skill[] // Skills contributing flat bonus
 }
 
 export interface InitiativeRollResult {
   d20Roll: number
-  d6AdvantageRoll: number
+  d6Rolls: number[]        // Individual d6 results
+  d6AdvantageRoll: number  // Highest of d6Rolls (or 0 if none)
   flatBonus: number
   total: number
 }
@@ -20,22 +23,27 @@ export interface InitiativeRollResult {
  * Minor initiative skills grant +1 flat bonus each
  */
 export function getPlayerInitiativeModifiers(player: PlayerData): InitiativeModifiers {
-  let d6Count = 0
-  let flatBonus = 0
+  const d6Skills: Skill[] = []
+  const flatBonusSkills: Skill[] = []
 
   for (const skill of player.majorSkills) {
     if (InitiativeSkills.includes(skill)) {
-      d6Count++
+      d6Skills.push(skill)
     }
   }
 
   for (const skill of player.minorSkills) {
     if (InitiativeSkills.includes(skill)) {
-      flatBonus++
+      flatBonusSkills.push(skill)
     }
   }
 
-  return { d6Count, flatBonus }
+  return {
+    d6Count: d6Skills.length,
+    flatBonus: flatBonusSkills.length,
+    d6Skills,
+    flatBonusSkills,
+  }
 }
 
 /**
@@ -46,12 +54,33 @@ export function calculatePlayerInitiativeContribution(
   modifiers: InitiativeModifiers
 ): InitiativeRollResult {
   const d20Roll = rollD20()
-  const d6AdvantageRoll = rollD6Advantage(modifiers.d6Count)
+  const d6Details = rollD6AdvantageWithDetails(modifiers.d6Count)
   const { flatBonus } = modifiers
-  const total = d20Roll + d6AdvantageRoll + flatBonus
+  const total = d20Roll + d6Details.highest + flatBonus
 
   return {
     d20Roll,
+    d6Rolls: d6Details.rolls,
+    d6AdvantageRoll: d6Details.highest,
+    flatBonus,
+    total,
+  }
+}
+
+/**
+ * Calculate initiative from manually entered dice values
+ */
+export function calculateManualInitiative(
+  d20Value: number,
+  d6Values: number[],
+  flatBonus: number
+): InitiativeRollResult {
+  const d6AdvantageRoll = d6Values.length > 0 ? Math.max(...d6Values) : 0
+  const total = d20Value + d6AdvantageRoll + flatBonus
+
+  return {
+    d20Roll: d20Value,
+    d6Rolls: d6Values,
     d6AdvantageRoll,
     flatBonus,
     total,

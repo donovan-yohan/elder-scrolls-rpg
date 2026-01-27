@@ -1,6 +1,11 @@
 import { Level } from '$lib/data/level'
 import type { DiceRoll, DiceRollBonus } from '$lib/models/combat'
 
+export interface D6RollDetails {
+  rolls: number[]  // Each individual d6 result (with explosions applied)
+  highest: number  // The highest roll (used as the advantage value)
+}
+
 /**
  * Roll a single d20
  */
@@ -68,6 +73,26 @@ export function rollD6Advantage(count: number): number {
   }
 
   return Math.max(...rolls)
+}
+
+/**
+ * Roll multiple d6s with advantage and return all results
+ * Uses exploding dice rules for each individual die
+ * @param count Number of d6s to roll
+ * @returns Object with all rolls and the highest value
+ */
+export function rollD6AdvantageWithDetails(count: number): D6RollDetails {
+  if (count <= 0) return { rolls: [], highest: 0 }
+
+  const rolls: number[] = []
+  for (let i = 0; i < count; i++) {
+    rolls.push(rollD6Exploding())
+  }
+
+  return {
+    rolls,
+    highest: Math.max(...rolls),
+  }
 }
 
 /**
