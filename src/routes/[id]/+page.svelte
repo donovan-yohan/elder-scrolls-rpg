@@ -66,11 +66,11 @@
 	}
 
 	// Handle entering combat from page
-	function handleEnterCombatFromPage(event: CustomEvent<{ partyInit: number; enemyInit: number }>) {
+	function handleEnterCombatFromPage(detail: { partyInit: number; enemyInit: number }) {
 		const currentPlayer = $playersStore[data.id]
 		if (!currentPlayer) return
 
-		const { partyInit, enemyInit } = event.detail
+		const { partyInit, enemyInit } = detail
 		combatStore.startCombat(
 			currentPlayer.id,
 			partyInit,
@@ -414,8 +414,8 @@
 			<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
 				<EnterCombatModal
 					player={currentPlayer}
-					on:start={handleEnterCombatFromPage}
-					on:cancel={() => showEnterCombatModal = false}
+					onstart={handleEnterCombatFromPage}
+					oncancel={() => showEnterCombatModal = false}
 				/>
 			</div>
 		{/if}

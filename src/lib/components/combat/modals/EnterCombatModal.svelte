@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
 	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton'
 	import type { PlayerData } from '$lib/models/player'
 	import {
@@ -11,37 +10,48 @@
 	} from '$lib/util/initiative.util'
 	import { camelToTitleCase } from '$lib/util/string.util'
 
-	export let player: PlayerData
+	interface Props {
+		player: PlayerData
+		onstart?: (detail: { partyInit: number; enemyInit: number }) => void
+		oncancel?: () => void
+	}
 
-	const dispatch = createEventDispatcher<{
-		start: { partyInit: number; enemyInit: number }
-		cancel: void
-	}>()
+	let { player, onstart, oncancel }: Props = $props()
 
 	// State
-	let rollMode: 'digital' | 'manual' = 'digital'
-	let playerRollResult: InitiativeRollResult | null = null
-	let isRolling = false
+	let rollMode = $state<'digital' | 'manual'>('digital')
+	let playerRollResult = $state<InitiativeRollResult | null>(null)
+	let isRolling = $state(false)
 
 	// Manual entry state
-	let manualD20: number = 10
-	let manualD6Values: number[] = []
+	let manualD20 = $state(10)
+	let manualD6Values = $state<number[]>([])
 
 	// Enemy initiative (always manual entry)
-	let enemyInitiative: number | null = null
+	let enemyInitiative = $state<number | null>(null)
 
 	// Get modifiers with skill tracking
 	const initiativeModifiers: InitiativeModifiers = getPlayerInitiativeModifiers(player)
 
 	// Initialize manual d6 array based on d6Count
-	$: {
+	$effect(() => {
 		if (manualD6Values.length !== initiativeModifiers.d6Count) {
 			manualD6Values = Array(initiativeModifiers.d6Count).fill(1)
 		}
-	}
+	})
+
+	// Reset roll result when switching modes
+	$effect(() => {
+		// Track rollMode to reset result when it changes
+		const _mode = rollMode
+		return () => {
+			// Cleanup runs when rollMode changes - reset the result
+			playerRollResult = null
+		}
+	})
 
 	// Derived: can start combat
-	$: canStartCombat = playerRollResult !== null && enemyInitiative !== null
+	let canStartCombat = $derived(playerRollResult !== null && enemyInitiative !== null)
 
 	async function handleDigitalRoll() {
 		if (isRolling) return
@@ -68,14 +78,14 @@
 
 	function handleConfirm() {
 		if (!playerRollResult || enemyInitiative === null) return
-		dispatch('start', {
+		onstart?.({
 			partyInit: playerRollResult.total,
 			enemyInit: enemyInitiative
 		})
 	}
 
 	function handleCancel() {
-		dispatch('cancel')
+		oncancel?.()
 	}
 </script>
 
@@ -152,7 +162,7 @@
 						<button
 							type="button"
 							class="btn variant-filled-primary"
-							on:click={handleDigitalRoll}
+							onclick={handleDigitalRoll}
 							disabled={isRolling}
 						>
 							{#if isRolling}
@@ -205,7 +215,7 @@
 							<button
 								type="button"
 								class="btn variant-filled-primary"
-								on:click={handleManualSubmit}
+								onclick={handleManualSubmit}
 							>
 								Use These Values
 							</button>
@@ -264,7 +274,7 @@
 				</div>
 
 				<div class="text-center">
-					<button type="button" class="btn btn-sm variant-ghost" on:click={resetRoll}>
+					<button type="button" class="btn btn-sm variant-ghost" onclick={resetRoll}>
 						Roll Again
 					</button>
 				</div>
@@ -288,11 +298,11 @@
 	</div>
 
 	<footer class="flex justify-end gap-2 mt-6">
-		<button type="button" class="btn variant-ghost" on:click={handleCancel}>Cancel</button>
+		<button type="button" class="btn variant-ghost" onclick={handleCancel}>Cancel</button>
 		<button
 			type="button"
 			class="btn variant-filled-primary"
-			on:click={handleConfirm}
+			onclick={handleConfirm}
 			disabled={!canStartCombat}
 		>
 			Start Combat

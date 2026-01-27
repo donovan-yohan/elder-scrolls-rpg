@@ -67,8 +67,8 @@
 		showEnterCombatModal = true
 	}
 
-	function handleCombatStarted(event: CustomEvent<{ partyInit: number; enemyInit: number }>) {
-		const { partyInit, enemyInit } = event.detail
+	function handleCombatStarted(detail: { partyInit: number; enemyInit: number }) {
+		const { partyInit, enemyInit } = detail
 		combatStore.startCombat(
 			player.id,
 			partyInit,
@@ -279,8 +279,8 @@
 		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
 			<EnterCombatModal
 				{player}
-				on:start={handleCombatStarted}
-				on:cancel={() => showEnterCombatModal = false}
+				onstart={handleCombatStarted}
+				oncancel={() => showEnterCombatModal = false}
 			/>
 		</div>
 	{/if}
