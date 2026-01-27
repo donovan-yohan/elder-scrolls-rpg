@@ -4,6 +4,7 @@
 	import type { AvailableAction } from '$lib/models/combatAction'
 	import { combatStore, getCombatSessionStore } from '$lib/stores/combat.store'
 	import { getAvailableActions } from '$lib/util/combat.util'
+	import { Weapons } from '$lib/data/weapons'
 	import CombatHeader from './CombatHeader.svelte'
 	import ResourceBars from './ResourceBars.svelte'
 	import InitiativeTracker from './InitiativeTracker.svelte'
@@ -17,6 +18,12 @@
 	import SpellResolverModal from './modals/SpellResolverModal.svelte'
 	import MoveModal from './modals/MoveModal.svelte'
 	import SwapWeaponModal from './modals/SwapWeaponModal.svelte'
+	import HeftShieldModal from './modals/HeftShieldModal.svelte'
+	import FocusAttackModal from './modals/FocusAttackModal.svelte'
+	import FocusSpellModal from './modals/FocusSpellModal.svelte'
+	import DodgeModal from './modals/DodgeModal.svelte'
+	import BlockModal from './modals/BlockModal.svelte'
+	import UseItemModal from './modals/UseItemModal.svelte'
 	import { ActionType } from '$lib/models/combat'
 
 	interface Props {
@@ -35,6 +42,14 @@
 	// Compute available actions based on current state
 	let availableActions = $derived(session ? getAvailableActions(player, session) : [])
 
+	// Check if player has a shield equipped in offhand
+	let hasShieldEquipped = $derived(() => {
+		const offhandId = session?.combatEquipment?.offhand?.id ?? player.equipment?.offhand?.id
+		if (!offhandId) return false
+		const weapon = Weapons[offhandId]
+		return weapon?.isShield ?? false
+	})
+
 	// Modal states
 	let showEnterCombatModal = $state(false)
 	let showEndCombatModal = $state(false)
@@ -43,9 +58,40 @@
 	let selectedAction = $state<AvailableAction | null>(null)
 	let activeModal = $state<ActionsPanelActionType | null>(null)
 
+	// Turn-based state (reset at turn end)
+	let hasHeftedShield = $state(false)
+	let hasFocusedAttack = $state(false)
+	let hasFocusedSpell = $state(false)
+
 	// Handle ActionsPanel action selection
 	function handleActionSelect(action: ActionsPanelActionType) {
-		activeModal = action
+		if (action === 'attack') {
+			// Create a default attack action with equipped weapon
+			const weaponId = session?.combatEquipment?.weapon?.id ?? player.equipment?.weapon?.id
+			if (weaponId) {
+				selectedAction = {
+					type: ActionType.Attack,
+					name: 'Attack',
+					apCost: 2, // Default AP cost
+					isAvailable: true,
+					weaponId
+				}
+				showAttackResolver = true
+			}
+		} else if (action === 'castSpell') {
+			// For now, open the spell resolver without a pre-selected spell
+			// The modal could be updated to allow spell selection
+			selectedAction = {
+				type: ActionType.CastSpell,
+				name: 'Cast Spell',
+				apCost: 1,
+				mpCost: 1,
+				isAvailable: true
+			}
+			showSpellResolver = true
+		} else {
+			activeModal = action
+		}
 	}
 
 	function handleCloseModal() {
@@ -59,6 +105,45 @@
 
 	function handleSwapWeapon(data: { weaponId: string; materialId: string | null; slot: 'weapon' | 'offhand' }) {
 		combatStore.swapWeapon(player.id, data)
+		activeModal = null
+	}
+
+	function handleHeftShield(apCost: number) {
+		combatStore.spendAP(player.id, apCost)
+		hasHeftedShield = true
+		activeModal = null
+	}
+
+	function handleFocusAttack(result: { success: boolean; isCritical: boolean }) {
+		combatStore.spendAP(player.id, 1)
+		if (result.success) {
+			hasFocusedAttack = true
+		}
+		activeModal = null
+	}
+
+	function handleFocusSpell(result: { success: boolean; extraMPCost: number }) {
+		combatStore.spendAP(player.id, 1)
+		if (result.success) {
+			hasFocusedSpell = true
+			combatStore.spendMP(player.id, result.extraMPCost)
+		}
+		activeModal = null
+	}
+
+	function handleDodge(result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean }) {
+		combatStore.spendInitiative(player.id, 1)
+		activeModal = null
+	}
+
+	function handleBlock(result: { success: boolean; damageReduction: 'full' | 'half' | 'minimal' | 'none' }) {
+		combatStore.spendInitiative(player.id, 1)
+		activeModal = null
+	}
+
+	function handleUseItem(itemId: string) {
+		combatStore.spendAP(player.id, 1)
+		// TODO: Apply item effects and remove from inventory
 		activeModal = null
 	}
 
@@ -99,6 +184,10 @@
 	// Handle turn management
 	function handleEndTurn() {
 		combatStore.endPlayerTurn(player.id, player)
+		// Reset turn-based states
+		hasHeftedShield = false
+		hasFocusedAttack = false
+		hasFocusedSpell = false
 	}
 
 	function handleStartTurn() {
@@ -237,7 +326,8 @@
 				currentAP={session.currentAP}
 				currentMP={session.currentMP}
 				currentInitiative={session.partyInitiativePool.current}
-				hasHeftedShield={false}
+				{hasHeftedShield}
+				hasShieldEquipped={hasShieldEquipped()}
 				onActionSelect={handleActionSelect}
 			/>
 
@@ -344,6 +434,59 @@
 			currentEquipment={session.combatEquipment}
 			currentAP={session.currentAP}
 			onSwap={handleSwapWeapon}
+			onClose={handleCloseModal}
+		/>
+
+		<HeftShieldModal
+			isOpen={activeModal === 'heftShield'}
+			currentAP={session.currentAP}
+			shieldId={session.combatEquipment?.offhand?.id ?? player.equipment?.offhand?.id ?? null}
+			{hasHeftedShield}
+			onHeft={handleHeftShield}
+			onClose={handleCloseModal}
+		/>
+
+		<FocusAttackModal
+			isOpen={activeModal === 'focusAttack'}
+			{player}
+			weaponId={session.combatEquipment?.weapon?.id ?? player.equipment?.weapon?.id ?? null}
+			currentAP={session.currentAP}
+			onFocus={handleFocusAttack}
+			onClose={handleCloseModal}
+		/>
+
+		<FocusSpellModal
+			isOpen={activeModal === 'focusSpell'}
+			{player}
+			currentAP={session.currentAP}
+			currentMP={session.currentMP}
+			onFocus={handleFocusSpell}
+			onClose={handleCloseModal}
+		/>
+
+		<DodgeModal
+			isOpen={activeModal === 'dodge'}
+			{player}
+			currentInitiative={session.partyInitiativePool.current}
+			onDodge={handleDodge}
+			onClose={handleCloseModal}
+		/>
+
+		<BlockModal
+			isOpen={activeModal === 'block'}
+			{player}
+			shieldId={session.combatEquipment?.offhand?.id ?? player.equipment?.offhand?.id ?? null}
+			currentInitiative={session.partyInitiativePool.current}
+			{hasHeftedShield}
+			onBlock={handleBlock}
+			onClose={handleCloseModal}
+		/>
+
+		<UseItemModal
+			isOpen={activeModal === 'useItem'}
+			{player}
+			currentAP={session.currentAP}
+			onUseItem={handleUseItem}
 			onClose={handleCloseModal}
 		/>
 	{/if}

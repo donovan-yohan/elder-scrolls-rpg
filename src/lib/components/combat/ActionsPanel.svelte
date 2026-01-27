@@ -11,16 +11,17 @@
 		currentMP: number
 		currentInitiative: number
 		hasHeftedShield: boolean
+		hasShieldEquipped: boolean
 		onActionSelect: (action: ActionType) => void
 	}
 
-	let { currentAP, currentMP, currentInitiative, hasHeftedShield, onActionSelect }: Props = $props()
+	let { currentAP, currentMP, currentInitiative, hasHeftedShield, hasShieldEquipped, onActionSelect }: Props = $props()
 
 	// Action definitions
 	const movementActions = [
 		{ id: 'move' as const, name: 'Move', cost: '1-3 AP', icon: 'boot', minAP: 1 },
 		{ id: 'swapWeapon' as const, name: 'Swap Weapon', cost: '1 AP', icon: 'sword', minAP: 1 },
-		{ id: 'heftShield' as const, name: 'Heft Shield', cost: '0-3 AP', icon: 'shield', minAP: 0 },
+		{ id: 'heftShield' as const, name: 'Heft Shield', cost: '0-3 AP', icon: 'shield', minAP: 0, requiresShield: true },
 		{ id: 'useItem' as const, name: 'Use Item', cost: '1 AP', icon: 'pouch', minAP: 1 }
 	]
 
@@ -31,14 +32,15 @@
 	]
 
 	const defensiveActions = [
-		{ id: 'block' as const, name: 'Block', cost: '1 Init', icon: 'shield', minInit: 1 },
+		{ id: 'block' as const, name: 'Block', cost: '1 Init', icon: 'shield', minInit: 1, requiresShield: true },
 		{ id: 'dodge' as const, name: 'Dodge', cost: '1 Init', icon: 'running', minInit: 1 },
 		{ id: 'focusSpell' as const, name: 'Focus Spell', cost: '1 AP', icon: 'aura', minAP: 1 }
 	]
 
-	function isDisabled(action: { minAP?: number; minInit?: number }): boolean {
+	function isDisabled(action: { minAP?: number; minInit?: number; requiresShield?: boolean }): boolean {
 		if (action.minAP !== undefined && currentAP < action.minAP) return true
 		if (action.minInit !== undefined && currentInitiative < action.minInit) return true
+		if (action.requiresShield && !hasShieldEquipped) return true
 		return false
 	}
 </script>
