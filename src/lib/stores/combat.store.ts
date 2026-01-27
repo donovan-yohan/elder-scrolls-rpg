@@ -135,8 +135,8 @@ function createCombatStore() {
 				const session: CombatSession = {
 					id: crypto.randomUUID(),
 					playerId,
-					round: 1,
-					isPlayerTurn: partyInitiative >= enemyInitiative,
+					round: 0,
+					isPlayerTurn: false,
 					partyInitiativePool: { current: partyInitiative, max: partyInitiative },
 					enemyInitiativePool: { current: enemyInitiative, max: enemyInitiative },
 					currentHP: playerData.health,

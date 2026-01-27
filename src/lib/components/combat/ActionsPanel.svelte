@@ -43,61 +43,63 @@
 	}
 </script>
 
-<div class="actions-panel grid grid-cols-3 gap-4 p-4">
-	<!-- Movement & Utility Column -->
-	<div class="flex flex-col gap-3">
-		<h3 class="font-bold text-primary-500 text-center border-b border-primary-500/30 pb-2">
-			Movement & Utility
-		</h3>
-		<div class="flex flex-col gap-2">
-			{#each movementActions as action}
-				<ActionTile
-					name={action.name}
-					cost={action.cost}
-					icon={action.icon}
-					color="primary"
-					disabled={isDisabled(action)}
-					onclick={() => onActionSelect(action.id)}
-				/>
-			{/each}
+<div class="card p-4">
+	<div class="grid grid-cols-3 gap-6">
+		<!-- Movement & Utility Column -->
+		<div class="flex flex-col gap-3">
+			<h3 class="font-bold text-primary-500 text-center border-b border-primary-500/30 pb-2 h-12 flex items-center justify-center">
+				Movement & Utility
+			</h3>
+			<div class="flex flex-col gap-2">
+				{#each movementActions as action}
+					<ActionTile
+						name={action.name}
+						cost={action.cost}
+						icon={action.icon}
+						color="primary"
+						disabled={isDisabled(action)}
+						onclick={() => onActionSelect(action.id)}
+					/>
+				{/each}
+			</div>
 		</div>
-	</div>
 
-	<!-- Offensive Column -->
-	<div class="flex flex-col gap-3">
-		<h3 class="font-bold text-error-500 text-center border-b border-error-500/30 pb-2">
-			Offensive
-		</h3>
-		<div class="flex flex-col gap-2">
-			{#each offensiveActions as action}
-				<ActionTile
-					name={action.name}
-					cost={action.cost}
-					icon={action.icon}
-					color="error"
-					disabled={isDisabled(action)}
-					onclick={() => onActionSelect(action.id)}
-				/>
-			{/each}
+		<!-- Offensive Column -->
+		<div class="flex flex-col gap-3">
+			<h3 class="font-bold text-error-500 text-center border-b border-error-500/30 pb-2 h-12 flex items-center justify-center">
+				Offensive
+			</h3>
+			<div class="flex flex-col gap-2">
+				{#each offensiveActions as action}
+					<ActionTile
+						name={action.name}
+						cost={action.cost}
+						icon={action.icon}
+						color="error"
+						disabled={isDisabled(action)}
+						onclick={() => onActionSelect(action.id)}
+					/>
+				{/each}
+			</div>
 		</div>
-	</div>
 
-	<!-- Defensive Column -->
-	<div class="flex flex-col gap-3">
-		<h3 class="font-bold text-success-500 text-center border-b border-success-500/30 pb-2">
-			Defensive
-		</h3>
-		<div class="flex flex-col gap-2">
-			{#each defensiveActions as action}
-				<ActionTile
-					name={action.name}
-					cost={action.cost}
-					icon={action.icon}
-					color="success"
-					disabled={isDisabled(action)}
-					onclick={() => onActionSelect(action.id)}
-				/>
-			{/each}
+		<!-- Defensive Column -->
+		<div class="flex flex-col gap-3">
+			<h3 class="font-bold text-success-500 text-center border-b border-success-500/30 pb-2 h-12 flex items-center justify-center">
+				Defensive
+			</h3>
+			<div class="flex flex-col gap-2">
+				{#each defensiveActions as action}
+					<ActionTile
+						name={action.name}
+						cost={action.cost}
+						icon={action.icon}
+						color="success"
+						disabled={isDisabled(action)}
+						onclick={() => onActionSelect(action.id)}
+					/>
+				{/each}
+			</div>
 		</div>
 	</div>
 </div>

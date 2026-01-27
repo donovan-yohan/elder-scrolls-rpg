@@ -11,11 +11,6 @@
 </script>
 
 <div class="movement-actions space-y-2">
-	<div class="text-center mb-3">
-		<span class="text-sm opacity-75">Current Distance:</span>
-		<span class="badge variant-filled-secondary ml-2">{session.distance}</span>
-	</div>
-
 	{#each moveActions as action}
 		<button
 			type="button"

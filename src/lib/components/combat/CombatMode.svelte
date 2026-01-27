@@ -188,34 +188,40 @@
 <div class="combat-mode">
 	{#if !session}
 		<!-- Not in combat - show enter combat button -->
-		<div class="card p-8 text-center">
-			<h2 class="h2 mb-4">Enter Combat</h2>
-			<p class="text-surface-600-300-token mb-6">
-				Ready to begin combat? You'll roll for initiative and start tracking actions.
-			</p>
-			<button
-				type="button"
-				class="btn variant-filled-primary btn-lg"
-				on:click={handleEnterCombat}
-			>
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-				</svg>
-				Enter Combat
-			</button>
-		</div>
+		<button
+			type="button"
+			class="btn variant-filled-warning btn-lg w-full"
+			onclick={handleEnterCombat}
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+			</svg>
+			Enter Combat
+		</button>
 	{:else}
 		<!-- In combat - show full combat interface -->
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-			<!-- Left Column: Resources & Status -->
-			<div class="space-y-4">
-				<CombatHeader
-					{session}
-					onEndTurn={handleEndTurn}
-					onStartTurn={handleStartTurn}
-					onEndCombat={handleEndCombat}
-				/>
+		<div class="space-y-4">
+			<!-- Top: End Combat button -->
+			<button
+				type="button"
+				class="btn variant-ringed-error btn-lg w-full"
+				onclick={handleEndCombat}
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+				Exit Combat
+			</button>
 
+			<!-- Round/Turn info with buttons -->
+			<CombatHeader
+				{session}
+				onEndTurn={handleEndTurn}
+				onStartTurn={handleStartTurn}
+			/>
+
+			<!-- Resource Bars in 3 columns -->
+			<div class="card p-4">
 				<ResourceBars
 					{session}
 					maxHP={player.maxHealth}
@@ -224,52 +230,59 @@
 					onAdjustMP={handleAdjustMP}
 					onAdjustAP={handleAdjustAP}
 				/>
-
-				<InitiativeTracker
-					partyPool={session.partyInitiativePool}
-					enemyPool={session.enemyInitiativePool}
-					onAdjustParty={(delta) => {
-						if (delta > 0) {
-							combatStore.gainInitiative(player.id, delta)
-						} else {
-							combatStore.spendInitiative(player.id, Math.abs(delta))
-						}
-					}}
-					onAdjustEnemy={(delta) => combatStore.adjustEnemyInitiative(player.id, delta)}
-				/>
-
-				<div class="card p-4">
-					<h3 class="h4 mb-3">Conditions</h3>
-					<ConditionTracker
-						conditions={session.conditions}
-						onRemove={handleRemoveCondition}
-					/>
-				</div>
 			</div>
 
-			<!-- Center Column: Actions -->
-			<div class="space-y-4">
-				<ActionsPanel
-					currentAP={session.currentAP}
-					currentMP={session.currentMP}
-					currentInitiative={session.partyInitiativePool.current}
-					hasHeftedShield={false}
-					onActionSelect={handleActionSelect}
-				/>
+			<!-- Full-width Actions Panel -->
+			<ActionsPanel
+				currentAP={session.currentAP}
+				currentMP={session.currentMP}
+				currentInitiative={session.partyInitiativePool.current}
+				hasHeftedShield={false}
+				onActionSelect={handleActionSelect}
+			/>
 
-				<div class="card p-4">
-					<h3 class="h4 mb-3">Quick Roll</h3>
-					<DiceRoller
-						onRoll={handleQuickRoll}
-						playerLevel={player.level}
-						label="Roll d20"
+			<!-- Three column layout for initiative, quick roll, and log -->
+			<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+				<!-- Left Column: Initiative & Conditions -->
+				<div class="space-y-4">
+					<InitiativeTracker
+						partyPool={session.partyInitiativePool}
+						enemyPool={session.enemyInitiativePool}
+						onAdjustParty={(delta) => {
+							if (delta > 0) {
+								combatStore.gainInitiative(player.id, delta)
+							} else {
+								combatStore.spendInitiative(player.id, Math.abs(delta))
+							}
+						}}
+						onAdjustEnemy={(delta) => combatStore.adjustEnemyInitiative(player.id, delta)}
 					/>
-				</div>
-			</div>
 
-			<!-- Right Column: Combat Log -->
-			<div class="space-y-4">
-				<CombatLog log={session.log} />
+					<div class="card p-4">
+						<h3 class="h4 mb-3">Conditions</h3>
+						<ConditionTracker
+							conditions={session.conditions}
+							onRemove={handleRemoveCondition}
+						/>
+					</div>
+				</div>
+
+				<!-- Center Column: Quick Roll -->
+				<div class="space-y-4">
+					<div class="card p-4">
+						<h3 class="h4 mb-3">Quick Roll</h3>
+						<DiceRoller
+							onRoll={handleQuickRoll}
+							playerLevel={player.level}
+							label="Roll d20"
+						/>
+					</div>
+				</div>
+
+				<!-- Right Column: Combat Log -->
+				<div class="space-y-4">
+					<CombatLog log={session.log} />
+				</div>
 			</div>
 		</div>
 	{/if}

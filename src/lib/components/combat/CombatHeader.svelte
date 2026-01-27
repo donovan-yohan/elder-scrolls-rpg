@@ -4,7 +4,6 @@
 	export let session: CombatSession
 	export let onEndTurn: () => void
 	export let onStartTurn: () => void
-	export let onEndCombat: () => void
 </script>
 
 <header class="combat-header card p-4 variant-soft-surface">
@@ -36,7 +35,7 @@
 				<button
 					type="button"
 					class="btn variant-filled-warning"
-					on:click={onEndTurn}
+					onclick={onEndTurn}
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
@@ -47,7 +46,7 @@
 				<button
 					type="button"
 					class="btn variant-filled-success"
-					on:click={onStartTurn}
+					onclick={onStartTurn}
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -56,25 +55,6 @@
 					Start Turn
 				</button>
 			{/if}
-
-			<button
-				type="button"
-				class="btn variant-ghost-error"
-				on:click={onEndCombat}
-			>
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-				</svg>
-				End Combat
-			</button>
-		</div>
-	</div>
-
-	<!-- Distance Indicator -->
-	<div class="mt-3 pt-3 border-t border-surface-500/20">
-		<div class="flex items-center justify-center gap-2 text-sm">
-			<span class="opacity-75">Current Distance:</span>
-			<span class="badge variant-filled-secondary">{session.distance}</span>
 		</div>
 	</div>
 </header>

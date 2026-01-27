@@ -20,7 +20,7 @@
 	}
 </script>
 
-<div class="resource-bars space-y-4">
+<div class="resource-bars grid grid-cols-3 gap-4">
 	<!-- HP Bar -->
 	<div class="resource-row">
 		<div class="flex items-center justify-between mb-1">

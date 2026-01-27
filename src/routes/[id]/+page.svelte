@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation'
+	import { browser } from '$app/environment'
 	import { getModalStore, RadioGroup, RadioItem } from '@skeletonlabs/skeleton'
 	import { Level } from '$lib/data/level'
 	import { playersStore } from '$lib/stores/persisted.store'
@@ -419,6 +420,13 @@
 				/>
 			</div>
 		{/if}
+	{:else if !browser}
+		<!-- Loading state while hydrating -->
+		<div class="card p-12 text-center">
+			<div class="placeholder-circle w-16 h-16 mx-auto mb-4 animate-pulse"></div>
+			<div class="placeholder h-8 w-48 mx-auto mb-4"></div>
+			<div class="placeholder h-4 w-64 mx-auto"></div>
+		</div>
 	{:else}
 		<!-- Player Not Found State -->
 		<div class="card p-12 text-center variant-soft-error">
