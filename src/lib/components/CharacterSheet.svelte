@@ -154,6 +154,8 @@
 				maxActionPoints: newMaxAP,
 				actionPoints: newMaxAP,
 				maxSpiritPoints: newMaxSpiritPoints,
+				spiritPoints: newMaxSpiritPoints,
+				currentSpiritPoints: newMaxSpiritPoints,
 			})
 		}
 
