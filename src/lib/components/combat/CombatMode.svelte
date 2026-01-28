@@ -11,6 +11,7 @@
 	import InitiativeTracker from './InitiativeTracker.svelte'
 	import ConditionTracker from './ConditionTracker.svelte'
 	import CombatLog from './CombatLog.svelte'
+	import MisfortuneTracker from './MisfortuneTracker.svelte'
 	import ActionsPanel, { type ActionType as ActionsPanelActionType } from './ActionsPanel.svelte'
 	import DiceRoller from './DiceRoller/DiceRoller.svelte'
 	import EnterCombatModal from './modals/EnterCombatModal.svelte'
@@ -174,8 +175,14 @@
 		activeModal = null
 	}
 
-	function handleDodge(result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean }) {
+	function handleDodge(result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean; storedMisfortune?: boolean }) {
 		combatStore.spendInitiative(player.id, 1)
+
+		// Handle stored misfortune
+		if (result.storedMisfortune) {
+			combatStore.addMisfortune(player.id, 1)
+		}
+
 		activeModal = null
 	}
 
@@ -768,6 +775,7 @@
 			isOpen={activeModal === 'dodge'}
 			{player}
 			currentInitiative={session.partyInitiativePool.current}
+			currentMisfortune={session.misfortunePoints}
 			onDodge={handleDodge}
 			onClose={handleCloseModal}
 		/>

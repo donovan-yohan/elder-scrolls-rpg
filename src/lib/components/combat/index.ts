@@ -8,6 +8,7 @@ export { default as CombatLog } from './CombatLog.svelte'
 export { default as ActionPanel } from './ActionPanel.svelte'
 export { default as ActionsPanel } from './ActionsPanel.svelte'
 export { default as ActionTile } from './ActionTile.svelte'
+export { default as MisfortuneTracker } from './MisfortuneTracker.svelte'
 
 // DiceRoller components
 export { default as DiceRoller } from './DiceRoller/DiceRoller.svelte'
@@ -29,3 +30,4 @@ export { default as SpellResolverModal } from './modals/SpellResolverModal.svelt
 export { default as MoveModal } from './modals/MoveModal.svelte'
 export { default as SwapWeaponModal } from './modals/SwapWeaponModal.svelte'
 export { default as SpiritRecoveryModal } from './modals/SpiritRecoveryModal.svelte'
+export { default as CriticalFailModal } from './modals/CriticalFailModal.svelte'
