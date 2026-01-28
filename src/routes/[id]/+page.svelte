@@ -53,9 +53,15 @@
 	}
 
 	// Handle combat ended event from CombatMode
-	function handleCombatEnded(combatResult: { health: number; magicka: number; equipment: Equipment }) {
+	function handleCombatEnded(combatResult: {
+		health: number
+		magicka: number
+		equipment: Equipment
+		fortunePoints: number
+		misfortunePoints: number
+	}) {
 		// The CombatMode component calls combatStore.endCombat and passes the result
-		// We sync health, magicka, and equipment changes back to the player
+		// We sync health, magicka, equipment, and fortune changes back to the player
 		playersStore.update(players => {
 			const player = players[data.id]
 			if (player && combatResult) {
@@ -85,6 +91,8 @@
 				equipment: currentPlayer.equipment,
 				level: currentPlayer.level,
 				currentSpiritPoints: currentPlayer.currentSpiritPoints,
+				fortunePoints: currentPlayer.fortunePoints,
+				misfortunePoints: currentPlayer.misfortunePoints,
 			}
 		)
 		showEnterCombatModal = false

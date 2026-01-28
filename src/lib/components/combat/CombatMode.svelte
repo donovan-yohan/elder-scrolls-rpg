@@ -30,12 +30,23 @@
 	import ComplicationRollModal from './modals/ComplicationRollModal.svelte'
 	import SpiritPointsTracker from './SpiritPointsTracker.svelte'
 	import ComplicationsDisplay from './ComplicationsDisplay.svelte'
+	import FortuneDisplay from './FortuneDisplay.svelte'
+	import FortuneChoiceModal from './modals/FortuneChoiceModal.svelte'
+	import MisfortuneChoiceModal from './modals/MisfortuneChoiceModal.svelte'
+	import UseFortuneModal from './modals/UseFortuneModal.svelte'
 	import { ActionType, ConditionType } from '$lib/models/combat'
+	import type { DiceRoll } from '$lib/models/combat'
 	import { DamageType } from '$lib/data/element'
 
 	interface Props {
 		player: PlayerData
-		onCombatEnded?: (data: { health: number; magicka: number; equipment: Equipment }) => void
+		onCombatEnded?: (data: {
+			health: number
+			magicka: number
+			equipment: Equipment
+			fortunePoints: number
+			misfortunePoints: number
+		}) => void
 		onPlayerUpdate?: (player: PlayerData) => void
 	}
 
@@ -83,6 +94,17 @@
 
 	// Take damage modal state
 	let showTakeDamageModal = $state(false)
+
+	// Fortune/Misfortune modal state
+	let showFortuneChoice = $state(false)
+	let showMisfortuneChoice = $state(false)
+	let showUseFortuneModal = $state(false)
+	let pendingRoll = $state<{
+		roll: DiceRoll
+		targetDC?: number
+		rollType: string
+		onComplete: (roll: DiceRoll, success: boolean, usedFortune: boolean) => void
+	} | null>(null)
 
 	// Handle ActionsPanel action selection
 	function handleActionSelect(action: ActionsPanelActionType) {
@@ -251,6 +273,8 @@
 				equipment: player.equipment,
 				level: player.level,
 				currentSpiritPoints: player.currentSpiritPoints,
+				fortunePoints: player.fortunePoints,
+				misfortunePoints: player.misfortunePoints,
 			}
 		)
 		showEnterCombatModal = false
@@ -408,8 +432,110 @@
 		combatStore.removeCondition(player.id, condition.type)
 	}
 
+	// Fortune/Misfortune handlers
+	function handleFortuneChoice(choice: 'keep' | 'store') {
+		if (!pendingRoll) return
+
+		if (choice === 'store') {
+			combatStore.gainFortune(player.id)
+			// Treat as non-crit roll
+			const nonCritRoll = { ...pendingRoll.roll, isCritical: false }
+			const success = pendingRoll.targetDC !== undefined
+				? nonCritRoll.total >= pendingRoll.targetDC
+				: true
+			pendingRoll.onComplete(nonCritRoll, success, false)
+		} else {
+			// Keep crit - pass through as-is
+			pendingRoll.onComplete(pendingRoll.roll, true, false)
+		}
+
+		showFortuneChoice = false
+		pendingRoll = null
+	}
+
+	function handleMisfortuneChoice(choice: 'accept' | 'store') {
+		if (!pendingRoll) return
+
+		if (choice === 'store') {
+			combatStore.gainMisfortune(player.id)
+			// Treat as normal failure (not crit fail)
+			const nonCritFailRoll = { ...pendingRoll.roll, isCriticalFail: false }
+			pendingRoll.onComplete(nonCritFailRoll, false, false)
+		} else {
+			// Accept crit fail
+			pendingRoll.onComplete(pendingRoll.roll, false, false)
+		}
+
+		showMisfortuneChoice = false
+		pendingRoll = null
+	}
+
+	function handleUseFortuneChoice(useFortune: boolean) {
+		if (!pendingRoll) return
+
+		if (useFortune && session && session.fortunePoints > 0) {
+			// Spend fortune and convert to crit success
+			combatStore.spendFortune(player.id)
+
+			// If original was crit fail, also gain misfortune
+			if (pendingRoll.roll.isCriticalFail) {
+				combatStore.gainMisfortune(player.id)
+			}
+
+			// Create crit success roll
+			const critRoll: DiceRoll = {
+				...pendingRoll.roll,
+				isCritical: true,
+				isCriticalFail: false,
+			}
+			pendingRoll.onComplete(critRoll, true, true)
+		} else {
+			// Keep original roll
+			const success = pendingRoll.targetDC !== undefined
+				? (pendingRoll.roll.total >= pendingRoll.targetDC || pendingRoll.roll.isCritical)
+				: !pendingRoll.roll.isCriticalFail
+			pendingRoll.onComplete(pendingRoll.roll, success, false)
+		}
+
+		showUseFortuneModal = false
+		pendingRoll = null
+	}
+
+	// Wrapper for rolls that should trigger fortune system
+	function handleRollWithFortune(
+		roll: DiceRoll,
+		targetDC: number | undefined,
+		rollType: string,
+		onComplete: (roll: DiceRoll, success: boolean, usedFortune: boolean) => void
+	) {
+		// Check for critical success - offer choice
+		if (roll.isCritical) {
+			pendingRoll = { roll, targetDC, rollType, onComplete }
+			showFortuneChoice = true
+			return
+		}
+
+		// Check for critical failure - offer choice
+		if (roll.isCriticalFail) {
+			pendingRoll = { roll, targetDC, rollType, onComplete }
+			showMisfortuneChoice = true
+			return
+		}
+
+		// Normal roll - check if player wants to use fortune
+		const success = targetDC !== undefined ? roll.total >= targetDC : true
+		if (!success && session && session.fortunePoints > 0) {
+			pendingRoll = { roll, targetDC, rollType, onComplete }
+			showUseFortuneModal = true
+			return
+		}
+
+		// No fortune interaction needed
+		onComplete(roll, success, false)
+	}
+
 	// Handle quick roll (for generic d20 rolls)
-	function handleQuickRoll(roll: import('$lib/models/combat').DiceRoll, success: boolean, margin: number) {
+	function handleQuickRoll(roll: DiceRoll, success: boolean, margin: number) {
 		// Could log the roll or display it
 		console.log('Quick roll:', roll.total, success ? 'success' : 'fail')
 	}
@@ -474,7 +600,7 @@
 
 			<!-- Three column layout for initiative, quick roll, and log -->
 			<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-				<!-- Left Column: Initiative & Conditions -->
+				<!-- Left Column: Initiative, Conditions & Fortune -->
 				<div class="space-y-4">
 					<InitiativeTracker
 						partyPool={session.partyInitiativePool}
@@ -511,6 +637,12 @@
 							/>
 						</div>
 					</div>
+
+					<FortuneDisplay
+						fortunePoints={session.fortunePoints}
+						misfortunePoints={session.misfortunePoints}
+						onSpendMisfortune={() => combatStore.spendMisfortune(player.id)}
+					/>
 				</div>
 
 				<!-- Center Column: Quick Roll -->
@@ -672,6 +804,42 @@
 			equipment={session?.combatEquipment ?? player.equipment}
 			onComplete={handleComplicationComplete}
 			onCancel={handleComplicationCancel}
+		/>
+	{/if}
+
+	<!-- Fortune System Modals -->
+	{#if showFortuneChoice && pendingRoll}
+		<FortuneChoiceModal
+			isOpen={true}
+			roll={pendingRoll.roll}
+			targetDC={pendingRoll.targetDC}
+			rollType={pendingRoll.rollType}
+			onKeepCrit={() => handleFortuneChoice('keep')}
+			onStoreFortune={() => handleFortuneChoice('store')}
+		/>
+	{/if}
+
+	{#if showMisfortuneChoice && pendingRoll}
+		<MisfortuneChoiceModal
+			isOpen={true}
+			roll={pendingRoll.roll}
+			targetDC={pendingRoll.targetDC}
+			rollType={pendingRoll.rollType}
+			onAcceptCritFail={() => handleMisfortuneChoice('accept')}
+			onStoreMisfortune={() => handleMisfortuneChoice('store')}
+		/>
+	{/if}
+
+	{#if showUseFortuneModal && pendingRoll && session}
+		<UseFortuneModal
+			isOpen={true}
+			fortunePoints={session.fortunePoints}
+			roll={pendingRoll.roll}
+			targetDC={pendingRoll.targetDC}
+			rollType={pendingRoll.rollType}
+			isCriticalFail={pendingRoll.roll.isCriticalFail}
+			onUseFortune={() => handleUseFortuneChoice(true)}
+			onDecline={() => handleUseFortuneChoice(false)}
 		/>
 	{/if}
 </div>

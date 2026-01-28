@@ -110,6 +110,9 @@ export interface CombatSession {
   concentrationSpellId?: string
   isConcentrationBroken: boolean
   combatEquipment: Equipment
+  // Fortune tracking (synced from player at combat start, updated during combat)
+  fortunePoints: number
+  misfortunePoints: number
 }
 
 export function createCombatLogEntry(

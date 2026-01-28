@@ -18,6 +18,10 @@
 		disabled?: boolean
 		label?: string
 		subSkills?: SubSkill[]
+		// Fortune integration
+		fortunePoints?: number
+		onUseFortune?: () => void
+		showFortuneOption?: boolean
 	}
 
 	let {
@@ -30,6 +34,9 @@
 		disabled = false,
 		label = 'Roll',
 		subSkills = [],
+		fortunePoints = 0,
+		onUseFortune,
+		showFortuneOption = false,
 	}: Props = $props()
 
 	let mode: 'digital' | 'manual' = $state('digital')
@@ -39,6 +46,16 @@
 	let selectedSubskill: SubSkill | null = $state(null)
 
 	let subskillBonus = $derived(selectedSubskill ? getSubskillBonus(playerLevel) : 0)
+
+	// Fortune pre-roll option
+	let showFortunePreRoll = $state(false)
+
+	function handleUseFortunePreRoll() {
+		if (onUseFortune && fortunePoints > 0) {
+			onUseFortune()
+			showFortunePreRoll = false
+		}
+	}
 
 	async function handleDigitalRoll() {
 		if (disabled || isRolling) return
@@ -130,6 +147,41 @@
 	{#if subSkills.length > 0}
 		<div class="mb-4">
 			<SubskillPicker {subSkills} {playerLevel} bind:selectedSubskill />
+		</div>
+	{/if}
+
+	<!-- Fortune Pre-Roll Option -->
+	{#if showFortuneOption && fortunePoints > 0 && !lastRoll}
+		<div class="mb-4">
+			{#if showFortunePreRoll}
+				<div class="card variant-soft-tertiary p-3 space-y-2">
+					<p class="text-sm">Use Fortune before rolling for automatic critical success?</p>
+					<div class="flex gap-2">
+						<button
+							type="button"
+							class="btn btn-sm variant-filled-tertiary"
+							onclick={handleUseFortunePreRoll}
+						>
+							Use Fortune ({fortunePoints})
+						</button>
+						<button
+							type="button"
+							class="btn btn-sm variant-ghost"
+							onclick={() => showFortunePreRoll = false}
+						>
+							Roll Normally
+						</button>
+					</div>
+				</div>
+			{:else}
+				<button
+					type="button"
+					class="btn btn-sm variant-ghost-tertiary w-full"
+					onclick={() => showFortunePreRoll = true}
+				>
+					Use Fortune Point? ({fortunePoints} available)
+				</button>
+			{/if}
 		</div>
 	{/if}
 

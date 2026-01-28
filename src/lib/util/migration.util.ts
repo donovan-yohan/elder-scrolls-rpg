@@ -62,11 +62,17 @@ export function migratePlayerData(player: PlayerData): PlayerData {
 	// Migrate complications - add empty array if missing
 	const complications = playerAny.complications ?? []
 
+	// Migrate fortune/misfortune points - add defaults if missing
+	const fortunePoints = playerAny.fortunePoints ?? 0
+	const misfortunePoints = playerAny.misfortunePoints ?? 0
+
 	return {
 		...player,
 		equipment: migratePlayerEquipment(player.equipment as Equipment | LegacyEquipment),
 		ownedWeapons,
 		currentSpiritPoints,
 		complications,
+		fortunePoints,
+		misfortunePoints,
 	}
 }

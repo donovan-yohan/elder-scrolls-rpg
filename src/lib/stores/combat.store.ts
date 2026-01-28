@@ -124,6 +124,8 @@ function createCombatStore() {
 				equipment?: Equipment
 				level: number
 				currentSpiritPoints: number
+				fortunePoints?: number
+				misfortunePoints?: number
 			}
 		): void => {
 			update((state) => {
@@ -162,6 +164,8 @@ function createCombatStore() {
 					concentrationSpellId: undefined,
 					isConcentrationBroken: false,
 					combatEquipment: equipmentSnapshot,
+					fortunePoints: playerData.fortunePoints ?? 0,
+					misfortunePoints: playerData.misfortunePoints ?? 0,
 				}
 				return { ...state, [playerId]: session }
 			})
@@ -170,8 +174,22 @@ function createCombatStore() {
 		/**
 		 * End combat session for a player
 		 */
-		endCombat: (playerId: string): { health: number; magicka: number; equipment: Equipment; currentSpiritPoints: number } | null => {
-			let finalState: { health: number; magicka: number; equipment: Equipment; currentSpiritPoints: number } | null = null
+		endCombat: (playerId: string): {
+			health: number
+			magicka: number
+			equipment: Equipment
+			currentSpiritPoints: number
+			fortunePoints: number
+			misfortunePoints: number
+		} | null => {
+			let finalState: {
+				health: number
+				magicka: number
+				equipment: Equipment
+				currentSpiritPoints: number
+				fortunePoints: number
+				misfortunePoints: number
+			} | null = null
 
 			update((state) => {
 				const session = state[playerId]
@@ -181,6 +199,8 @@ function createCombatStore() {
 						magicka: session.currentMP,
 						equipment: session.combatEquipment,
 						currentSpiritPoints: session.currentSpiritPoints,
+						fortunePoints: session.fortunePoints,
+						misfortunePoints: session.misfortunePoints,
 					}
 				}
 				const newState = { ...state }
@@ -345,6 +365,84 @@ function createCombatStore() {
 					}
 				}
 			})
+		},
+
+		/**
+		 * Gain a Fortune point (when storing a critical success)
+		 */
+		gainFortune: (playerId: string): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						fortunePoints: session.fortunePoints + 1,
+						log: [...session.log, createCombatLogEntry('system', 'Stored 1 Fortune point')]
+					}
+				}
+			})
+		},
+
+		/**
+		 * Spend a Fortune point (when using it on a roll)
+		 */
+		spendFortune: (playerId: string): boolean => {
+			let spent = false
+			update((state) => {
+				const session = state[playerId]
+				if (!session || session.fortunePoints <= 0) return state
+				spent = true
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						fortunePoints: session.fortunePoints - 1,
+						log: [...session.log, createCombatLogEntry('system', 'Spent 1 Fortune point')]
+					}
+				}
+			})
+			return spent
+		},
+
+		/**
+		 * Gain a Misfortune point (when a critical failure is stored or Fortune used on crit fail)
+		 */
+		gainMisfortune: (playerId: string): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						misfortunePoints: session.misfortunePoints + 1,
+						log: [...session.log, createCombatLogEntry('system', 'Gained 1 Misfortune point (stored for GM)')]
+					}
+				}
+			})
+		},
+
+		/**
+		 * Spend a Misfortune point (GM invokes it)
+		 */
+		spendMisfortune: (playerId: string): boolean => {
+			let spent = false
+			update((state) => {
+				const session = state[playerId]
+				if (!session || session.misfortunePoints <= 0) return state
+				spent = true
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						misfortunePoints: session.misfortunePoints - 1,
+						log: [...session.log, createCombatLogEntry('system', 'GM spent 1 Misfortune point')]
+					}
+				}
+			})
+			return spent
 		},
 
 		/**
