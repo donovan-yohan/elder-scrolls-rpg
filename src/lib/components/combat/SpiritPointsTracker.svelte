@@ -20,9 +20,7 @@
 	<div class="flex gap-1 mb-3">
 		{#each Array(max) as _, i}
 			<div
-				class="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-				class:bg-secondary-500={i < current}
-				class:bg-surface-500/30={i >= current}
+				class="w-8 h-8 rounded-full flex items-center justify-center transition-colors {i < current ? 'bg-secondary-500' : 'bg-surface-500/30'}"
 			>
 				{#if i < current}
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
