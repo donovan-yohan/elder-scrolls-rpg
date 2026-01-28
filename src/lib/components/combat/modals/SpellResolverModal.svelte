@@ -3,6 +3,7 @@
 	import { getSpellById, SpellDC } from '$lib/data/spells'
 	import type { DiceRoll } from '$lib/models/combat'
 	import type { AvailableAction } from '$lib/models/combatAction'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
 	import { getSkillBonus } from '$lib/util/combat.util'
@@ -10,11 +11,14 @@
 	interface Props {
 		player: PlayerData
 		action: AvailableAction
+		currentMP: number
+		currentHP: number
 		onComplete: (result: { mpSpent: number; isCritical: boolean; apCost: number; success: boolean }) => void
 		onCancel: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { player, action, onComplete, onCancel }: Props = $props()
+	let { player, action, currentMP, currentHP, onComplete, onCancel, onMagickaBurst }: Props = $props()
 
 	// Get spell from action
 	let spell = $derived(action.spellId ? getSpellById(action.spellId) : null)
@@ -30,6 +34,12 @@
 		skillCheckRoll = roll
 		spellSuccess = success
 		step = 'result'
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
 	function handleConfirm() {
@@ -61,6 +71,10 @@
 			targetDC={spellDC}
 			playerLevel={player.level}
 			label="Roll Skill Check"
+			showMagickaBurst={true}
+			{currentMP}
+			{currentHP}
+			onMagickaBurst={handleMagickaBurst}
 		/>
 	{:else}
 		<div class="space-y-4">
