@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { getModalStore } from '@skeletonlabs/skeleton'
-	import type { PlayerData, Equipment } from '$lib/models/player'
+	import type { PlayerData, Equipment, Complication } from '$lib/models/player'
 	import type { AvailableAction } from '$lib/models/combatAction'
 	import { combatStore, getCombatSessionStore } from '$lib/stores/combat.store'
 	import { getAvailableActions } from '$lib/util/combat.util'
 	import { Weapons } from '$lib/data/weapons'
+	import { calculateEffectiveMaxHealth, calculateEffectiveMaxMagicka, calculateEffectiveMaxAP } from '$lib/util/stats.util'
 	import CombatHeader from './CombatHeader.svelte'
 	import ResourceBars from './ResourceBars.svelte'
 	import InitiativeTracker from './InitiativeTracker.svelte'
@@ -26,15 +27,19 @@
 	import UseItemModal from './modals/UseItemModal.svelte'
 	import TakeDamageModal from './modals/TakeDamageModal.svelte'
 	import SpiritRecoveryModal from './modals/SpiritRecoveryModal.svelte'
+	import ComplicationRollModal from './modals/ComplicationRollModal.svelte'
+	import SpiritPointsTracker from './SpiritPointsTracker.svelte'
+	import ComplicationsDisplay from './ComplicationsDisplay.svelte'
 	import { ActionType, ConditionType } from '$lib/models/combat'
 	import { DamageType } from '$lib/data/element'
 
 	interface Props {
 		player: PlayerData
 		onCombatEnded?: (data: { health: number; magicka: number; equipment: Equipment }) => void
+		onPlayerUpdate?: (player: PlayerData) => void
 	}
 
-	let { player, onCombatEnded }: Props = $props()
+	let { player, onCombatEnded, onPlayerUpdate }: Props = $props()
 
 	const modalStore = getModalStore()
 
@@ -53,6 +58,11 @@
 		return weapon?.isShield ?? false
 	})
 
+	// Effective max stats after complications
+	let effectiveMaxHP = $derived(calculateEffectiveMaxHealth(player))
+	let effectiveMaxMP = $derived(calculateEffectiveMaxMagicka(player))
+	let effectiveMaxAP = $derived(calculateEffectiveMaxAP(player))
+
 	// Modal states
 	let showEnterCombatModal = $state(false)
 	let showEndCombatModal = $state(false)
@@ -61,6 +71,10 @@
 	let showSpiritRecoveryModal = $state(false)
 	let selectedAction = $state<AvailableAction | null>(null)
 	let activeModal = $state<ActionsPanelActionType | null>(null)
+
+	// Complication modal state
+	let showComplicationModal = $state(false)
+	let pendingDamageAmount = $state(0)
 
 	// Turn-based state (reset at turn end)
 	let hasHeftedShield = $state(false)
@@ -152,6 +166,71 @@
 		combatStore.spendAP(player.id, 1)
 		// TODO: Apply item effects and remove from inventory
 		activeModal = null
+	}
+
+	// Handle damage that might trigger spirit point usage
+	function handlePotentialLethalDamage(damage: number) {
+		if (!session) return
+
+		if (combatStore.checkLethalDamage(player.id, damage)) {
+			// Check if player has spirit points
+			if (player.spiritPoints > 0) {
+				pendingDamageAmount = damage
+				showComplicationModal = true
+			} else {
+				// No spirit points - player is dying/unconscious
+				combatStore.takeDamage(player.id, damage)
+				// Could trigger unconscious state here
+			}
+		} else {
+			combatStore.takeDamage(player.id, damage)
+		}
+	}
+
+	// Handle complication roll completion
+	function handleComplicationComplete(complication: Complication) {
+		// Add complication to player
+		if (onPlayerUpdate) {
+			const newComplications = [...player.complications, complication]
+			const newSpiritPoints = Math.max(0, player.spiritPoints - 1)
+
+			onPlayerUpdate({
+				...player,
+				complications: newComplications,
+				spiritPoints: newSpiritPoints,
+				// Reset HP/MP/AP to new effective maximums
+				health: calculateEffectiveMaxHealth({ ...player, complications: newComplications }),
+				magicka: calculateEffectiveMaxMagicka({ ...player, complications: newComplications }),
+				actionPoints: calculateEffectiveMaxAP({ ...player, complications: newComplications }),
+			})
+		}
+
+		// Update combat session HP to new max
+		if (session) {
+			const newEffectiveMaxHP = calculateEffectiveMaxHealth({ ...player, complications: [...player.complications, complication] })
+			// Reset combat HP to new max
+			combatStore.heal(player.id, newEffectiveMaxHP, newEffectiveMaxHP)
+		}
+
+		showComplicationModal = false
+		pendingDamageAmount = 0
+	}
+
+	function handleComplicationCancel() {
+		// Player chose not to spend spirit point - apply the damage normally
+		combatStore.takeDamage(player.id, pendingDamageAmount)
+		showComplicationModal = false
+		pendingDamageAmount = 0
+	}
+
+	// Handle healing a complication (outside combat, typically)
+	function handleHealComplication(complicationId: string) {
+		if (onPlayerUpdate) {
+			onPlayerUpdate({
+				...player,
+				complications: player.complications.filter(c => c.id !== complicationId),
+			})
+		}
 	}
 
 	// Handle entering combat
@@ -271,7 +350,7 @@
 	// Handle resource adjustments
 	function handleAdjustHP(amount: number) {
 		if (amount > 0) {
-			combatStore.heal(player.id, amount, player.maxHealth)
+			combatStore.heal(player.id, amount, effectiveMaxHP)
 		} else {
 			// Open the take damage modal for damage input with type selection
 			showTakeDamageModal = true
@@ -375,8 +454,8 @@
 			<div class="card p-4">
 				<ResourceBars
 					{session}
-					maxHP={player.maxHealth}
-					maxMP={player.maxMagicka}
+					maxHP={effectiveMaxHP}
+					maxMP={effectiveMaxMP}
 					onAdjustHP={handleAdjustHP}
 					onAdjustMP={handleAdjustMP}
 					onAdjustAP={handleAdjustAP}
@@ -416,6 +495,21 @@
 							conditions={session.conditions}
 							onRemove={handleRemoveCondition}
 						/>
+					</div>
+
+					<div class="card p-4">
+						<h3 class="h4 mb-3">Spirit & Wounds</h3>
+						<SpiritPointsTracker
+							current={player.spiritPoints}
+							max={player.maxSpiritPoints}
+						/>
+						<div class="mt-4">
+							<h4 class="font-semibold text-sm mb-2">Active Complications</h4>
+							<ComplicationsDisplay
+								complications={player.complications}
+								equipment={player.equipment}
+							/>
+						</div>
 					</div>
 				</div>
 
@@ -568,6 +662,16 @@
 			isOpen={showTakeDamageModal}
 			onTakeDamage={handleTakeDamage}
 			onClose={() => showTakeDamageModal = false}
+		/>
+	{/if}
+
+	{#if showComplicationModal}
+		<ComplicationRollModal
+			isOpen={showComplicationModal}
+			{player}
+			equipment={session?.combatEquipment ?? player.equipment}
+			onComplete={handleComplicationComplete}
+			onCancel={handleComplicationCancel}
 		/>
 	{/if}
 </div>

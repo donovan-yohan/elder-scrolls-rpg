@@ -15,6 +15,13 @@ export interface OwnedWeapon {
 	materialId: string | null
 }
 
+export interface Complication {
+	id: string
+	type: 'hp' | 'ap' | 'mp' | 'equipment'
+	equipmentSlot?: 'weapon' | 'offhand' | 'armor' // Only for equipment type
+	timestamp: string
+}
+
 export interface EquipmentSlot {
 	id: string | null
 	materialId: string | null
@@ -51,6 +58,9 @@ export type PlayerData = {
 	inventory: InventoryItem[]
 	ownedWeapons: OwnedWeapon[]
 	notes: string
+	spiritPoints: number
+	maxSpiritPoints: number
+	complications: Complication[]
 	createdAt: string
 	updatedAt: string
 }
@@ -83,6 +93,9 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	inventory: [],
 	ownedWeapons: [],
 	notes: '',
+	spiritPoints: 1,
+	maxSpiritPoints: 1,
+	complications: [],
 	createdAt: '',
 	updatedAt: '',
 }

@@ -1,4 +1,4 @@
-import type { PlayerData } from '$lib/models/player'
+import type { PlayerData, Complication } from '$lib/models/player'
 import { Skill } from '$lib/data/skill'
 import { SpellSkills } from '$lib/data/skill'
 import { Archetypes } from '$lib/data/archetype'
@@ -6,6 +6,9 @@ import { BirthSigns } from '$lib/data/birthSign'
 import { RaceName } from '$lib/data/race'
 import { Level } from '$lib/data/level'
 import { calculateMaxSpiritPoints } from './spiritPoints.util'
+
+// Re-export for backwards compatibility
+export { calculateMaxSpiritPoints }
 
 /**
  * Calculate subskill bonus based on player level.
@@ -241,19 +244,90 @@ export function hasMagicSkills(player: PlayerData): boolean {
 }
 
 /**
+ * Count complications by type for a player.
+ */
+export function countComplications(complications: Complication[]): {
+	hp: number
+	ap: number
+	mp: number
+	equipment: number
+} {
+	return complications.reduce(
+		(acc, c) => {
+			acc[c.type]++
+			return acc
+		},
+		{ hp: 0, ap: 0, mp: 0, equipment: 0 }
+	)
+}
+
+/**
+ * Calculate effective max health after complications.
+ */
+export function calculateEffectiveMaxHealth(player: PlayerData): number {
+	const baseMax = calculateMaxHealth(player)
+	const hpComplications = player.complications.filter(c => c.type === 'hp').length
+	return Math.max(1, baseMax - hpComplications)
+}
+
+/**
+ * Calculate effective max magicka after complications.
+ */
+export function calculateEffectiveMaxMagicka(player: PlayerData): number {
+	const baseMax = calculateMaxMagicka(player)
+	const mpComplications = player.complications.filter(c => c.type === 'mp').length
+	return Math.max(0, baseMax - mpComplications)
+}
+
+/**
+ * Calculate effective max AP after complications.
+ */
+export function calculateEffectiveMaxAP(player: PlayerData): number {
+	const baseMax = calculateMaxAP(player)
+	const apComplications = player.complications.filter(c => c.type === 'ap').length
+	return Math.max(1, baseMax - apComplications)
+}
+
+/**
+ * Check if an equipment slot is damaged.
+ */
+export function isEquipmentDamaged(
+	complications: Complication[],
+	slot: 'weapon' | 'offhand' | 'armor'
+): boolean {
+	return complications.some(c => c.type === 'equipment' && c.equipmentSlot === slot)
+}
+
+/**
+ * Get all damaged equipment slots.
+ */
+export function getDamagedEquipmentSlots(complications: Complication[]): ('weapon' | 'offhand' | 'armor')[] {
+	return complications
+		.filter(c => c.type === 'equipment' && c.equipmentSlot)
+		.map(c => c.equipmentSlot as 'weapon' | 'offhand' | 'armor')
+}
+
+/**
  * Calculate all derived stats for a player.
  * Convenience function that returns all calculated max stats.
+ * Includes both base and effective (after complications) values.
  */
 export function calculateAllStats(player: PlayerData): {
 	maxHealth: number
 	maxMagicka: number
 	maxAP: number
+	effectiveMaxHealth: number
+	effectiveMaxMagicka: number
+	effectiveMaxAP: number
 	maxSpiritPoints: number
 } {
 	return {
 		maxHealth: calculateMaxHealth(player),
 		maxMagicka: calculateMaxMagicka(player),
 		maxAP: calculateMaxAP(player),
+		effectiveMaxHealth: calculateEffectiveMaxHealth(player),
+		effectiveMaxMagicka: calculateEffectiveMaxMagicka(player),
+		effectiveMaxAP: calculateEffectiveMaxAP(player),
 		maxSpiritPoints: calculateMaxSpiritPoints(player.level),
 	}
 }

@@ -460,6 +460,15 @@ function createCombatStore() {
 		},
 
 		/**
+		 * Check if damage would reduce HP to 0 or below
+		 */
+		checkLethalDamage: (playerId: string, damage: number): boolean => {
+			const session = get({ subscribe })[playerId]
+			if (!session) return false
+			return session.currentHP - damage <= 0
+		},
+
+		/**
 		 * Heal HP
 		 */
 		heal: (playerId: string, amount: number, maxHP: number): void => {
