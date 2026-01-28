@@ -29,3 +29,4 @@ export { default as SpellResolverModal } from './modals/SpellResolverModal.svelt
 export { default as MoveModal } from './modals/MoveModal.svelte'
 export { default as SwapWeaponModal } from './modals/SwapWeaponModal.svelte'
 export { default as SpiritRecoveryModal } from './modals/SpiritRecoveryModal.svelte'
+export { default as CriticalFailModal } from './modals/CriticalFailModal.svelte'
