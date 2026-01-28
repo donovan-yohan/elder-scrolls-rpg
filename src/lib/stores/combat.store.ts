@@ -299,6 +299,54 @@ function createCombatStore() {
 		},
 
 		/**
+		 * Apply magicka burn damage (when using magicka burst with 0 MP)
+		 */
+		takeMagickaBurnDamage: (playerId: string): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				const newHP = Math.max(0, session.currentHP - 1)
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentHP: newHP,
+						log: [
+							...session.log,
+							createCombatLogEntry('damage', 'Took 1 magicka burn damage', { damage: 1 })
+						]
+					}
+				}
+			})
+		},
+
+		/**
+		 * Log a magicka burst reroll
+		 */
+		logMagickaBurst: (playerId: string, usedBurn: boolean, acceptedMisfortune: boolean): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+
+				let message = usedBurn
+					? 'Used Magicka Burst (burn damage)'
+					: 'Used Magicka Burst (1 MP)'
+
+				if (acceptedMisfortune) {
+					message += ' - Misfortune accepted from critical failure'
+				}
+
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						log: [...session.log, createCombatLogEntry('system', message)]
+					}
+				}
+			})
+		},
+
+		/**
 		 * Spend party initiative
 		 */
 		spendInitiative: (playerId: string, amount: number): void => {
