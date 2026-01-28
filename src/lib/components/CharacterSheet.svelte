@@ -9,11 +9,16 @@
 		calculateMaxHealth,
 		calculateMaxMagicka,
 		calculateMaxAP,
+		calculateEffectiveMaxHealth,
+		calculateEffectiveMaxMagicka,
+		calculateEffectiveMaxAP,
+		calculateMaxSpiritPoints,
 		getStatBreakdown,
 		getSubskillBonus,
 		getSkillsWithLevels,
 		getLevelUpChanges,
 	} from '$lib/util/stats.util'
+	import ComplicationsDisplay from './combat/ComplicationsDisplay.svelte'
 	import { camelToTitleCase } from '$lib/util/string.util'
 	import { getSpellById, SpellSchool, type Spell } from '$lib/data/spells'
 	import { ArmorTypes } from '$lib/data/armor'
@@ -47,6 +52,17 @@
 	let maxMagicka = $derived(calculateMaxMagicka(player))
 	let maxAP = $derived(calculateMaxAP(player))
 	let levelData = $derived(Level[player.level] ?? Level[1]!)
+
+	// Effective stats after complications
+	let effectiveMaxHealth = $derived(calculateEffectiveMaxHealth(player))
+	let effectiveMaxMagicka = $derived(calculateEffectiveMaxMagicka(player))
+	let effectiveMaxAP = $derived(calculateEffectiveMaxAP(player))
+	let maxSpiritPoints = $derived(calculateMaxSpiritPoints(player.level))
+
+	// Check if player has any stat-reducing complications
+	let hasStatComplications = $derived(
+		player.complications.some(c => c.type === 'hp' || c.type === 'ap' || c.type === 'mp')
+	)
 
 	// Stat breakdowns using shared utility
 	let healthBreakdown = $derived(getStatBreakdown(player, 'health'))
@@ -176,7 +192,7 @@
 
 	// Consolidated resource adjustment function (DRY)
 	function adjustResource(stat: 'health' | 'magicka', delta: number) {
-		const maxValue = stat === 'health' ? maxHealth : maxMagicka
+		const maxValue = stat === 'health' ? effectiveMaxHealth : effectiveMaxMagicka
 		const currentValue = player[stat]
 		const newValue = Math.max(0, Math.min(maxValue, currentValue + delta))
 		if (newValue !== currentValue && onUpdate) {
@@ -301,11 +317,11 @@
 							type="number"
 							class="input w-16 h-8 text-center"
 							min="0"
-							max={maxHealth}
+							max={effectiveMaxHealth}
 							value={player.health}
 							onchange={(e) => updateCurrentStat('health', parseInt(e.currentTarget.value) || 0)}
 						/>
-						<span class="text-xl font-bold">/ {maxHealth}</span>
+						<span class="text-xl font-bold">/ {effectiveMaxHealth}</span>
 					{:else}
 						<div class="flex items-center gap-2">
 							{#if showResourceControls}
@@ -316,13 +332,18 @@
 									disabled={player.health <= 0}
 								>-</button>
 							{/if}
-							<span class="text-2xl font-bold">{player.health} / {maxHealth}</span>
+							<span class="text-2xl font-bold">
+								{player.health} / {effectiveMaxHealth}
+								{#if effectiveMaxHealth < maxHealth}
+									<span class="text-sm text-error-400">({maxHealth})</span>
+								{/if}
+							</span>
 							{#if showResourceControls}
 								<button
 									type="button"
 									class="btn-icon btn-icon-sm variant-soft-error"
 									onclick={() => adjustResource('health', 1)}
-									disabled={player.health >= maxHealth}
+									disabled={player.health >= effectiveMaxHealth}
 								>+</button>
 							{/if}
 						</div>
@@ -331,7 +352,7 @@
 			</div>
 			<ProgressBar
 				value={player.health}
-				max={maxHealth}
+				max={effectiveMaxHealth}
 				meter="bg-error-500"
 				track="bg-error-500/20"
 				height="h-4"
@@ -345,6 +366,9 @@
 					{/if}
 					{#if healthBreakdown.birthSign !== 0}
 						<span class="text-warning-600 dark:text-warning-400">{healthBreakdown.birthSign > 0 ? '+' : ''}{healthBreakdown.birthSign} sign</span>
+					{/if}
+					{#if effectiveMaxHealth < maxHealth}
+						<span class="text-error-400">-{maxHealth - effectiveMaxHealth} wounds</span>
 					{/if}
 				</span>
 			</div>
@@ -360,11 +384,11 @@
 							type="number"
 							class="input w-16 h-8 text-center"
 							min="0"
-							max={maxMagicka}
+							max={effectiveMaxMagicka}
 							value={player.magicka}
 							onchange={(e) => updateCurrentStat('magicka', parseInt(e.currentTarget.value) || 0)}
 						/>
-						<span class="text-xl font-bold">/ {maxMagicka}</span>
+						<span class="text-xl font-bold">/ {effectiveMaxMagicka}</span>
 					{:else}
 						<div class="flex items-center gap-2">
 							{#if showResourceControls}
@@ -375,13 +399,18 @@
 									disabled={player.magicka <= 0}
 								>-</button>
 							{/if}
-							<span class="text-2xl font-bold">{player.magicka} / {maxMagicka}</span>
+							<span class="text-2xl font-bold">
+								{player.magicka} / {effectiveMaxMagicka}
+								{#if effectiveMaxMagicka < maxMagicka}
+									<span class="text-sm text-error-400">({maxMagicka})</span>
+								{/if}
+							</span>
 							{#if showResourceControls}
 								<button
 									type="button"
 									class="btn-icon btn-icon-sm variant-soft-primary"
 									onclick={() => adjustResource('magicka', 1)}
-									disabled={player.magicka >= maxMagicka}
+									disabled={player.magicka >= effectiveMaxMagicka}
 								>+</button>
 							{/if}
 						</div>
@@ -390,7 +419,7 @@
 			</div>
 			<ProgressBar
 				value={player.magicka}
-				max={maxMagicka}
+				max={effectiveMaxMagicka}
 				meter="bg-primary-500"
 				track="bg-primary-500/20"
 				height="h-4"
@@ -404,6 +433,9 @@
 					{/if}
 					{#if magickaBreakdown.birthSign !== 0}
 						<span class="text-warning-600 dark:text-warning-400">{magickaBreakdown.birthSign > 0 ? '+' : ''}{magickaBreakdown.birthSign} sign</span>
+					{/if}
+					{#if effectiveMaxMagicka < maxMagicka}
+						<span class="text-error-400">-{maxMagicka - effectiveMaxMagicka} wounds</span>
 					{/if}
 				</span>
 			</div>
@@ -419,19 +451,24 @@
 							type="number"
 							class="input w-16 h-8 text-center"
 							min="0"
-							max={maxAP}
+							max={effectiveMaxAP}
 							value={player.actionPoints}
 							onchange={(e) => updateCurrentStat('actionPoints', parseInt(e.currentTarget.value) || 0)}
 						/>
-						<span class="text-xl font-bold">/ {maxAP}</span>
+						<span class="text-xl font-bold">/ {effectiveMaxAP}</span>
 					{:else}
-						<span class="text-2xl font-bold">{player.actionPoints} / {maxAP}</span>
+						<span class="text-2xl font-bold">
+							{player.actionPoints} / {effectiveMaxAP}
+							{#if effectiveMaxAP < maxAP}
+								<span class="text-sm text-error-400">({maxAP})</span>
+							{/if}
+						</span>
 					{/if}
 				</div>
 			</div>
 			<ProgressBar
 				value={player.actionPoints}
-				max={maxAP}
+				max={effectiveMaxAP}
 				meter="bg-success-500"
 				track="bg-success-500/20"
 				height="h-4"
@@ -445,6 +482,9 @@
 					{/if}
 					{#if apBreakdown.birthSign !== 0}
 						<span class="text-warning-600 dark:text-warning-400">{apBreakdown.birthSign > 0 ? '+' : ''}{apBreakdown.birthSign} sign</span>
+					{/if}
+					{#if effectiveMaxAP < maxAP}
+						<span class="text-error-400">-{maxAP - effectiveMaxAP} wounds</span>
 					{/if}
 				</span>
 			</div>
@@ -895,6 +935,61 @@
 					{BirthSigns[player.birthSign].skillDisadvantages?.map(camelToTitleCase).join(', ')}
 				</div>
 			{/if}
+		</div>
+	</section>
+
+	<!-- Spirit Points & Complications -->
+	<section class="card p-4 variant-soft-secondary">
+		<h3 class="h4 font-bold mb-3 text-secondary-700 dark:text-secondary-300">Spirit & Wounds</h3>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<!-- Spirit Points -->
+			<div>
+				<h4 class="font-semibold text-sm mb-2">Spirit Points</h4>
+				<div class="flex items-center gap-2">
+					<div class="flex gap-1">
+						{#each Array(maxSpiritPoints) as _, i}
+							<div
+								class="w-6 h-6 rounded-full flex items-center justify-center {i < player.spiritPoints ? 'bg-secondary-500' : 'bg-surface-500/30'}"
+							>
+								{#if i < player.spiritPoints}
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+										<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+									</svg>
+								{/if}
+							</div>
+						{/each}
+					</div>
+					<span class="text-sm">{player.spiritPoints} / {maxSpiritPoints}</span>
+				</div>
+				<p class="text-xs opacity-75 mt-1">
+					Recover 1 after a full night's rest in comfort.
+				</p>
+			</div>
+
+			<!-- Complications -->
+			<div>
+				<h4 class="font-semibold text-sm mb-2">Active Complications</h4>
+				{#if editMode}
+					<ComplicationsDisplay
+						complications={player.complications}
+						equipment={player.equipment}
+						onHeal={(id) => {
+							if (onUpdate) {
+								onUpdate({
+									...player,
+									complications: player.complications.filter(c => c.id !== id)
+								})
+							}
+						}}
+					/>
+				{:else}
+					<ComplicationsDisplay
+						complications={player.complications}
+						equipment={player.equipment}
+					/>
+				{/if}
+			</div>
 		</div>
 	</section>
 
