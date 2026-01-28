@@ -15,6 +15,13 @@ export interface OwnedWeapon {
 	materialId: string | null
 }
 
+export interface Complication {
+	id: string
+	type: 'hp' | 'ap' | 'mp' | 'equipment'
+	equipmentSlot?: 'weapon' | 'offhand' | 'armor' // Only for equipment type
+	timestamp: string
+}
+
 export interface EquipmentSlot {
 	id: string | null
 	materialId: string | null
@@ -39,6 +46,7 @@ export type PlayerData = {
 	actionPoints: number
 	maxMagicka: number
 	magicka: number
+	currentSpiritPoints: number
 	birthSign: BirthSignName
 	archetype: ArchetypeName
 	majorSkills: Skill[]
@@ -50,6 +58,11 @@ export type PlayerData = {
 	inventory: InventoryItem[]
 	ownedWeapons: OwnedWeapon[]
 	notes: string
+	spiritPoints: number
+	maxSpiritPoints: number
+	complications: Complication[]
+	fortunePoints: number
+	misfortunePoints: number
 	createdAt: string
 	updatedAt: string
 }
@@ -65,6 +78,7 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	actionPoints: 0,
 	maxMagicka: 0,
 	magicka: 0,
+	currentSpiritPoints: 1,
 	birthSign: BirthSignName.Apprentice,
 	archetype: ArchetypeName.Warrior,
 	race: RaceName.Nord,
@@ -81,6 +95,11 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	inventory: [],
 	ownedWeapons: [],
 	notes: '',
+	spiritPoints: 1,
+	maxSpiritPoints: 1,
+	complications: [],
+	fortunePoints: 0,
+	misfortunePoints: 0,
 	createdAt: '',
 	updatedAt: '',
 }

@@ -2,15 +2,18 @@ import { writable, derived, get } from 'svelte/store'
 import { browser } from '$app/environment'
 import type { CombatSession, CombatLogEntry, ActiveCondition } from '$lib/models/combat'
 import { CombatDistance, createCombatLogEntry } from '$lib/models/combat'
+import { calculateMaxSpiritPoints } from '$lib/util/spiritPoints.util'
 import { tickConditions } from '$lib/util/combat.util'
 import {
-  executeTurnStartEffects,
-  executeTurnEndEffects,
-  executeDamageTakenEffects,
+	executeTurnStartEffects,
+	executeTurnEndEffects,
+	executeDamageTakenEffects,
 } from '$lib/services/effectAggregator'
 import type { EffectResult } from '$lib/models/effect'
 import { EffectActionType } from '$lib/models/effect'
 import type { PlayerData, Equipment } from '$lib/models/player'
+import { calculateDamageWithResistances } from '$lib/util/resistance.util'
+import { DamageType } from '$lib/data/element'
 
 const COMBAT_STORAGE_KEY = 'combat-sessions'
 
@@ -114,7 +117,16 @@ function createCombatStore() {
 			playerId: string,
 			partyInitiative: number,
 			enemyInitiative: number,
-			playerData: { health: number; magicka: number; maxActionPoints: number; equipment?: Equipment }
+			playerData: {
+				health: number
+				magicka: number
+				maxActionPoints: number
+				equipment?: Equipment
+				level: number
+				currentSpiritPoints: number
+				fortunePoints?: number
+				misfortunePoints?: number
+			}
 		): void => {
 			update((state) => {
 				// Create a deep copy of equipment to avoid mutations
@@ -132,6 +144,7 @@ function createCombatStore() {
 							accessories: [],
 						}
 
+				const maxSpiritPoints = calculateMaxSpiritPoints(playerData.level)
 				const session: CombatSession = {
 					id: crypto.randomUUID(),
 					playerId,
@@ -143,12 +156,16 @@ function createCombatStore() {
 					currentMP: playerData.magicka,
 					currentAP: playerData.maxActionPoints,
 					maxAP: playerData.maxActionPoints,
+					currentSpiritPoints: playerData.currentSpiritPoints,
+					maxSpiritPoints,
 					conditions: [],
 					log: [createCombatLogEntry('system', 'Combat started!')],
 					distance: CombatDistance.Medium,
 					concentrationSpellId: undefined,
 					isConcentrationBroken: false,
 					combatEquipment: equipmentSnapshot,
+					fortunePoints: playerData.fortunePoints ?? 0,
+					misfortunePoints: playerData.misfortunePoints ?? 0,
 				}
 				return { ...state, [playerId]: session }
 			})
@@ -157,8 +174,22 @@ function createCombatStore() {
 		/**
 		 * End combat session for a player
 		 */
-		endCombat: (playerId: string): { health: number; magicka: number; equipment: Equipment } | null => {
-			let finalState: { health: number; magicka: number; equipment: Equipment } | null = null
+		endCombat: (playerId: string): {
+			health: number
+			magicka: number
+			equipment: Equipment
+			currentSpiritPoints: number
+			fortunePoints: number
+			misfortunePoints: number
+		} | null => {
+			let finalState: {
+				health: number
+				magicka: number
+				equipment: Equipment
+				currentSpiritPoints: number
+				fortunePoints: number
+				misfortunePoints: number
+			} | null = null
 
 			update((state) => {
 				const session = state[playerId]
@@ -167,6 +198,9 @@ function createCombatStore() {
 						health: session.currentHP,
 						magicka: session.currentMP,
 						equipment: session.combatEquipment,
+						currentSpiritPoints: session.currentSpiritPoints,
+						fortunePoints: session.fortunePoints,
+						misfortunePoints: session.misfortunePoints,
 					}
 				}
 				const newState = { ...state }
@@ -223,6 +257,90 @@ function createCombatStore() {
 					[playerId]: {
 						...session,
 						currentMP: Math.max(0, session.currentMP - amount)
+					}
+				}
+			})
+		},
+
+		/**
+		 * Gain AP (e.g., from crit refund)
+		 */
+		gainAP: (playerId: string, amount: number): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentAP: Math.min(session.maxAP, session.currentAP + amount)
+					}
+				}
+			})
+		},
+
+		/**
+		 * Gain MP (e.g., from crit refund)
+		 */
+		gainMP: (playerId: string, amount: number): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				// Note: We don't cap at maxMP here as player.maxMagicka isn't available
+				// The caller should handle capping if needed
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentMP: session.currentMP + amount
+					}
+				}
+			})
+		},
+
+		/**
+		 * Apply magicka burn damage (when using magicka burst with 0 MP)
+		 */
+		takeMagickaBurnDamage: (playerId: string): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				const newHP = Math.max(0, session.currentHP - 1)
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentHP: newHP,
+						log: [
+							...session.log,
+							createCombatLogEntry('damage', 'Took 1 magicka burn damage', { damage: 1 })
+						]
+					}
+				}
+			})
+		},
+
+		/**
+		 * Log a magicka burst reroll
+		 */
+		logMagickaBurst: (playerId: string, usedBurn: boolean, acceptedMisfortune: boolean): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+
+				let message = usedBurn
+					? 'Used Magicka Burst (burn damage)'
+					: 'Used Magicka Burst (1 MP)'
+
+				if (acceptedMisfortune) {
+					message += ' - Misfortune accepted from critical failure'
+				}
+
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						log: [...session.log, createCombatLogEntry('system', message)]
 					}
 				}
 			})
@@ -298,6 +416,84 @@ function createCombatStore() {
 		},
 
 		/**
+		 * Gain a Fortune point (when storing a critical success)
+		 */
+		gainFortune: (playerId: string): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						fortunePoints: session.fortunePoints + 1,
+						log: [...session.log, createCombatLogEntry('system', 'Stored 1 Fortune point')]
+					}
+				}
+			})
+		},
+
+		/**
+		 * Spend a Fortune point (when using it on a roll)
+		 */
+		spendFortune: (playerId: string): boolean => {
+			let spent = false
+			update((state) => {
+				const session = state[playerId]
+				if (!session || session.fortunePoints <= 0) return state
+				spent = true
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						fortunePoints: session.fortunePoints - 1,
+						log: [...session.log, createCombatLogEntry('system', 'Spent 1 Fortune point')]
+					}
+				}
+			})
+			return spent
+		},
+
+		/**
+		 * Gain a Misfortune point (when a critical failure is stored or Fortune used on crit fail)
+		 */
+		gainMisfortune: (playerId: string): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						misfortunePoints: session.misfortunePoints + 1,
+						log: [...session.log, createCombatLogEntry('system', 'Gained 1 Misfortune point (stored for GM)')]
+					}
+				}
+			})
+		},
+
+		/**
+		 * Spend a Misfortune point (GM invokes it)
+		 */
+		spendMisfortune: (playerId: string): boolean => {
+			let spent = false
+			update((state) => {
+				const session = state[playerId]
+				if (!session || session.misfortunePoints <= 0) return state
+				spent = true
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						misfortunePoints: session.misfortunePoints - 1,
+						log: [...session.log, createCombatLogEntry('system', 'GM spent 1 Misfortune point')]
+					}
+				}
+			})
+			return spent
+		},
+
+		/**
 		 * Take damage
 		 */
 		takeDamage: (playerId: string, amount: number): void => {
@@ -318,38 +514,53 @@ function createCombatStore() {
 
 		/**
 		 * Take damage with effect processing (damage modifiers, resistances)
+		 *
+		 * Damage reduction order:
+		 * 1. Magical effect DR (existing effects system)
+		 * 2. Racial resistances (new resistance system)
+		 * 3. Remaining damage applied to HP
 		 */
 		takeDamageWithEffects: (
 			playerId: string,
 			player: PlayerData,
 			amount: number,
-			damageType: string
+			damageType: string,
+			isMagicSource: boolean = false
 		): void => {
 			update((state) => {
 				const session = state[playerId]
 				if (!session) return state
 
-				// Execute damage effects (may modify damage)
+				// Step 1: Execute damage effects (may modify damage)
 				const results = executeDamageTakenEffects(player, session, amount, damageType)
 
-				// Calculate final damage after effects
-				let finalDamage = amount
+				// Calculate damage after effects (existing logic)
+				let damageAfterEffects = amount
 				for (const result of results) {
 					if (!result.success) continue
 					for (const actionResult of result.actions) {
 						if (actionResult.action.type === EffectActionType.ModifyIncomingDamage) {
 							if (actionResult.action.multiplier !== undefined) {
-								finalDamage *= actionResult.action.multiplier
+								damageAfterEffects *= actionResult.action.multiplier
 							}
 							if (actionResult.action.value !== undefined) {
-								finalDamage += actionResult.action.value
+								damageAfterEffects += actionResult.action.value
 							}
 						}
 					}
 				}
 
-				finalDamage = Math.max(0, Math.floor(finalDamage))
+				damageAfterEffects = Math.max(0, Math.floor(damageAfterEffects))
 
+				// Step 2: Apply racial resistances
+				const resistanceResult = calculateDamageWithResistances(
+					player.race,
+					damageAfterEffects,
+					damageType as DamageType,
+					isMagicSource
+				)
+
+				const finalDamage = resistanceResult.finalDamage
 				const newHP = Math.max(0, session.currentHP - finalDamage)
 				const logEntries: CombatLogEntry[] = []
 
@@ -363,12 +574,25 @@ function createCombatStore() {
 					}
 				}
 
+				// Log resistance reductions
+				if (resistanceResult.isImmune) {
+					logEntries.push(
+						createCombatLogEntry('system', `Immune to ${damageType} (${player.race})`)
+					)
+				} else if (resistanceResult.reductionSources.length > 0) {
+					for (const source of resistanceResult.reductionSources) {
+						logEntries.push(createCombatLogEntry('system', source))
+					}
+				}
+
 				// Log final damage
-				logEntries.push(
-					createCombatLogEntry('damage', `Took ${finalDamage} ${damageType} damage`, {
-						damage: finalDamage,
-					})
-				)
+				if (!resistanceResult.isImmune) {
+					logEntries.push(
+						createCombatLogEntry('damage', `Took ${finalDamage} ${damageType} damage`, {
+							damage: finalDamage,
+						})
+					)
+				}
 
 				return {
 					...state,
@@ -379,6 +603,15 @@ function createCombatStore() {
 					},
 				}
 			})
+		},
+
+		/**
+		 * Check if damage would reduce HP to 0 or below
+		 */
+		checkLethalDamage: (playerId: string, damage: number): boolean => {
+			const session = get({ subscribe })[playerId]
+			if (!session) return false
+			return session.currentHP - damage <= 0
 		},
 
 		/**
@@ -399,6 +632,44 @@ function createCombatStore() {
 					}
 				}
 			})
+		},
+
+		/**
+		 * Spend a spirit point to reset HP, MP, and AP to maximum
+		 */
+		spendSpiritPoint: (
+			playerId: string,
+			playerData: { maxHealth: number; maxMagicka: number; maxActionPoints: number }
+		): boolean => {
+			let success = false
+
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				if (session.currentSpiritPoints <= 0) return state
+
+				success = true
+
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentSpiritPoints: session.currentSpiritPoints - 1,
+						currentHP: playerData.maxHealth,
+						currentMP: playerData.maxMagicka,
+						currentAP: playerData.maxActionPoints,
+						log: [
+							...session.log,
+							createCombatLogEntry(
+								'system',
+								`Spent a spirit point! HP, MP, and AP reset to maximum. (${session.currentSpiritPoints - 1} spirit points remaining)`
+							),
+						],
+					},
+				}
+			})
+
+			return success
 		},
 
 		/**

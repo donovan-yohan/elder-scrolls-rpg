@@ -34,6 +34,7 @@ describe('Combat Actions Integration', () => {
 	function createMockPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
 		return {
 			id: 'player-1',
+			schemaVersion: '0.2.0',
 			level: 1,
 			playerName: 'Test Player',
 			characterName: 'Test Character',
@@ -43,6 +44,7 @@ describe('Combat Actions Integration', () => {
 			actionPoints: 5,
 			maxMagicka: 50,
 			magicka: 50,
+			currentSpiritPoints: 1,
 			birthSign: BirthSignName.Warrior,
 			archetype: ArchetypeName.Warrior,
 			majorSkills: [],
@@ -86,6 +88,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			let state = get(combatStore)
@@ -154,6 +158,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			// First swap: main weapon
@@ -201,6 +207,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			// Swap weapon in combat
@@ -226,6 +234,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			combatStore.swapWeapon('player-1', {
@@ -253,6 +263,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			// Make several equipment changes
@@ -283,6 +295,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			// Verify session exists
@@ -307,6 +321,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			combatStore.swapWeapon('player-1', {
@@ -336,6 +352,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: 1,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			// First swap should succeed
@@ -372,6 +390,8 @@ describe('Combat Actions Integration', () => {
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
 				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			})
 
 			// Make comprehensive changes

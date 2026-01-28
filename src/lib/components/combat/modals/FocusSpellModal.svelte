@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import { getSkillBonus } from '$lib/util/combat.util'
 	import { Skill } from '$lib/data/skill'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
@@ -11,11 +12,13 @@
 		player: PlayerData
 		currentAP: number
 		currentMP: number
+		currentHP: number
 		onFocus: (result: { success: boolean; extraMPCost: number }) => void
 		onClose: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { isOpen, player, currentAP, currentMP, onFocus, onClose }: Props = $props()
+	let { isOpen, player, currentAP, currentMP, currentHP, onFocus, onClose, onMagickaBurst }: Props = $props()
 
 	// Spell tier affects extra MP cost
 	const spellTiers = [
@@ -47,6 +50,12 @@
 		focusRoll = roll
 		focusSuccess = success
 		step = 'result'
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
 	function handleConfirm() {
@@ -127,6 +136,10 @@
 						targetDC={currentTier.dc}
 						playerLevel={player.level}
 						label="Roll Focus Check"
+						showMagickaBurst={true}
+						{currentMP}
+						{currentHP}
+						onMagickaBurst={handleMagickaBurst}
 					/>
 				</div>
 			{:else}
@@ -139,7 +152,11 @@
 						<div class="card variant-soft-success p-4 text-center">
 							<p class="font-bold text-success-500">Spell Focused!</p>
 							<p class="text-sm opacity-75">
-								Your next spell gains advantage and enhanced effects.
+								{#if focusRoll?.isCritical}
+									Critical! Retroactively increase spell DC by {Math.floor(player.level / 2)} (half your level).
+								{:else}
+									Your next spell gains advantage and enhanced effects.
+								{/if}
 								Extra cost: {currentTier.extraMP} MP
 							</p>
 						</div>

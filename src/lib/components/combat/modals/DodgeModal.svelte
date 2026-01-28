@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import { getSkillBonus } from '$lib/util/combat.util'
 	import { Skill } from '$lib/data/skill'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
@@ -10,17 +11,23 @@
 		isOpen: boolean
 		player: PlayerData
 		currentInitiative: number
-		onDodge: (result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean }) => void
+		currentMisfortune?: number
+		currentMP: number
+		currentHP: number
+		onDodge: (result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean; storedMisfortune: boolean }) => void
 		onClose: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { isOpen, player, currentInitiative, onDodge, onClose }: Props = $props()
+	let { isOpen, player, currentInitiative, currentMisfortune = 0, currentMP, currentHP, onDodge, onClose, onMagickaBurst }: Props = $props()
 
 	let step = $state<'setup' | 'roll' | 'result'>('setup')
 	let attackRoll = $state(15) // Enemy attack roll to dodge against
 	let dodgeRoll = $state<DiceRoll | undefined>(undefined)
 	let useAcrobatics = $state(true) // Acrobatics (normal) vs Athletics (disadvantage)
 	let partialChoice = $state<'half' | 'disoriented' | null>(null)
+	let storedMisfortune = $state(false)
+	let wasCritFail = $state(false)
 
 	let skillBonus = $derived(
 		useAcrobatics
@@ -36,6 +43,16 @@
 	let dodgeResult = $derived.by(() => {
 		if (!dodgeRoll) return { damageReduction: 'none' as const, disoriented: false, isPartial: false }
 		const margin = dodgeRoll.total - attackRoll
+
+		// If crit fail was stored, treat as normal failure
+		if (wasCritFail && storedMisfortune) {
+			if (margin >= -10) {
+				return { damageReduction: 'half' as const, disoriented: false, isPartial: true }
+			}
+			return { damageReduction: 'none' as const, disoriented: false, isPartial: false }
+		}
+
+		// Normal crit fail - full damage + disoriented
 		if (dodgeRoll.isCriticalFail) {
 			return { damageReduction: 'none' as const, disoriented: true, isPartial: false }
 		}
@@ -57,7 +74,21 @@
 
 	function handleDodgeRoll(roll: DiceRoll) {
 		dodgeRoll = roll
+		wasCritFail = roll.isCriticalFail
 		step = 'result'
+	}
+
+	function handleCritFailChoice(choice: 'accept' | 'store', roll: DiceRoll) {
+		if (choice === 'store') {
+			storedMisfortune = true
+			wasCritFail = roll.isCriticalFail  // Capture from original roll before modified roll overwrites it
+		}
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
 	function handleConfirm() {
@@ -66,13 +97,15 @@
 			onDodge({
 				success: false,
 				damageReduction: partialChoice === 'half' ? 'half' : 'none',
-				disoriented: partialChoice === 'disoriented'
+				disoriented: partialChoice === 'disoriented',
+				storedMisfortune,
 			})
 		} else {
 			onDodge({
 				success: dodgeSuccess,
 				damageReduction: dodgeResult.damageReduction,
-				disoriented: dodgeResult.disoriented
+				disoriented: dodgeResult.disoriented,
+				storedMisfortune,
 			})
 		}
 	}
@@ -83,6 +116,8 @@
 		dodgeRoll = undefined
 		useAcrobatics = true
 		partialChoice = null
+		storedMisfortune = false
+		wasCritFail = false
 	}
 
 	$effect(() => {
@@ -156,12 +191,26 @@
 						playerLevel={player.level}
 						label="Roll Dodge"
 						advantageCount={useAcrobatics ? 0 : -1}
+						rollContext="dodge"
+						{currentMisfortune}
+						onCritFailChoice={handleCritFailChoice}
+						enableCritFailModal={true}
+						showMagickaBurst={true}
+						{currentMP}
+						{currentHP}
+						onMagickaBurst={handleMagickaBurst}
 					/>
 				</div>
 			{:else}
 				<div class="space-y-4">
 					{#if dodgeRoll}
 						<RollResult roll={dodgeRoll} targetDC={attackRoll} />
+					{/if}
+
+					{#if storedMisfortune}
+						<div class="card variant-soft-warning p-3 text-center">
+							<span class="text-warning-500 font-semibold">+1 Misfortune stored</span>
+						</div>
 					{/if}
 
 					{#if dodgeSuccess}

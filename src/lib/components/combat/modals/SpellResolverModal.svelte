@@ -1,30 +1,34 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
 	import type { PlayerData } from '$lib/models/player'
 	import { getSpellById, SpellDC } from '$lib/data/spells'
 	import type { DiceRoll } from '$lib/models/combat'
 	import type { AvailableAction } from '$lib/models/combatAction'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
 	import { getSkillBonus } from '$lib/util/combat.util'
 
-	export let player: PlayerData
-	export let action: AvailableAction
+	interface Props {
+		player: PlayerData
+		action: AvailableAction
+		currentMP: number
+		currentHP: number
+		onComplete: (result: { mpSpent: number; isCritical: boolean; apCost: number; success: boolean }) => void
+		onCancel: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
+	}
 
-	const dispatch = createEventDispatcher<{
-		complete: { mpSpent: number }
-		cancel: void
-	}>()
+	let { player, action, currentMP, currentHP, onComplete, onCancel, onMagickaBurst }: Props = $props()
 
 	// Get spell from action
-	$: spell = action.spellId ? getSpellById(action.spellId) : null
+	let spell = $derived(action.spellId ? getSpellById(action.spellId) : null)
 
-	let step: 'skillCheck' | 'result' = 'skillCheck'
-	let skillCheckRoll: DiceRoll | undefined
-	let spellSuccess = false
+	let step = $state<'skillCheck' | 'result'>('skillCheck')
+	let skillCheckRoll = $state<DiceRoll | undefined>(undefined)
+	let spellSuccess = $state(false)
 
-	$: skillBonus = spell ? getSkillBonus(player, spell.skill) : 0
-	$: spellDC = spell ? SpellDC[spell.level] : 10
+	let skillBonus = $derived(spell ? getSkillBonus(player, spell.skill) : 0)
+	let spellDC = $derived(spell ? SpellDC[spell.level] : 10)
 
 	function handleSkillCheck(roll: DiceRoll, success: boolean) {
 		skillCheckRoll = roll
@@ -32,12 +36,19 @@
 		step = 'result'
 	}
 
-	function handleConfirm() {
-		dispatch('complete', { mpSpent: spell?.mpCost ?? 0 })
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
-	function handleCancel() {
-		dispatch('cancel')
+	function handleConfirm() {
+		onComplete({
+			mpSpent: spell?.mpCost ?? 0,
+			isCritical: skillCheckRoll?.isCritical ?? false,
+			apCost: action.apCost,
+			success: spellSuccess
+		})
 	}
 </script>
 
@@ -60,6 +71,10 @@
 			targetDC={spellDC}
 			playerLevel={player.level}
 			label="Roll Skill Check"
+			showMagickaBurst={true}
+			{currentMP}
+			{currentHP}
+			onMagickaBurst={handleMagickaBurst}
 		/>
 	{:else}
 		<div class="space-y-4">
@@ -70,6 +85,11 @@
 			{#if spellSuccess}
 				<div class="card variant-soft-success p-4">
 					<div class="text-lg font-bold text-success-500 mb-2">Spell Cast!</div>
+					{#if skillCheckRoll?.isCritical}
+						<div class="text-sm text-warning-500 font-semibold mb-2">
+							Critical! Refund {Math.floor(action.apCost / 2)} AP + full MP + 1 Party Initiative
+						</div>
+					{/if}
 					<div class="text-sm">
 						{#if spell?.effects}
 							{#each spell.effects as effect}
@@ -88,9 +108,9 @@
 	{/if}
 
 	<footer class="flex justify-end gap-2 mt-6">
-		<button type="button" class="btn variant-ghost" on:click={handleCancel}>Cancel</button>
+		<button type="button" class="btn variant-ghost" onclick={onCancel}>Cancel</button>
 		{#if step === 'result'}
-			<button type="button" class="btn variant-filled-primary" on:click={handleConfirm}
+			<button type="button" class="btn variant-filled-primary" onclick={handleConfirm}
 				>Apply Result</button
 			>
 		{/if}

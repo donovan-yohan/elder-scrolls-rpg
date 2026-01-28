@@ -63,6 +63,9 @@ export interface DiceRoll {
   total: number
   isCritical: boolean
   isCriticalFail: boolean
+  // Magicka burst fields
+  isMagickaBurst?: boolean
+  wasDowngradedFromCrit?: boolean
 }
 
 export type CombatLogEntryType = 'action' | 'damage' | 'healing' | 'condition' | 'turn' | 'initiative' | 'system'
@@ -102,12 +105,17 @@ export interface CombatSession {
   currentMP: number
   currentAP: number
   maxAP: number
+  currentSpiritPoints: number
+  maxSpiritPoints: number
   conditions: ActiveCondition[]
   log: CombatLogEntry[]
   distance: CombatDistance
   concentrationSpellId?: string
   isConcentrationBroken: boolean
   combatEquipment: Equipment
+  // Fortune tracking (synced from player at combat start, updated during combat)
+  fortunePoints: number
+  misfortunePoints: number
 }
 
 export function createCombatLogEntry(
