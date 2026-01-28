@@ -1,5 +1,5 @@
 import { Skill } from '$lib/data/skill'
-import { Element } from '$lib/data/element'
+import { DamageType, Element } from '$lib/data/element'
 
 export enum SpellLevel {
 	Novice = 'Novice',
@@ -42,7 +42,7 @@ export enum SpellShape {
 export interface SpellEffect {
 	type: 'damage' | 'healing' | 'buff' | 'debuff' | 'summon' | 'utility' | 'ward'
 	value?: number
-	element?: Element
+	element?: DamageType
 	duration?: number
 	description: string
 }

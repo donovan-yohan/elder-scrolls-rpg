@@ -24,7 +24,9 @@
 	import DodgeModal from './modals/DodgeModal.svelte'
 	import BlockModal from './modals/BlockModal.svelte'
 	import UseItemModal from './modals/UseItemModal.svelte'
+	import TakeDamageModal from './modals/TakeDamageModal.svelte'
 	import { ActionType } from '$lib/models/combat'
+	import { DamageType } from '$lib/data/element'
 
 	interface Props {
 		player: PlayerData
@@ -62,6 +64,9 @@
 	let hasHeftedShield = $state(false)
 	let hasFocusedAttack = $state(false)
 	let hasFocusedSpell = $state(false)
+
+	// Take damage modal state
+	let showTakeDamageModal = $state(false)
 
 	// Handle ActionsPanel action selection
 	function handleActionSelect(action: ActionsPanelActionType) {
@@ -263,8 +268,15 @@
 		if (amount > 0) {
 			combatStore.heal(player.id, amount, player.maxHealth)
 		} else {
-			combatStore.takeDamage(player.id, Math.abs(amount))
+			// Open the take damage modal for damage input with type selection
+			showTakeDamageModal = true
 		}
+	}
+
+	// Handle damage with resistance calculation
+	function handleTakeDamage(amount: number, damageType: DamageType, isMagicSource: boolean) {
+		combatStore.takeDamageWithEffects(player.id, player, amount, damageType, isMagicSource)
+		showTakeDamageModal = false
 	}
 
 	function handleAdjustMP(amount: number) {
@@ -509,6 +521,12 @@
 			currentAP={session.currentAP}
 			onUseItem={handleUseItem}
 			onClose={handleCloseModal}
+		/>
+
+		<TakeDamageModal
+			isOpen={showTakeDamageModal}
+			onTakeDamage={handleTakeDamage}
+			onClose={() => showTakeDamageModal = false}
 		/>
 	{/if}
 </div>

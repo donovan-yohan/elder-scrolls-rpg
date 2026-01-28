@@ -4,13 +4,15 @@ import type { CombatSession, CombatLogEntry, ActiveCondition } from '$lib/models
 import { CombatDistance, createCombatLogEntry } from '$lib/models/combat'
 import { tickConditions } from '$lib/util/combat.util'
 import {
-  executeTurnStartEffects,
-  executeTurnEndEffects,
-  executeDamageTakenEffects,
+	executeTurnStartEffects,
+	executeTurnEndEffects,
+	executeDamageTakenEffects,
 } from '$lib/services/effectAggregator'
 import type { EffectResult } from '$lib/models/effect'
 import { EffectActionType } from '$lib/models/effect'
 import type { PlayerData, Equipment } from '$lib/models/player'
+import { calculateDamageWithResistances } from '$lib/util/resistance.util'
+import { DamageType } from '$lib/data/element'
 
 const COMBAT_STORAGE_KEY = 'combat-sessions'
 
@@ -354,38 +356,53 @@ function createCombatStore() {
 
 		/**
 		 * Take damage with effect processing (damage modifiers, resistances)
+		 *
+		 * Damage reduction order:
+		 * 1. Magical effect DR (existing effects system)
+		 * 2. Racial resistances (new resistance system)
+		 * 3. Remaining damage applied to HP
 		 */
 		takeDamageWithEffects: (
 			playerId: string,
 			player: PlayerData,
 			amount: number,
-			damageType: string
+			damageType: string,
+			isMagicSource: boolean = false
 		): void => {
 			update((state) => {
 				const session = state[playerId]
 				if (!session) return state
 
-				// Execute damage effects (may modify damage)
+				// Step 1: Execute damage effects (may modify damage)
 				const results = executeDamageTakenEffects(player, session, amount, damageType)
 
-				// Calculate final damage after effects
-				let finalDamage = amount
+				// Calculate damage after effects (existing logic)
+				let damageAfterEffects = amount
 				for (const result of results) {
 					if (!result.success) continue
 					for (const actionResult of result.actions) {
 						if (actionResult.action.type === EffectActionType.ModifyIncomingDamage) {
 							if (actionResult.action.multiplier !== undefined) {
-								finalDamage *= actionResult.action.multiplier
+								damageAfterEffects *= actionResult.action.multiplier
 							}
 							if (actionResult.action.value !== undefined) {
-								finalDamage += actionResult.action.value
+								damageAfterEffects += actionResult.action.value
 							}
 						}
 					}
 				}
 
-				finalDamage = Math.max(0, Math.floor(finalDamage))
+				damageAfterEffects = Math.max(0, Math.floor(damageAfterEffects))
 
+				// Step 2: Apply racial resistances
+				const resistanceResult = calculateDamageWithResistances(
+					player.race,
+					damageAfterEffects,
+					damageType as DamageType,
+					isMagicSource
+				)
+
+				const finalDamage = resistanceResult.finalDamage
 				const newHP = Math.max(0, session.currentHP - finalDamage)
 				const logEntries: CombatLogEntry[] = []
 
@@ -399,12 +416,25 @@ function createCombatStore() {
 					}
 				}
 
+				// Log resistance reductions
+				if (resistanceResult.isImmune) {
+					logEntries.push(
+						createCombatLogEntry('system', `Immune to ${damageType} (${player.race})`)
+					)
+				} else if (resistanceResult.reductionSources.length > 0) {
+					for (const source of resistanceResult.reductionSources) {
+						logEntries.push(createCombatLogEntry('system', source))
+					}
+				}
+
 				// Log final damage
-				logEntries.push(
-					createCombatLogEntry('damage', `Took ${finalDamage} ${damageType} damage`, {
-						damage: finalDamage,
-					})
-				)
+				if (!resistanceResult.isImmune) {
+					logEntries.push(
+						createCombatLogEntry('damage', `Took ${finalDamage} ${damageType} damage`, {
+							damage: finalDamage,
+						})
+					)
+				}
 
 				return {
 					...state,
