@@ -2,6 +2,7 @@ import { writable, derived, get } from 'svelte/store'
 import { browser } from '$app/environment'
 import type { CombatSession, CombatLogEntry, ActiveCondition } from '$lib/models/combat'
 import { CombatDistance, createCombatLogEntry } from '$lib/models/combat'
+import { calculateMaxSpiritPoints } from '$lib/util/spiritPoints.util'
 import { tickConditions } from '$lib/util/combat.util'
 import {
 	executeTurnStartEffects,
@@ -116,7 +117,14 @@ function createCombatStore() {
 			playerId: string,
 			partyInitiative: number,
 			enemyInitiative: number,
-			playerData: { health: number; magicka: number; maxActionPoints: number; equipment?: Equipment }
+			playerData: {
+				health: number
+				magicka: number
+				maxActionPoints: number
+				equipment?: Equipment
+				level: number
+				currentSpiritPoints: number
+			}
 		): void => {
 			update((state) => {
 				// Create a deep copy of equipment to avoid mutations
@@ -134,6 +142,7 @@ function createCombatStore() {
 							accessories: [],
 						}
 
+				const maxSpiritPoints = calculateMaxSpiritPoints(playerData.level)
 				const session: CombatSession = {
 					id: crypto.randomUUID(),
 					playerId,
@@ -145,6 +154,8 @@ function createCombatStore() {
 					currentMP: playerData.magicka,
 					currentAP: playerData.maxActionPoints,
 					maxAP: playerData.maxActionPoints,
+					currentSpiritPoints: playerData.currentSpiritPoints,
+					maxSpiritPoints,
 					conditions: [],
 					log: [createCombatLogEntry('system', 'Combat started!')],
 					distance: CombatDistance.Medium,
@@ -159,8 +170,8 @@ function createCombatStore() {
 		/**
 		 * End combat session for a player
 		 */
-		endCombat: (playerId: string): { health: number; magicka: number; equipment: Equipment } | null => {
-			let finalState: { health: number; magicka: number; equipment: Equipment } | null = null
+		endCombat: (playerId: string): { health: number; magicka: number; equipment: Equipment; currentSpiritPoints: number } | null => {
+			let finalState: { health: number; magicka: number; equipment: Equipment; currentSpiritPoints: number } | null = null
 
 			update((state) => {
 				const session = state[playerId]
@@ -169,6 +180,7 @@ function createCombatStore() {
 						health: session.currentHP,
 						magicka: session.currentMP,
 						equipment: session.combatEquipment,
+						currentSpiritPoints: session.currentSpiritPoints,
 					}
 				}
 				const newState = { ...state }

@@ -102,6 +102,8 @@ export interface CombatSession {
   currentMP: number
   currentAP: number
   maxAP: number
+  currentSpiritPoints: number
+  maxSpiritPoints: number
   conditions: ActiveCondition[]
   log: CombatLogEntry[]
   distance: CombatDistance

@@ -80,6 +80,9 @@
 				health: currentPlayer.health,
 				magicka: currentPlayer.magicka,
 				maxActionPoints: currentPlayer.maxActionPoints,
+				equipment: currentPlayer.equipment,
+				level: currentPlayer.level,
+				currentSpiritPoints: currentPlayer.currentSpiritPoints,
 			}
 		)
 		showEnterCombatModal = false
