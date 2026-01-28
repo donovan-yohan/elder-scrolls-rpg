@@ -197,4 +197,65 @@ describe('Combat Store - Spirit Points', () => {
 		expect(result).toBeDefined()
 		expect(result!.currentSpiritPoints).toBe(2)
 	})
+
+	it('should spend spirit point and reset resources via spendSpiritPoint', () => {
+		const mockPlayer = {
+			...mockPlayerData,
+			currentSpiritPoints: 2,
+			maxHealth: 100,
+			maxMagicka: 50,
+			maxActionPoints: 5
+		}
+		combatStore.startCombat('player-1', 3, 2, mockPlayer as any)
+
+		// Simulate damage to 0 HP
+		combatStore.takeDamage('player-1', 100)
+
+		// Verify HP is 0
+		expect(get(combatStore)['player-1'].currentHP).toBe(0)
+
+		// Spend spirit point to recover
+		combatStore.spendSpiritPoint('player-1', mockPlayer as any)
+
+		const state = get(combatStore)
+		const session = state['player-1']
+
+		expect(session.currentSpiritPoints).toBe(1) // 2 - 1 = 1
+		expect(session.currentHP).toBe(100) // Reset to max
+		expect(session.currentMP).toBe(50) // Reset to max
+		expect(session.currentAP).toBe(5) // Reset to max
+	})
+
+	it('should add log entry when spirit point spent', () => {
+		const mockPlayer = {
+			...mockPlayerData,
+			currentSpiritPoints: 1
+		}
+		combatStore.startCombat('player-1', 3, 2, mockPlayer as any)
+
+		const initialLogLength = get(combatStore)['player-1'].log.length
+
+		combatStore.spendSpiritPoint('player-1', mockPlayer as any)
+
+		const state = get(combatStore)
+		const logEntry = state['player-1'].log[state['player-1'].log.length - 1]
+
+		expect(state['player-1'].log.length).toBeGreaterThan(initialLogLength)
+		expect(logEntry.description).toContain('spirit point')
+	})
+
+	it('should not spend spirit point when none available', () => {
+		const mockPlayer = {
+			...mockPlayerData,
+			currentSpiritPoints: 0
+		}
+		combatStore.startCombat('player-1', 3, 2, mockPlayer as any)
+
+		const stateBefore = get(combatStore)['player-1']
+
+		combatStore.spendSpiritPoint('player-1', mockPlayer as any)
+
+		const stateAfter = get(combatStore)['player-1']
+		expect(stateAfter.currentSpiritPoints).toBe(0)
+	})
 })

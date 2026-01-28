@@ -480,6 +480,44 @@ function createCombatStore() {
 		},
 
 		/**
+		 * Spend a spirit point to reset HP, MP, and AP to maximum
+		 */
+		spendSpiritPoint: (
+			playerId: string,
+			playerData: { maxHealth: number; maxMagicka: number; maxActionPoints: number }
+		): boolean => {
+			let success = false
+
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				if (session.currentSpiritPoints <= 0) return state
+
+				success = true
+
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentSpiritPoints: session.currentSpiritPoints - 1,
+						currentHP: playerData.maxHealth,
+						currentMP: playerData.maxMagicka,
+						currentAP: playerData.maxActionPoints,
+						log: [
+							...session.log,
+							createCombatLogEntry(
+								'system',
+								`Spent a spirit point! HP, MP, and AP reset to maximum. (${session.currentSpiritPoints - 1} spirit points remaining)`
+							),
+						],
+					},
+				}
+			})
+
+			return success
+		},
+
+		/**
 		 * Add a condition
 		 */
 		addCondition: (playerId: string, condition: ActiveCondition): void => {
