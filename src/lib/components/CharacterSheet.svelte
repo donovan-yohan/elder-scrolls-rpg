@@ -29,6 +29,7 @@
 		getArmorMaterialProperties,
 	} from '$lib/util/equipment.util'
 	import type { SubSkill } from '$lib/models/subskill'
+	import { getDisplayResistances } from '$lib/util/resistance.util'
 
 	interface Props {
 		player: PlayerData
@@ -62,6 +63,10 @@
 	// Birth sign skill modifiers for display
 	let birthSignAdvantages = $derived(BirthSigns[player.birthSign]?.skillAdvantages ?? [])
 	let birthSignDisadvantages = $derived(BirthSigns[player.birthSign]?.skillDisadvantages ?? [])
+
+	// Racial resistances for display
+	let racialResistances = $derived(getDisplayResistances(player.race))
+	let hasResistances = $derived(racialResistances.length > 0)
 
 	function openSkillRoll(skill: Skill) {
 		selectedSkill = skill
@@ -857,6 +862,17 @@
 			<p class="text-sm whitespace-pre-line text-surface-600-300-token">
 				{Race[player.race]?.description ?? 'No description available'}
 			</p>
+
+			{#if hasResistances}
+				<div class="mt-3 pt-3 border-t border-surface-300-600-token">
+					<h4 class="text-sm font-semibold text-surface-600-300-token mb-2">Resistances</h4>
+					<div class="flex flex-wrap gap-2">
+						{#each racialResistances as resistance}
+							<span class="badge variant-soft-tertiary text-xs">{resistance}</span>
+						{/each}
+					</div>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Birth Sign Details -->
