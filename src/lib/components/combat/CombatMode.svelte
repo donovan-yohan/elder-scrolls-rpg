@@ -175,8 +175,14 @@
 		activeModal = null
 	}
 
-	function handleDodge(result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean }) {
+	function handleDodge(result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean; storedMisfortune?: boolean }) {
 		combatStore.spendInitiative(player.id, 1)
+
+		// Handle stored misfortune
+		if (result.storedMisfortune) {
+			combatStore.addMisfortune(player.id, 1)
+		}
+
 		activeModal = null
 	}
 
@@ -770,6 +776,7 @@
 			isOpen={activeModal === 'dodge'}
 			{player}
 			currentInitiative={session.partyInitiativePool.current}
+			currentMisfortune={session.misfortunePoints}
 			onDodge={handleDodge}
 			onClose={handleCloseModal}
 		/>
