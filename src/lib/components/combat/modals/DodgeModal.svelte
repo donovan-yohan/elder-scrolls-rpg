@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import { getSkillBonus } from '$lib/util/combat.util'
 	import { Skill } from '$lib/data/skill'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
@@ -11,11 +12,14 @@
 		player: PlayerData
 		currentInitiative: number
 		currentMisfortune?: number
+		currentMP: number
+		currentHP: number
 		onDodge: (result: { success: boolean; damageReduction: 'full' | 'half' | 'none'; disoriented: boolean; storedMisfortune: boolean }) => void
 		onClose: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { isOpen, player, currentInitiative, currentMisfortune = 0, onDodge, onClose }: Props = $props()
+	let { isOpen, player, currentInitiative, currentMisfortune = 0, currentMP, currentHP, onDodge, onClose, onMagickaBurst }: Props = $props()
 
 	let step = $state<'setup' | 'roll' | 'result'>('setup')
 	let attackRoll = $state(15) // Enemy attack roll to dodge against
@@ -77,6 +81,12 @@
 	function handleCritFailChoice(choice: 'accept' | 'store', roll: DiceRoll) {
 		if (choice === 'store') {
 			storedMisfortune = true
+		}
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
 		}
 	}
 
@@ -184,6 +194,10 @@
 						{currentMisfortune}
 						onCritFailChoice={handleCritFailChoice}
 						enableCritFailModal={true}
+						showMagickaBurst={true}
+						{currentMP}
+						{currentHP}
+						onMagickaBurst={handleMagickaBurst}
 					/>
 				</div>
 			{:else}

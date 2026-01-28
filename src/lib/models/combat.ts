@@ -63,6 +63,9 @@ export interface DiceRoll {
   total: number
   isCritical: boolean
   isCriticalFail: boolean
+  // Magicka burst fields
+  isMagickaBurst?: boolean
+  wasDowngradedFromCrit?: boolean
 }
 
 export type CombatLogEntryType = 'action' | 'damage' | 'healing' | 'condition' | 'turn' | 'initiative' | 'system'

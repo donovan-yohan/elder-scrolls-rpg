@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import { getWeaponById, getShieldBlockAdvantage, type WeaponType } from '$lib/data/weapons'
 	import { getSkillBonus } from '$lib/util/combat.util'
 	import { Skill } from '$lib/data/skill'
@@ -12,12 +13,15 @@
 		player: PlayerData
 		shieldId: string | null
 		currentInitiative: number
+		currentMP: number
+		currentHP: number
 		hasHeftedShield: boolean
 		onBlock: (result: { success: boolean; damageReduction: 'full' | 'half' | 'minimal' | 'none' }) => void
 		onClose: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { isOpen, player, shieldId, currentInitiative, hasHeftedShield, onBlock, onClose }: Props = $props()
+	let { isOpen, player, shieldId, currentInitiative, currentMP, currentHP, hasHeftedShield, onBlock, onClose, onMagickaBurst }: Props = $props()
 
 	let shield = $derived(shieldId ? getWeaponById(shieldId) : null)
 	let shieldAdvantage = $derived(shield ? getShieldBlockAdvantage(shield.type as WeaponType) : 0)
@@ -69,6 +73,12 @@
 	function handleBlockRoll(roll: DiceRoll) {
 		blockRoll = roll
 		step = 'result'
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
 	function handleConfirm() {
@@ -142,6 +152,10 @@
 						playerLevel={player.level}
 						label="Roll Block"
 						advantageCount={shieldAdvantage}
+						showMagickaBurst={true}
+						{currentMP}
+						{currentHP}
+						onMagickaBurst={handleMagickaBurst}
 					/>
 				</div>
 			{:else}

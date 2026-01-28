@@ -1,15 +1,26 @@
 <script lang="ts">
 	import type { DiceRoll } from '$lib/models/combat'
 
-	export let roll: DiceRoll
-	export let targetDC: number | undefined = undefined
-	export let showBreakdown: boolean = true
+	interface Props {
+		roll: DiceRoll
+		targetDC?: number
+		showBreakdown?: boolean
+	}
 
-	$: success = targetDC !== undefined ? (roll.total >= targetDC || roll.isCritical) : undefined
-	$: margin = targetDC !== undefined ? roll.total - targetDC : undefined
+	let { roll, targetDC = undefined, showBreakdown = true }: Props = $props()
+
+	let success = $derived(targetDC !== undefined ? (roll.total >= targetDC || roll.isCritical) : undefined)
+	let margin = $derived(targetDC !== undefined ? roll.total - targetDC : undefined)
 </script>
 
 <div class="roll-result p-4 rounded-lg" class:variant-soft-success={success === true} class:variant-soft-error={success === false} class:variant-soft-surface={success === undefined}>
+	<!-- Magicka Burst Indicator -->
+	{#if roll.isMagickaBurst}
+		<div class="text-center mb-2">
+			<span class="badge variant-filled-tertiary text-xs">Magicka Burst</span>
+		</div>
+	{/if}
+
 	<!-- Main Result -->
 	<div class="text-center mb-2">
 		<span class="text-3xl font-bold" class:text-success-500={roll.isCritical} class:text-error-500={roll.isCriticalFail}>
@@ -20,6 +31,9 @@
 		{/if}
 		{#if roll.isCriticalFail}
 			<span class="badge variant-filled-error ml-2">FUMBLE!</span>
+		{/if}
+		{#if roll.wasDowngradedFromCrit}
+			<span class="badge variant-soft-warning ml-2 text-xs">Crit Suppressed</span>
 		{/if}
 	</div>
 

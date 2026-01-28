@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import { getSkillBonus } from '$lib/util/combat.util'
 	import { Skill } from '$lib/data/skill'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
@@ -11,11 +12,13 @@
 		player: PlayerData
 		currentAP: number
 		currentMP: number
+		currentHP: number
 		onFocus: (result: { success: boolean; extraMPCost: number }) => void
 		onClose: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { isOpen, player, currentAP, currentMP, onFocus, onClose }: Props = $props()
+	let { isOpen, player, currentAP, currentMP, currentHP, onFocus, onClose, onMagickaBurst }: Props = $props()
 
 	// Spell tier affects extra MP cost
 	const spellTiers = [
@@ -47,6 +50,12 @@
 		focusRoll = roll
 		focusSuccess = success
 		step = 'result'
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
 	function handleConfirm() {
@@ -127,6 +136,10 @@
 						targetDC={currentTier.dc}
 						playerLevel={player.level}
 						label="Roll Focus Check"
+						showMagickaBurst={true}
+						{currentMP}
+						{currentHP}
+						onMagickaBurst={handleMagickaBurst}
 					/>
 				</div>
 			{:else}

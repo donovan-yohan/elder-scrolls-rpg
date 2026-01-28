@@ -3,6 +3,7 @@
 	import { getWeaponById } from '$lib/data/weapons'
 	import type { DiceRoll } from '$lib/models/combat'
 	import type { AvailableAction } from '$lib/models/combatAction'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
 	import { calculateWeaponDamage, getSkillBonus } from '$lib/util/combat.util'
@@ -10,11 +11,14 @@
 	interface Props {
 		player: PlayerData
 		action: AvailableAction
+		currentMP: number
+		currentHP: number
 		onComplete: (result: { damage: number; isCritical: boolean; apCost: number }) => void
 		onCancel: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { player, action, onComplete, onCancel }: Props = $props()
+	let { player, action, currentMP, currentHP, onComplete, onCancel, onMagickaBurst }: Props = $props()
 
 	// Get weapon from action
 	let weapon = $derived(action.weaponId ? getWeaponById(action.weaponId) : null)
@@ -34,6 +38,12 @@
 			damageResult = calculateWeaponDamage(weapon, roll.total, targetAC, roll.isCritical)
 		}
 		step = 'damage'
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
 	function handleConfirm() {
@@ -63,6 +73,10 @@
 				targetDC={targetAC}
 				playerLevel={player.level}
 				label="Roll Attack"
+				showMagickaBurst={true}
+				{currentMP}
+				{currentHP}
+				onMagickaBurst={handleMagickaBurst}
 			/>
 		</div>
 	{:else}

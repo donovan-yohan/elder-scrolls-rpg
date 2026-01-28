@@ -5,6 +5,12 @@
 	import { rollD20, isCriticalSuccess, isCriticalFailure, performSkillCheck } from '$lib/util/dice.util'
 	import { getSubskillBonus } from '$lib/util/stats.util'
 	import { shouldShowCritFailModal } from '$lib/util/criticalFail.util'
+	import {
+		canUseMagickaBurst,
+		getMagickaBurstCost,
+		processMagickaBurstRoll,
+		type MagickaBurstCost,
+	} from '$lib/util/magicka-burst.util'
 	import RollResult from './RollResult.svelte'
 	import ManualEntry from './ManualEntry.svelte'
 	import SubskillPicker from '$lib/components/subskills/SubskillPicker.svelte'
@@ -29,6 +35,11 @@
 		currentMisfortune?: number
 		onCritFailChoice?: (choice: 'accept' | 'store', roll: DiceRoll) => void
 		enableCritFailModal?: boolean
+		// Magicka burst support
+		currentMP?: number
+		currentHP?: number
+		onMagickaBurst?: (cost: MagickaBurstCost, previousRollWasCritFail: boolean) => void
+		showMagickaBurst?: boolean
 	}
 
 	let {
@@ -50,6 +61,11 @@
 		currentMisfortune = 0,
 		onCritFailChoice,
 		enableCritFailModal = false,
+		// Magicka burst props
+		currentMP = 0,
+		currentHP = 0,
+		onMagickaBurst,
+		showMagickaBurst = false,
 	}: Props = $props()
 
 	let mode: 'digital' | 'manual' = $state('digital')
@@ -64,7 +80,15 @@
 	let pendingSuccess = $state(false)
 	let pendingMargin = $state(0)
 
+	// Magicka burst state
+	let isMagickaBurstRoll: boolean = $state(false)
+	let previousRollWasCritFail: boolean = $state(false)
+
 	let subskillBonus = $derived(selectedSubskill ? getSubskillBonus(playerLevel) : 0)
+
+	// Can the player use magicka burst?
+	let canBurst = $derived(showMagickaBurst && canUseMagickaBurst(currentMP, currentHP))
+	let burstCost = $derived(canBurst ? getMagickaBurstCost(currentMP, currentHP) : null)
 
 	// Fortune pre-roll option
 	let showFortunePreRoll = $state(false)
@@ -77,8 +101,8 @@
 	}
 
 	function handleRollResult(roll: DiceRoll, success: boolean, margin: number) {
-		// Check if we should show crit fail modal
-		if (enableCritFailModal && onCritFailChoice && shouldShowCritFailModal(roll)) {
+		// Check if we should show crit fail modal (but not for magicka burst rerolls)
+		if (enableCritFailModal && onCritFailChoice && shouldShowCritFailModal(roll) && !isMagickaBurstRoll) {
 			pendingRoll = roll
 			pendingSuccess = success
 			pendingMargin = margin
@@ -93,10 +117,17 @@
 		}
 	}
 
-	async function handleDigitalRoll() {
+	async function handleDigitalRoll(magickaBurst: boolean = false) {
 		if (disabled || isRolling) return
 
 		isRolling = true
+		isMagickaBurstRoll = magickaBurst
+
+		// Track if previous roll was crit fail (for misfortune)
+		if (magickaBurst && lastRoll?.isCriticalFail) {
+			previousRollWasCritFail = true
+		}
+
 		lastRoll = undefined
 
 		// Brief animation delay
@@ -111,7 +142,24 @@
 		const baseRoll = rollD20(advantageCount)
 		const result = performSkillCheck(baseRoll, skillBonus, allBonuses, targetDC ?? 0, playerLevel, advantageCount)
 
+		// If magicka burst, process the roll to downgrade crits
+		if (magickaBurst && targetDC !== undefined) {
+			const burstResult = processMagickaBurstRoll(baseRoll, targetDC, playerLevel, true)
+
+			// Override the roll's critical status
+			result.roll.isCritical = burstResult.isCritical
+			result.roll.isMagickaBurst = true
+			result.roll.wasDowngradedFromCrit = burstResult.wasDowngradedFromCrit
+			result.success = burstResult.success
+		}
+
 		isRolling = false
+
+		// Notify parent about magicka burst cost
+		if (magickaBurst && burstCost && onMagickaBurst) {
+			onMagickaBurst(burstCost, previousRollWasCritFail)
+		}
+
 		handleRollResult(result.roll, result.success, result.margin)
 	}
 
@@ -174,11 +222,17 @@
 		lastSuccess = undefined
 	}
 
+	function handleMagickaBurst() {
+		handleDigitalRoll(true)
+	}
+
 	function reset() {
 		lastRoll = undefined
 		lastSuccess = undefined
 		pendingRoll = undefined
 		showCritFailModal = false
+		isMagickaBurstRoll = false
+		previousRollWasCritFail = false
 	}
 </script>
 
@@ -228,7 +282,7 @@
 			<button
 				type="button"
 				class="btn variant-filled-primary w-full"
-				onclick={handleDigitalRoll}
+				onclick={() => handleDigitalRoll(false)}
 				disabled={disabled || isRolling}
 			>
 				{#if isRolling}
@@ -250,6 +304,57 @@
 				{targetDC}
 				success={lastSuccess}
 			/>
+		</div>
+
+		<!-- Magicka Burst Warning for downgraded crit -->
+		{#if lastRoll.wasDowngradedFromCrit}
+			<div class="text-center mt-2 text-warning-500 text-sm">
+				Magicka Burst: Critical success downgraded to normal success
+			</div>
+		{/if}
+
+		<div class="text-center mt-2 flex flex-col gap-2">
+			<!-- Magicka Burst Reroll Option -->
+			{#if showMagickaBurst && canBurst && burstCost && mode === 'digital'}
+				<button
+					type="button"
+					class="btn btn-sm variant-filled-tertiary"
+					onclick={handleMagickaBurst}
+					disabled={disabled || isRolling}
+				>
+					{#if burstCost.isBurn}
+						Magicka Burst (Burn: 1 HP)
+					{:else}
+						Magicka Burst (1 MP)
+					{/if}
+					{#if lastRoll.isCriticalFail}
+						<span class="text-xs opacity-75 ml-1">(accepts misfortune)</span>
+					{/if}
+				</button>
+				{#if burstCost.isBurn}
+					<div class="text-xs text-error-500">
+						Warning: No MP remaining - will take burn damage!
+					</div>
+				{/if}
+			{/if}
+
+			<button type="button" class="btn btn-sm variant-ghost" onclick={reset}>
+				Roll Again
+			</button>
+		</div>
+	{/if}
+
+	<!-- Magicka Burst Info (when enabled but no roll yet) -->
+	{#if showMagickaBurst && !lastRoll}
+		<div class="text-xs text-center opacity-60 mt-2">
+			Magicka Burst available after rolling
+			{#if currentMP > 0}
+				(1 MP)
+			{:else if currentHP > 0}
+				(Burn: 1 HP)
+			{:else}
+				(Burned out - unavailable)
+			{/if}
 		</div>
 	{/if}
 

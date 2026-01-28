@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 	import { getWeaponById } from '$lib/data/weapons'
 	import { getSkillBonus } from '$lib/util/combat.util'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
@@ -11,11 +12,14 @@
 		player: PlayerData
 		weaponId: string | null
 		currentAP: number
+		currentMP: number
+		currentHP: number
 		onFocus: (result: { success: boolean; isCritical: boolean }) => void
 		onClose: () => void
+		onMagickaBurst?: (cost: MagickaBurstCost, acceptedMisfortune: boolean) => void
 	}
 
-	let { isOpen, player, weaponId, currentAP, onFocus, onClose }: Props = $props()
+	let { isOpen, player, weaponId, currentAP, currentMP, currentHP, onFocus, onClose, onMagickaBurst }: Props = $props()
 
 	let weapon = $derived(weaponId ? getWeaponById(weaponId) : null)
 	let focusDC = $derived(weapon ? 10 + (weapon.focusCost ?? 2) : 12)
@@ -31,6 +35,12 @@
 		focusRoll = roll
 		focusSuccess = success
 		step = 'result'
+	}
+
+	function handleMagickaBurst(cost: MagickaBurstCost, previousRollWasCritFail: boolean) {
+		if (onMagickaBurst) {
+			onMagickaBurst(cost, previousRollWasCritFail)
+		}
 	}
 
 	function handleConfirm() {
@@ -79,6 +89,10 @@
 						targetDC={focusDC}
 						playerLevel={player.level}
 						label="Roll Focus Check"
+						showMagickaBurst={true}
+						{currentMP}
+						{currentHP}
+						onMagickaBurst={handleMagickaBurst}
 					/>
 				</div>
 			{:else}
