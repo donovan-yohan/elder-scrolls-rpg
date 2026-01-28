@@ -11,6 +11,7 @@
 	import InitiativeTracker from './InitiativeTracker.svelte'
 	import ConditionTracker from './ConditionTracker.svelte'
 	import CombatLog from './CombatLog.svelte'
+	import MisfortuneTracker from './MisfortuneTracker.svelte'
 	import ActionsPanel, { type ActionType as ActionsPanelActionType } from './ActionsPanel.svelte'
 	import DiceRoller from './DiceRoller/DiceRoller.svelte'
 	import EnterCombatModal from './modals/EnterCombatModal.svelte'
@@ -432,6 +433,7 @@
 		combatStore.removeCondition(player.id, condition.type)
 	}
 
+<<<<<<< HEAD
 	// Fortune/Misfortune handlers
 	function handleFortuneChoice(choice: 'keep' | 'store') {
 		if (!pendingRoll) return
