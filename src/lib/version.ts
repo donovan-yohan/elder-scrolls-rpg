@@ -5,4 +5,4 @@
  * per-character migration functions. Currently we wipe all characters on
  * version mismatch during pre-release development.
  */
-export const CHARACTER_SCHEMA_VERSION = '0.1.0'
+export const CHARACTER_SCHEMA_VERSION = '0.2.0'
