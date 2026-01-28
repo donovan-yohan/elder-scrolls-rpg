@@ -5,9 +5,11 @@
 		getPlayerInitiativeModifiers,
 		calculatePlayerInitiativeContribution,
 		calculateManualInitiative,
+		rollToSuccesses,
 		type InitiativeModifiers,
 		type InitiativeRollResult
 	} from '$lib/util/initiative.util'
+	import { Level } from '$lib/data/level'
 	import { camelToTitleCase } from '$lib/util/string.util'
 
 	interface Props {
@@ -78,8 +80,16 @@
 
 	function handleConfirm() {
 		if (!playerRollResult || enemyInitiative === null) return
+
+		// Determine if roll was a critical based on player's level crit range
+		const critRange = Level[player.level]?.critical ?? 20
+		const isCritical = playerRollResult.d20Roll >= critRange
+
+		// Convert roll total to successes per Combat 2.0 rules
+		const partySuccesses = rollToSuccesses(playerRollResult.total, isCritical)
+
 		onstart?.({
-			partyInit: playerRollResult.total,
+			partyInit: partySuccesses,
 			enemyInit: enemyInitiative
 		})
 	}

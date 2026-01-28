@@ -84,6 +84,7 @@
 			minorSkills: formData.minorSkills || [],
 			subSkills: formData.subSkills || [],
 			knownSpells: formData.knownSpells || [],
+			knownShouts: [],
 			equipment: formData.equipment || {
 				weapon: createEmptySlot(),
 				offhand: createEmptySlot(),

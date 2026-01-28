@@ -8,6 +8,7 @@
 	import { BirthSigns } from '$lib/data/birthSign'
 	import { Race } from '$lib/data/race'
 	import { camelToTitleCase } from '$lib/util/string.util'
+	import { getEquippedWeapon, getEquippedArmor } from '$lib/util/equipment.util'
 
 	export let stepIndex: number = 5
 
@@ -31,6 +32,28 @@
 	$: spellSlots = formData.majorSkills && formData.minorSkills
 		? getAvailableSpellSlots(formData as PlayerData)
 		: {}
+
+	// Equipment display helpers
+	$: equippedWeapon = formData.equipment?.weapon
+		? getEquippedWeapon(formData.equipment.weapon)
+		: null
+	$: equippedOffhand = formData.equipment?.offhand
+		? getEquippedWeapon(formData.equipment.offhand)
+		: null
+	$: equippedArmor = formData.equipment?.armor
+		? getEquippedArmor(formData.equipment.armor)
+		: null
+
+	// Helper to format equipment name with optional material
+	function formatEquipmentName(
+		equipped: { weapon?: { name: string }; armor?: { name: string }; material: { name: string } | null } | null,
+		type: 'weapon' | 'armor'
+	): string {
+		if (!equipped) return 'None'
+		const itemName = type === 'weapon' ? equipped.weapon?.name : equipped.armor?.name
+		if (!itemName) return 'None'
+		return equipped.material ? `${equipped.material.name} ${itemName}` : itemName
+	}
 
 	// Validate the review step (always valid if we got here)
 	$: {
@@ -174,15 +197,15 @@
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 				<div>
 					<span class="text-surface-400 text-sm">Weapon</span>
-					<p class="font-semibold">{formData.equipment?.weapon || 'None'}</p>
+					<p class="font-semibold">{formatEquipmentName(equippedWeapon, 'weapon')}</p>
 				</div>
 				<div>
 					<span class="text-surface-400 text-sm">Offhand</span>
-					<p class="font-semibold">{formData.equipment?.offhand || 'None'}</p>
+					<p class="font-semibold">{formatEquipmentName(equippedOffhand, 'weapon')}</p>
 				</div>
 				<div>
 					<span class="text-surface-400 text-sm">Armor</span>
-					<p class="font-semibold">{formData.equipment?.armor || 'None'}</p>
+					<p class="font-semibold">{formatEquipmentName(equippedArmor, 'armor')}</p>
 				</div>
 				<div>
 					<span class="text-surface-400 text-sm">Accessories</span>
