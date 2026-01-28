@@ -235,7 +235,7 @@
 		<!-- Main Content -->
 		{#if viewMode === 'playing'}
 			{#if isInCombat}
-				<CombatMode player={currentPlayer} onCombatEnded={handleCombatEnded} />
+				<CombatMode player={currentPlayer} onCombatEnded={handleCombatEnded} onPlayerUpdate={handlePlayerUpdate} />
 			{:else}
 				<!-- Action Buttons -->
 				<div class="flex gap-4 mb-6">
