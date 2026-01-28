@@ -229,6 +229,42 @@ function createCombatStore() {
 		},
 
 		/**
+		 * Gain AP (e.g., from crit refund)
+		 */
+		gainAP: (playerId: string, amount: number): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentAP: Math.min(session.maxAP, session.currentAP + amount)
+					}
+				}
+			})
+		},
+
+		/**
+		 * Gain MP (e.g., from crit refund)
+		 */
+		gainMP: (playerId: string, amount: number): void => {
+			update((state) => {
+				const session = state[playerId]
+				if (!session) return state
+				// Note: We don't cap at maxMP here as player.maxMagicka isn't available
+				// The caller should handle capping if needed
+				return {
+					...state,
+					[playerId]: {
+						...session,
+						currentMP: session.currentMP + amount
+					}
+				}
+			})
+		},
+
+		/**
 		 * Spend party initiative
 		 */
 		spendInitiative: (playerId: string, amount: number): void => {

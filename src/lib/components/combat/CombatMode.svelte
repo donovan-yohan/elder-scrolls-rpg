@@ -219,20 +219,41 @@
 	}
 
 	// Handle attack resolution
-	function handleAttackComplete(event: CustomEvent<{ damage: number }>) {
-		if (selectedAction) {
-			combatStore.spendAP(player.id, selectedAction.apCost)
+	function handleAttackComplete(result: { damage: number; isCritical: boolean; apCost: number }) {
+		// Spend AP (full cost first)
+		combatStore.spendAP(player.id, result.apCost)
+
+		// On critical: refund half AP (rounded down) + add 1 party initiative
+		if (result.isCritical) {
+			const apRefund = Math.floor(result.apCost / 2)
+			if (apRefund > 0) {
+				// Refund AP by gaining it back
+				combatStore.gainAP(player.id, apRefund)
+			}
+			combatStore.gainInitiative(player.id, 1)
 		}
+
 		showAttackResolver = false
 		selectedAction = null
 	}
 
 	// Handle spell resolution
-	function handleSpellComplete(event: CustomEvent<{ mpSpent: number }>) {
-		if (selectedAction) {
-			combatStore.spendAP(player.id, selectedAction.apCost)
-			combatStore.spendMP(player.id, event.detail.mpSpent)
+	function handleSpellComplete(result: { mpSpent: number; isCritical: boolean; apCost: number; success: boolean }) {
+		// Spend AP and MP (full cost first)
+		combatStore.spendAP(player.id, result.apCost)
+		combatStore.spendMP(player.id, result.mpSpent)
+
+		// On critical success: refund half AP (rounded down) + full MP + 1 party initiative
+		if (result.isCritical && result.success) {
+			const apRefund = Math.floor(result.apCost / 2)
+			if (apRefund > 0) {
+				combatStore.gainAP(player.id, apRefund)
+			}
+			// Refund full MP
+			combatStore.gainMP(player.id, result.mpSpent)
+			combatStore.gainInitiative(player.id, 1)
 		}
+
 		showSpellResolver = false
 		selectedAction = null
 	}
@@ -402,8 +423,8 @@
 			<AttackResolverModal
 				{player}
 				action={selectedAction}
-				on:complete={handleAttackComplete}
-				on:cancel={() => { showAttackResolver = false; selectedAction = null; }}
+				onComplete={handleAttackComplete}
+				onCancel={() => { showAttackResolver = false; selectedAction = null; }}
 			/>
 		</div>
 	{/if}
@@ -413,8 +434,8 @@
 			<SpellResolverModal
 				{player}
 				action={selectedAction}
-				on:complete={handleSpellComplete}
-				on:cancel={() => { showSpellResolver = false; selectedAction = null; }}
+				onComplete={handleSpellComplete}
+				onCancel={() => { showSpellResolver = false; selectedAction = null; }}
 			/>
 		</div>
 	{/if}

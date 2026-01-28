@@ -139,7 +139,11 @@
 						<div class="card variant-soft-success p-4 text-center">
 							<p class="font-bold text-success-500">Spell Focused!</p>
 							<p class="text-sm opacity-75">
-								Your next spell gains advantage and enhanced effects.
+								{#if focusRoll?.isCritical}
+									Critical! Retroactively increase spell DC by {Math.floor(player.level / 2)} (half your level).
+								{:else}
+									Your next spell gains advantage and enhanced effects.
+								{/if}
 								Extra cost: {currentTier.extraMP} MP
 							</p>
 						</div>

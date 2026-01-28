@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
 	import type { PlayerData } from '$lib/models/player'
-	import type { Weapon } from '$lib/data/weapons'
 	import { getWeaponById } from '$lib/data/weapons'
 	import type { DiceRoll } from '$lib/models/combat'
 	import type { AvailableAction } from '$lib/models/combatAction'
@@ -9,24 +7,25 @@
 	import RollResult from '../DiceRoller/RollResult.svelte'
 	import { calculateWeaponDamage, getSkillBonus } from '$lib/util/combat.util'
 
-	export let player: PlayerData
-	export let action: AvailableAction
+	interface Props {
+		player: PlayerData
+		action: AvailableAction
+		onComplete: (result: { damage: number; isCritical: boolean; apCost: number }) => void
+		onCancel: () => void
+	}
 
-	const dispatch = createEventDispatcher<{
-		complete: { damage: number }
-		cancel: void
-	}>()
+	let { player, action, onComplete, onCancel }: Props = $props()
 
 	// Get weapon from action
-	$: weapon = action.weaponId ? getWeaponById(action.weaponId) : null
+	let weapon = $derived(action.weaponId ? getWeaponById(action.weaponId) : null)
 
-	let step: 'attack' | 'damage' | 'complete' = 'attack'
-	let targetAC = 10
-	let attackRoll: DiceRoll | undefined
-	let attackSuccess = false
-	let damageResult: { baseDamage: number; bonusDamage: number; total: number } | undefined
+	let step = $state<'attack' | 'damage' | 'complete'>('attack')
+	let targetAC = $state(10)
+	let attackRoll = $state<DiceRoll | undefined>(undefined)
+	let attackSuccess = $state(false)
+	let damageResult = $state<{ baseDamage: number; bonusDamage: number; total: number } | undefined>(undefined)
 
-	$: skillBonus = weapon ? getSkillBonus(player, weapon.relatedSkill) : 0
+	let skillBonus = $derived(weapon ? getSkillBonus(player, weapon.relatedSkill) : 0)
 
 	function handleAttackRoll(roll: DiceRoll, success: boolean) {
 		attackRoll = roll
@@ -38,11 +37,11 @@
 	}
 
 	function handleConfirm() {
-		dispatch('complete', { damage: attackSuccess ? damageResult?.total ?? 0 : 0 })
-	}
-
-	function handleCancel() {
-		dispatch('cancel')
+		onComplete({
+			damage: attackSuccess ? damageResult?.total ?? 0 : 0,
+			isCritical: attackRoll?.isCritical ?? false,
+			apCost: action.apCost
+		})
 	}
 </script>
 
@@ -79,6 +78,11 @@
 					<div class="text-xs opacity-75">
 						{damageResult.baseDamage} base + {damageResult.bonusDamage} bonus
 					</div>
+					{#if attackRoll?.isCritical}
+						<div class="text-sm text-warning-500 font-semibold mt-2">
+							Critical! Refund {Math.floor(action.apCost / 2)} AP + 1 Party Initiative
+						</div>
+					{/if}
 				</div>
 			{:else}
 				<div class="card variant-soft-error p-4 text-center">
@@ -89,9 +93,9 @@
 	{/if}
 
 	<footer class="flex justify-end gap-2 mt-6">
-		<button type="button" class="btn variant-ghost" on:click={handleCancel}>Cancel</button>
+		<button type="button" class="btn variant-ghost" onclick={onCancel}>Cancel</button>
 		{#if step === 'damage'}
-			<button type="button" class="btn variant-filled-primary" on:click={handleConfirm}
+			<button type="button" class="btn variant-filled-primary" onclick={handleConfirm}
 				>Apply Result</button
 			>
 		{/if}
