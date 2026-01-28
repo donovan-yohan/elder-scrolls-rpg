@@ -1,4 +1,5 @@
 import type { Equipment, EquipmentSlot, PlayerData } from '$lib/models/player'
+import { calculateMaxSpiritPoints } from './spiritPoints.util'
 
 // Type for the old equipment format
 interface LegacyEquipment {
@@ -49,9 +50,19 @@ export function migratePlayerData(player: PlayerData): PlayerData {
 	// Migrate ownedWeapons - add empty array if missing
 	const ownedWeapons = playerAny.ownedWeapons ?? []
 
+	// Migrate spirit points - add max if missing, cap if over max
+	const maxSpiritPoints = calculateMaxSpiritPoints(player.level)
+	let currentSpiritPoints = playerAny.currentSpiritPoints
+	if (currentSpiritPoints === undefined) {
+		currentSpiritPoints = maxSpiritPoints
+	} else {
+		currentSpiritPoints = Math.min(currentSpiritPoints, maxSpiritPoints)
+	}
+
 	return {
 		...player,
 		equipment: migratePlayerEquipment(player.equipment as Equipment | LegacyEquipment),
 		ownedWeapons,
+		currentSpiritPoints,
 	}
 }

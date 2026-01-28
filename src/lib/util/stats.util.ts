@@ -5,6 +5,7 @@ import { Archetypes } from '$lib/data/archetype'
 import { BirthSigns } from '$lib/data/birthSign'
 import { RaceName } from '$lib/data/race'
 import { Level } from '$lib/data/level'
+import { calculateMaxSpiritPoints } from './spiritPoints.util'
 
 /**
  * Calculate subskill bonus based on player level.
@@ -247,11 +248,13 @@ export function calculateAllStats(player: PlayerData): {
 	maxHealth: number
 	maxMagicka: number
 	maxAP: number
+	maxSpiritPoints: number
 } {
 	return {
 		maxHealth: calculateMaxHealth(player),
 		maxMagicka: calculateMaxMagicka(player),
 		maxAP: calculateMaxAP(player),
+		maxSpiritPoints: calculateMaxSpiritPoints(player.level),
 	}
 }
 

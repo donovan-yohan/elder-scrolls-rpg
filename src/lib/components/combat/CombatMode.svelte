@@ -25,7 +25,8 @@
 	import BlockModal from './modals/BlockModal.svelte'
 	import UseItemModal from './modals/UseItemModal.svelte'
 	import TakeDamageModal from './modals/TakeDamageModal.svelte'
-	import { ActionType } from '$lib/models/combat'
+	import SpiritRecoveryModal from './modals/SpiritRecoveryModal.svelte'
+	import { ActionType, ConditionType } from '$lib/models/combat'
 	import { DamageType } from '$lib/data/element'
 
 	interface Props {
@@ -57,6 +58,7 @@
 	let showEndCombatModal = $state(false)
 	let showAttackResolver = $state(false)
 	let showSpellResolver = $state(false)
+	let showSpiritRecoveryModal = $state(false)
 	let selectedAction = $state<AvailableAction | null>(null)
 	let activeModal = $state<ActionsPanelActionType | null>(null)
 
@@ -167,6 +169,9 @@
 				health: player.health,
 				magicka: player.magicka,
 				maxActionPoints: player.maxActionPoints,
+				equipment: player.equipment,
+				level: player.level,
+				currentSpiritPoints: player.currentSpiritPoints,
 			}
 		)
 		showEnterCombatModal = false
@@ -277,6 +282,30 @@
 	function handleTakeDamage(amount: number, damageType: DamageType, isMagicSource: boolean) {
 		combatStore.takeDamageWithEffects(player.id, player, amount, damageType, isMagicSource)
 		showTakeDamageModal = false
+		// Check if HP dropped to 0 or below after taking damage
+		const currentSession = combatStore.getSession(player.id)
+		if (currentSession && currentSession.currentHP <= 0) {
+			showSpiritRecoveryModal = true
+		}
+	}
+
+	// Handle spirit point spending
+	function handleSpendSpiritPoint() {
+		combatStore.spendSpiritPoint(player.id, {
+			maxHealth: player.maxHealth,
+			maxMagicka: player.maxMagicka,
+			maxActionPoints: player.maxActionPoints
+		})
+		showSpiritRecoveryModal = false
+	}
+
+	// Handle falling unconscious
+	function handleFallUnconscious() {
+		combatStore.addCondition(player.id, {
+			type: ConditionType.Stunned, // Using Stunned as substitute for Unconscious
+			source: 'Spirit Point Exhaustion'
+		})
+		showSpiritRecoveryModal = false
 	}
 
 	function handleAdjustMP(amount: number) {
@@ -426,6 +455,18 @@
 			<EndCombatModal
 				on:confirm={handleCombatEnded}
 				on:cancel={() => showEndCombatModal = false}
+			/>
+		</div>
+	{/if}
+
+	{#if showSpiritRecoveryModal && session}
+		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
+			<SpiritRecoveryModal
+				currentSpiritPoints={session.currentSpiritPoints}
+				maxSpiritPoints={session.maxSpiritPoints}
+				characterName={player.characterName}
+				onspend={handleSpendSpiritPoint}
+				onfall={handleFallUnconscious}
 			/>
 		</div>
 	{/if}

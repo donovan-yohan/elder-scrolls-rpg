@@ -4,6 +4,7 @@ export interface CombatResult {
 	health: number
 	magicka: number
 	equipment: Equipment
+	currentSpiritPoints: number
 }
 
 /**
@@ -19,6 +20,7 @@ export function syncCombatResultToPlayer(
 		health: combatResult.health,
 		magicka: combatResult.magicka,
 		equipment: combatResult.equipment,
+		currentSpiritPoints: combatResult.currentSpiritPoints,
 		updatedAt: new Date().toISOString()
 	}
 }

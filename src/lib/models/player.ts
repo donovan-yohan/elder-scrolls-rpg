@@ -39,6 +39,7 @@ export type PlayerData = {
 	actionPoints: number
 	maxMagicka: number
 	magicka: number
+	currentSpiritPoints: number
 	birthSign: BirthSignName
 	archetype: ArchetypeName
 	majorSkills: Skill[]
@@ -65,6 +66,7 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	actionPoints: 0,
 	maxMagicka: 0,
 	magicka: 0,
+	currentSpiritPoints: 1,
 	birthSign: BirthSignName.Apprentice,
 	archetype: ArchetypeName.Warrior,
 	race: RaceName.Nord,

@@ -20,6 +20,7 @@ function createTestPlayerData(overrides: Partial<PlayerData> = {}): PlayerData {
 		actionPoints: 10,
 		maxMagicka: 50,
 		magicka: 50,
+		currentSpiritPoints: 1,
 		birthSign: BirthSignName.Warrior,
 		archetype: ArchetypeName.Warrior,
 		majorSkills: [],
@@ -118,5 +119,70 @@ describe('migratePlayerData', () => {
 		const result = migratePlayerData(playerWithLegacyEquipment as unknown as PlayerData)
 
 		expect(result.equipment.weapon).toEqual({ id: 'iron-sword', materialId: null })
+	})
+
+	describe('Spirit Points Migration', () => {
+		it('should add currentSpiritPoints based on level if missing', () => {
+			const legacyPlayer = {
+				id: 'test-id',
+				level: 8, // Should have max 2 spirit points
+				playerName: 'Test',
+				characterName: 'Hero',
+				equipment: {
+					weapon: { id: null, materialId: null },
+					offhand: { id: null, materialId: null },
+					armor: { id: null, materialId: null },
+					accessories: []
+				},
+				inventory: [],
+				ownedWeapons: []
+				// Note: no currentSpiritPoints field
+			} as unknown as PlayerData
+
+			const migrated = migratePlayerData(legacyPlayer)
+
+			expect(migrated.currentSpiritPoints).toBeDefined()
+			expect(migrated.currentSpiritPoints).toBe(2) // max for level 8
+		})
+
+		it('should preserve existing currentSpiritPoints', () => {
+			const player = {
+				id: 'test-id',
+				level: 12, // Max 3 spirit points
+				currentSpiritPoints: 1, // Player has only 1 remaining
+				equipment: {
+					weapon: { id: null, materialId: null },
+					offhand: { id: null, materialId: null },
+					armor: { id: null, materialId: null },
+					accessories: []
+				},
+				inventory: [],
+				ownedWeapons: []
+			} as unknown as PlayerData
+
+			const migrated = migratePlayerData(player)
+
+			expect(migrated.currentSpiritPoints).toBe(1)
+		})
+
+		it('should cap currentSpiritPoints to max if over limit', () => {
+			const player = {
+				id: 'test-id',
+				level: 4, // Max 1 spirit point
+				currentSpiritPoints: 5, // Invalid - over max
+				equipment: {
+					weapon: { id: null, materialId: null },
+					offhand: { id: null, materialId: null },
+					armor: { id: null, materialId: null },
+					accessories: []
+				},
+				inventory: [],
+				ownedWeapons: []
+			} as unknown as PlayerData
+
+			const migrated = migratePlayerData(player)
+
+			expect(migrated.currentSpiritPoints).toBe(1) // Capped to max
+		})
 	})
 })
