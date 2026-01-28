@@ -9,6 +9,7 @@
 	import { syncCombatResultToPlayer } from '$lib/util/combatSync.util'
 	import CharacterSheet from '$lib/components/CharacterSheet.svelte'
 	import { CombatMode, EnterCombatModal } from '$lib/components/combat'
+	import RestModal from '$lib/components/player/RestModal.svelte'
 	import { getIsInCombatStore, combatStore } from '$lib/stores/combat.store'
 	import classNames from 'classnames'
 
@@ -32,6 +33,7 @@
 	let isInCombat = $derived($isInCombatStore)
 	let showDeleteConfirm = $state(false)
 	let showEnterCombatModal = $state(false)
+	let showRestModal = $state(false)
 
 	// Helper function to update player safely
 	function updatePlayer(updates: Partial<PlayerData>) {
@@ -86,6 +88,16 @@
 			}
 		)
 		showEnterCombatModal = false
+	}
+
+	// Handle resting
+	function handleRest(restResult: { spiritPoints: number; health: number; magicka: number }) {
+		updatePlayer({
+			currentSpiritPoints: restResult.spiritPoints,
+			health: restResult.health,
+			magicka: restResult.magicka
+		})
+		showRestModal = false
 	}
 
 	// Delete character with confirmation
@@ -225,17 +237,27 @@
 			{#if isInCombat}
 				<CombatMode player={currentPlayer} onCombatEnded={handleCombatEnded} />
 			{:else}
-				<!-- Enter Combat Button -->
-				<div class="mb-6">
+				<!-- Action Buttons -->
+				<div class="flex gap-4 mb-6">
 					<button
 						type="button"
-						class="btn variant-filled-warning w-full"
+						class="btn variant-filled-warning flex-1"
 						onclick={() => showEnterCombatModal = true}
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
 						</svg>
 						Enter Combat
+					</button>
+					<button
+						type="button"
+						class="btn variant-soft-primary"
+						onclick={() => showRestModal = true}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+						</svg>
+						Rest
 					</button>
 				</div>
 
@@ -420,6 +442,22 @@
 					player={currentPlayer}
 					onstart={handleEnterCombatFromPage}
 					oncancel={() => showEnterCombatModal = false}
+				/>
+			</div>
+		{/if}
+
+		<!-- Rest Modal -->
+		{#if showRestModal}
+			<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
+				<RestModal
+					level={currentPlayer.level}
+					currentSpiritPoints={currentPlayer.currentSpiritPoints}
+					currentHealth={currentPlayer.health}
+					maxHealth={currentPlayer.maxHealth}
+					currentMagicka={currentPlayer.magicka}
+					maxMagicka={currentPlayer.maxMagicka}
+					onrest={handleRest}
+					oncancel={() => showRestModal = false}
 				/>
 			</div>
 		{/if}
