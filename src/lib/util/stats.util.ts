@@ -7,6 +7,9 @@ import { RaceName } from '$lib/data/race'
 import { Level } from '$lib/data/level'
 import { calculateMaxSpiritPoints } from './spiritPoints.util'
 
+// Re-export for backwards compatibility
+export { calculateMaxSpiritPoints }
+
 /**
  * Calculate subskill bonus based on player level.
  * Formula: floor(level / 2), minimum 1
