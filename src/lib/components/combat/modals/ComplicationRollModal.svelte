@@ -22,6 +22,7 @@
 	let manualInput = $state('')
 	let isRolling = $state(false)
 	let selectedEquipmentSlot = $state<'weapon' | 'offhand' | 'armor' | null>(null)
+	let rerollMessage = $state<string | null>(null)
 
 	// Determine complication type from roll
 	let complicationType = $derived.by(() => {
@@ -81,8 +82,10 @@
 		if (rollValue === 10 && availableSlots.length > 0) {
 			step = 'equipment-select'
 		} else if (rollValue === 10 && availableSlots.length === 0) {
-			// No equipment - treat as reroll needed
+			// No equipment - inform user and ask for reroll
 			rollValue = null
+			manualInput = ''
+			rerollMessage = 'You rolled 10 but have no equipment to damage. Please reroll 1-9.'
 			step = 'roll'
 		} else {
 			step = 'result'
@@ -113,6 +116,7 @@
 		manualInput = ''
 		isRolling = false
 		selectedEquipmentSlot = null
+		rerollMessage = null
 	}
 
 	$effect(() => {
@@ -152,6 +156,12 @@
 
 			{#if step === 'roll'}
 				<div class="space-y-4">
+					{#if rerollMessage}
+						<div class="card variant-soft-warning p-3 text-center">
+							<p class="text-sm text-warning-500">{rerollMessage}</p>
+						</div>
+					{/if}
+
 					<div class="mb-4">
 						<RadioGroup>
 							<RadioItem bind:group={mode} name="roll-mode" value="digital">

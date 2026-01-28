@@ -2,18 +2,22 @@
 	import { ProgressBar } from '@skeletonlabs/skeleton'
 	import type { CombatSession } from '$lib/models/combat'
 
-	export let session: CombatSession
-	export let maxHP: number
-	export let maxMP: number
-	export let onAdjustHP: (delta: number) => void
-	export let onAdjustMP: (delta: number) => void
-	export let onAdjustAP: (delta: number) => void
-	export let onAdjustSP: ((delta: number) => void) | undefined = undefined
+	interface Props {
+		session: CombatSession
+		maxHP: number
+		maxMP: number
+		onAdjustHP: (delta: number) => void
+		onAdjustMP: (delta: number) => void
+		onAdjustAP: (delta: number) => void
+		onAdjustSP?: (delta: number) => void
+	}
 
-	$: hpPercent = maxHP > 0 ? (session.currentHP / maxHP) * 100 : 0
-	$: mpPercent = maxMP > 0 ? (session.currentMP / maxMP) * 100 : 0
-	$: apPercent = session.maxAP > 0 ? (session.currentAP / session.maxAP) * 100 : 0
-	$: spPercent = session.maxSpiritPoints > 0 ? (session.currentSpiritPoints / session.maxSpiritPoints) * 100 : 0
+	let { session, maxHP, maxMP, onAdjustHP, onAdjustMP, onAdjustAP, onAdjustSP }: Props = $props()
+
+	let hpPercent = $derived(maxHP > 0 ? (session.currentHP / maxHP) * 100 : 0)
+	let mpPercent = $derived(maxMP > 0 ? (session.currentMP / maxMP) * 100 : 0)
+	let apPercent = $derived(session.maxAP > 0 ? (session.currentAP / session.maxAP) * 100 : 0)
+	let spPercent = $derived(session.maxSpiritPoints > 0 ? (session.currentSpiritPoints / session.maxSpiritPoints) * 100 : 0)
 
 	function getHPColor(percent: number): string {
 		if (percent > 50) return 'bg-success-500'
@@ -33,7 +37,7 @@
 			<button
 				type="button"
 				class="btn btn-sm variant-ghost-error"
-				on:click={() => onAdjustHP(-1)}
+				onclick={() => onAdjustHP(-1)}
 				disabled={session.currentHP <= 0}
 			>
 				-
@@ -44,7 +48,7 @@
 			<button
 				type="button"
 				class="btn btn-sm variant-ghost-success"
-				on:click={() => onAdjustHP(1)}
+				onclick={() => onAdjustHP(1)}
 				disabled={session.currentHP >= maxHP}
 			>
 				+
@@ -62,7 +66,7 @@
 			<button
 				type="button"
 				class="btn btn-sm variant-ghost-error"
-				on:click={() => onAdjustMP(-1)}
+				onclick={() => onAdjustMP(-1)}
 				disabled={session.currentMP <= 0}
 			>
 				-
@@ -73,7 +77,7 @@
 			<button
 				type="button"
 				class="btn btn-sm variant-ghost-success"
-				on:click={() => onAdjustMP(1)}
+				onclick={() => onAdjustMP(1)}
 				disabled={session.currentMP >= maxMP}
 			>
 				+
@@ -91,7 +95,7 @@
 			<button
 				type="button"
 				class="btn btn-sm variant-ghost-error"
-				on:click={() => onAdjustAP(-1)}
+				onclick={() => onAdjustAP(-1)}
 				disabled={session.currentAP <= 0}
 			>
 				-
@@ -102,7 +106,7 @@
 			<button
 				type="button"
 				class="btn btn-sm variant-ghost-success"
-				on:click={() => onAdjustAP(1)}
+				onclick={() => onAdjustAP(1)}
 				disabled={session.currentAP >= session.maxAP}
 			>
 				+
@@ -121,7 +125,7 @@
 				<button
 					type="button"
 					class="btn btn-sm variant-ghost-error"
-					on:click={() => onAdjustSP?.(-1)}
+					onclick={() => onAdjustSP?.(-1)}
 					disabled={session.currentSpiritPoints <= 0}
 				>
 					-
@@ -139,7 +143,7 @@
 				<button
 					type="button"
 					class="btn btn-sm variant-ghost-success"
-					on:click={() => onAdjustSP?.(1)}
+					onclick={() => onAdjustSP?.(1)}
 					disabled={session.currentSpiritPoints >= session.maxSpiritPoints}
 				>
 					+

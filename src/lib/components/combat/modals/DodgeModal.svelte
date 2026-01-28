@@ -81,6 +81,7 @@
 	function handleCritFailChoice(choice: 'accept' | 'store', roll: DiceRoll) {
 		if (choice === 'store') {
 			storedMisfortune = true
+			wasCritFail = roll.isCriticalFail  // Capture from original roll before modified roll overwrites it
 		}
 	}
 

@@ -126,6 +126,8 @@
 		// Track if previous roll was crit fail (for misfortune)
 		if (magickaBurst && lastRoll?.isCriticalFail) {
 			previousRollWasCritFail = true
+		} else if (magickaBurst) {
+			previousRollWasCritFail = false
 		}
 
 		lastRoll = undefined
