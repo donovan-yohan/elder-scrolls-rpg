@@ -8,6 +8,7 @@ export { default as CombatLog } from './CombatLog.svelte'
 export { default as ActionPanel } from './ActionPanel.svelte'
 export { default as ActionsPanel } from './ActionsPanel.svelte'
 export { default as ActionTile } from './ActionTile.svelte'
+export { default as MisfortuneTracker } from './MisfortuneTracker.svelte'
 
 // DiceRoller components
 export { default as DiceRoller } from './DiceRoller/DiceRoller.svelte'
