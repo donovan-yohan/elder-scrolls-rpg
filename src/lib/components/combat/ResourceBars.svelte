@@ -8,10 +8,12 @@
 	export let onAdjustHP: (delta: number) => void
 	export let onAdjustMP: (delta: number) => void
 	export let onAdjustAP: (delta: number) => void
+	export let onAdjustSP: ((delta: number) => void) | undefined = undefined
 
 	$: hpPercent = maxHP > 0 ? (session.currentHP / maxHP) * 100 : 0
 	$: mpPercent = maxMP > 0 ? (session.currentMP / maxMP) * 100 : 0
 	$: apPercent = session.maxAP > 0 ? (session.currentAP / session.maxAP) * 100 : 0
+	$: spPercent = session.maxSpiritPoints > 0 ? (session.currentSpiritPoints / session.maxSpiritPoints) * 100 : 0
 
 	function getHPColor(percent: number): string {
 		if (percent > 50) return 'bg-success-500'
@@ -20,7 +22,7 @@
 	}
 </script>
 
-<div class="resource-bars grid grid-cols-3 gap-4">
+<div class="resource-bars grid grid-cols-4 gap-4">
 	<!-- HP Bar -->
 	<div class="resource-row">
 		<div class="flex items-center justify-between mb-1">
@@ -105,6 +107,44 @@
 			>
 				+
 			</button>
+		</div>
+	</div>
+
+	<!-- Spirit Points Bar -->
+	<div class="resource-row">
+		<div class="flex items-center justify-between mb-1">
+			<span class="font-semibold text-primary-500">SP</span>
+			<span class="text-sm font-mono">{session.currentSpiritPoints} / {session.maxSpiritPoints}</span>
+		</div>
+		<div class="flex items-center gap-2">
+			{#if onAdjustSP}
+				<button
+					type="button"
+					class="btn btn-sm variant-ghost-error"
+					on:click={() => onAdjustSP?.(-1)}
+					disabled={session.currentSpiritPoints <= 0}
+				>
+					-
+				</button>
+			{/if}
+			<div class="flex-1">
+				<ProgressBar
+					value={spPercent}
+					max={100}
+					meter="bg-primary-500"
+					track="bg-surface-300 dark:bg-surface-600"
+				/>
+			</div>
+			{#if onAdjustSP}
+				<button
+					type="button"
+					class="btn btn-sm variant-ghost-success"
+					on:click={() => onAdjustSP?.(1)}
+					disabled={session.currentSpiritPoints >= session.maxSpiritPoints}
+				>
+					+
+				</button>
+			{/if}
 		</div>
 	</div>
 </div>
