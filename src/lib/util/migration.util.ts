@@ -66,6 +66,9 @@ export function migratePlayerData(player: PlayerData): PlayerData {
 	const fortunePoints = playerAny.fortunePoints ?? 0
 	const misfortunePoints = playerAny.misfortunePoints ?? 0
 
+	// Migrate knownShouts - add empty array if missing
+	const knownShouts = playerAny.knownShouts ?? []
+
 	return {
 		...player,
 		equipment: migratePlayerEquipment(player.equipment as Equipment | LegacyEquipment),
@@ -74,5 +77,6 @@ export function migratePlayerData(player: PlayerData): PlayerData {
 		complications,
 		fortunePoints,
 		misfortunePoints,
+		knownShouts,
 	}
 }

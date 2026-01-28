@@ -90,7 +90,7 @@ export const Level: BaseStats[] = [
 		critical: 19,
 		criticalFail: 1,
 		subSkillSlots: 2,
-		minorSkills: 6,
+		minorSkills: 7,
 		majorSkills: 7,
 	},
 	{

@@ -49,6 +49,8 @@ export const playerSchema = z
 		subSkills: z.array(subSkillSchema).default([]),
 		// Magic
 		knownSpells: z.array(z.string()).default([]),
+		// Dragon Shouts
+		knownShouts: z.array(z.string()).default([]),
 		// Equipment
 		equipment: equipmentSchema.default({
 			weapon: { id: null, materialId: null },

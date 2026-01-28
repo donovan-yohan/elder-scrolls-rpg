@@ -27,6 +27,9 @@
 	import { SkillRollModal } from '$lib/components/skills'
 	import { LevelUpWizard } from '$lib/components/levelup'
 	import { EquipmentEditor } from '$lib/components/equipment'
+	import { SpellPicker } from '$lib/components/spells'
+	import { ShoutPicker } from '$lib/components/shouts'
+	import { getShoutById, type Shout } from '$lib/data/shouts'
 	import {
 		getEquippedWeapon,
 		getEquippedArmor,
@@ -125,14 +128,32 @@
 		]
 		const updatedSubskills = [...(player.subSkills ?? []), ...newSubskills]
 
-		// Apply all changes
+		// Build the updated player object with new level and skills
+		const updatedPlayer: PlayerData = {
+			...player,
+			level: newLevel,
+			majorSkills: newMajorSkills,
+			minorSkills: newMinorSkills,
+			subSkills: updatedSubskills,
+		}
+
+		// Recalculate all max stats based on the new level
+		const newMaxHealth = calculateMaxHealth(updatedPlayer)
+		const newMaxMagicka = calculateMaxMagicka(updatedPlayer)
+		const newMaxAP = calculateMaxAP(updatedPlayer)
+		const newMaxSpiritPoints = calculateMaxSpiritPoints(newLevel)
+
+		// Apply all changes including recalculated stats reset to full
 		if (onUpdate) {
 			onUpdate({
-				...player,
-				level: newLevel,
-				majorSkills: newMajorSkills,
-				minorSkills: newMinorSkills,
-				subSkills: updatedSubskills,
+				...updatedPlayer,
+				maxHealth: newMaxHealth,
+				health: newMaxHealth,
+				maxMagicka: newMaxMagicka,
+				magicka: newMaxMagicka,
+				maxActionPoints: newMaxAP,
+				actionPoints: newMaxAP,
+				maxSpiritPoints: newMaxSpiritPoints,
 			})
 		}
 
@@ -158,6 +179,14 @@
 
 	let hasSpells = $derived(player.knownSpells.length > 0)
 
+	// Known shouts
+	let knownShoutDetails = $derived(
+		(player.knownShouts ?? [])
+			.map(id => getShoutById(id))
+			.filter((s): s is Shout => s !== undefined)
+	)
+	let hasShouts = $derived((player.knownShouts ?? []).length > 0)
+
 	// Equipment helpers - using new EquipmentSlot structure with material support
 	let equippedWeapon = $derived(getEquippedWeapon(player.equipment.weapon))
 	let equippedOffhand = $derived(getEquippedWeapon(player.equipment.offhand))
@@ -179,6 +208,18 @@
 	function handleOwnedWeaponsChange(newOwnedWeapons: OwnedWeapon[]) {
 		if (onUpdate) {
 			onUpdate({ ...player, ownedWeapons: newOwnedWeapons })
+		}
+	}
+
+	function handleSpellsChange(newSpells: string[]) {
+		if (onUpdate) {
+			onUpdate({ ...player, knownSpells: newSpells })
+		}
+	}
+
+	function handleShoutsChange(newShouts: string[]) {
+		if (onUpdate) {
+			onUpdate({ ...player, knownShouts: newShouts })
 		}
 	}
 
@@ -654,53 +695,113 @@
 	{/if}
 
 	<!-- Spells Section -->
-	{#if hasSpells}
+	{#if hasSpells || editMode}
 		<section class="card p-4 variant-soft-tertiary">
 			<h3 class="h4 font-bold mb-3 text-tertiary-700 dark:text-tertiary-300">Spells</h3>
-			<Accordion>
-				{#each Object.entries(spellsBySchool) as [school, spells]}
-					<AccordionItem open>
-						<svelte:fragment slot="lead">
-							<span class="badge variant-soft-tertiary">{spells.length}</span>
-						</svelte:fragment>
-						<svelte:fragment slot="summary">
-							<span class="font-semibold">{school}</span>
-						</svelte:fragment>
-						<svelte:fragment slot="content">
-							<div class="space-y-3">
-								{#each spells as spell}
-									<div class="card p-3 variant-ghost-surface">
-										<div class="flex flex-wrap justify-between items-start gap-2">
-											<div class="flex items-center gap-2">
-												<span class="font-bold">{spell.name}</span>
-												<span class="badge {getSpellLevelColor(spell.level)} text-xs">{spell.level}</span>
-												{#if spell.isConcentration}
-													<span class="badge variant-soft-warning text-xs">Concentration</span>
-												{/if}
-												{#if spell.isReaction}
-													<span class="badge variant-soft-error text-xs">Reaction</span>
-												{/if}
+			{#if editMode}
+				<!-- Edit Mode: Show SpellPicker -->
+				<SpellPicker
+					knownSpells={player.knownSpells}
+					onchange={handleSpellsChange}
+				/>
+			{:else}
+				<!-- View Mode: Show spell details -->
+				<Accordion>
+					{#each Object.entries(spellsBySchool) as [school, spells]}
+						<AccordionItem open>
+							<svelte:fragment slot="lead">
+								<span class="badge variant-soft-tertiary">{spells.length}</span>
+							</svelte:fragment>
+							<svelte:fragment slot="summary">
+								<span class="font-semibold">{school}</span>
+							</svelte:fragment>
+							<svelte:fragment slot="content">
+								<div class="space-y-3">
+									{#each spells as spell}
+										<div class="card p-3 variant-ghost-surface">
+											<div class="flex flex-wrap justify-between items-start gap-2">
+												<div class="flex items-center gap-2">
+													<span class="font-bold">{spell.name}</span>
+													<span class="badge {getSpellLevelColor(spell.level)} text-xs">{spell.level}</span>
+													{#if spell.isConcentration}
+														<span class="badge variant-soft-warning text-xs">Concentration</span>
+													{/if}
+													{#if spell.isReaction}
+														<span class="badge variant-soft-error text-xs">Reaction</span>
+													{/if}
+												</div>
+												<div class="flex gap-2">
+													<span class="badge variant-filled-success">{spell.apCost} AP</span>
+													<span class="badge variant-filled-primary">{spell.mpCost} MP</span>
+												</div>
 											</div>
-											<div class="flex gap-2">
-												<span class="badge variant-filled-success">{spell.apCost} AP</span>
-												<span class="badge variant-filled-primary">{spell.mpCost} MP</span>
+											<p class="text-sm text-surface-600-300-token mt-2">{spell.description}</p>
+											<div class="flex flex-wrap gap-2 mt-2 text-xs text-surface-500">
+												<span>Range: {spell.range}</span>
+												<span>Shape: {spell.shape}</span>
+												{#if spell.duration > 0}
+													<span>Duration: {spell.duration} rounds</span>
+												{/if}
 											</div>
 										</div>
-										<p class="text-sm text-surface-600-300-token mt-2">{spell.description}</p>
-										<div class="flex flex-wrap gap-2 mt-2 text-xs text-surface-500">
-											<span>Range: {spell.range}</span>
-											<span>Shape: {spell.shape}</span>
-											{#if spell.duration > 0}
-												<span>Duration: {spell.duration} rounds</span>
-											{/if}
+									{/each}
+								</div>
+							</svelte:fragment>
+						</AccordionItem>
+					{/each}
+				</Accordion>
+			{/if}
+		</section>
+	{/if}
+
+	<!-- Dragon Shouts Section -->
+	{#if hasShouts || editMode}
+		<section class="card p-4 variant-soft-warning">
+			<h3 class="h4 font-bold mb-3 text-warning-700 dark:text-warning-300">Dragon Shouts</h3>
+			<p class="text-sm text-surface-500 mb-4">
+				Cost: <span class="font-semibold text-warning-400">1 AP</span> and <span class="font-semibold text-primary-400">2 MP</span> per word
+			</p>
+			{#if editMode}
+				<!-- Edit Mode: Show ShoutPicker -->
+				<ShoutPicker
+					knownShouts={player.knownShouts ?? []}
+					onchange={handleShoutsChange}
+				/>
+			{:else}
+				<!-- View Mode: Show shout details -->
+				<div class="space-y-4">
+					{#each knownShoutDetails as shout (shout.id)}
+						<div class="card p-4 variant-ghost-surface">
+							<div class="flex items-start justify-between gap-2 mb-2">
+								<h4 class="font-bold text-lg">{shout.name}</h4>
+							</div>
+							<p class="text-sm text-surface-400 mb-3">{shout.description}</p>
+
+							{#if shout.resolve}
+								<p class="text-xs text-warning-400 mb-3 italic">{shout.resolve}</p>
+							{/if}
+
+							<div class="space-y-2">
+								{#each shout.words as word, index}
+									<div class="flex items-start gap-3 p-2 rounded bg-surface-700/50">
+										<div class="flex-shrink-0 w-6 h-6 rounded-full bg-warning-500/30 flex items-center justify-center text-xs font-bold text-warning-300">
+											{index + 1}
+										</div>
+										<div class="flex-1 min-w-0">
+											<div class="flex items-center gap-2 flex-wrap">
+												<span class="font-semibold text-warning-300">{word.word}</span>
+												<span class="text-surface-500">({word.translation})</span>
+												<span class="badge variant-soft-surface text-xs">{word.range}</span>
+											</div>
+											<p class="text-sm text-surface-400 mt-1">{word.effect}</p>
 										</div>
 									</div>
 								{/each}
 							</div>
-						</svelte:fragment>
-					</AccordionItem>
-				{/each}
-			</Accordion>
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</section>
 	{/if}
 
@@ -881,7 +982,7 @@
 	</section>
 
 	<!-- Inventory Section -->
-	{#if inventoryItems.length > 0}
+	{#if inventoryItems.length > 0 || editMode}
 		<section class="card p-4 variant-soft-surface">
 			<Accordion>
 				<AccordionItem>
@@ -892,6 +993,11 @@
 						<span class="h4 font-bold">Inventory</span>
 					</svelte:fragment>
 					<svelte:fragment slot="content">
+						{#if editMode}
+							<p class="edit-hint" style="font-style: italic; color: var(--text-muted, #666); margin-bottom: 0.75rem;">
+								Edit inventory items in the Equipment section above (Items tab)
+							</p>
+						{/if}
 						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 							{#each inventoryItems as { item, quantity }}
 								{#if item}

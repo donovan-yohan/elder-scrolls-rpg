@@ -86,3 +86,20 @@ export function calculateManualInitiative(
     total,
   }
 }
+
+/**
+ * Converts a roll total to initiative successes per Combat 2.0 rules
+ * - Roll 13+ = 1 success
+ * - Roll 20+ = 2 successes
+ * - Roll 30+ = 3 successes
+ * - Critical = +1 extra success
+ */
+export function rollToSuccesses(rollTotal: number, isCritical: boolean = false): number {
+  let successes = 0
+  if (rollTotal >= 30) successes = 3
+  else if (rollTotal >= 20) successes = 2
+  else if (rollTotal >= 13) successes = 1
+
+  if (isCritical) successes += 1
+  return successes
+}

@@ -54,6 +54,7 @@ export type PlayerData = {
 	subSkills: SubSkill[]
 	race: RaceName
 	knownSpells: string[]
+	knownShouts: string[]
 	equipment: Equipment
 	inventory: InventoryItem[]
 	ownedWeapons: OwnedWeapon[]
@@ -86,6 +87,7 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	minorSkills: [],
 	subSkills: [],
 	knownSpells: [],
+	knownShouts: [],
 	equipment: {
 		weapon: { id: null, materialId: null },
 		offhand: { id: null, materialId: null },
