@@ -20,6 +20,7 @@ function createTestPlayerData(overrides: Partial<PlayerData> = {}): PlayerData {
 		actionPoints: 10,
 		maxMagicka: 50,
 		magicka: 50,
+		currentSpiritPoints: 1,
 		birthSign: BirthSignName.Warrior,
 		archetype: ArchetypeName.Warrior,
 		majorSkills: [],
@@ -58,6 +59,7 @@ describe('syncCombatResultToPlayer', () => {
 			health: 75,
 			magicka: 50,
 			equipment: player.equipment,
+			currentSpiritPoints: 1,
 		}
 
 		const result = syncCombatResultToPlayer(player, combatResult)
@@ -71,6 +73,7 @@ describe('syncCombatResultToPlayer', () => {
 			health: 100,
 			magicka: 25,
 			equipment: player.equipment,
+			currentSpiritPoints: 1,
 		}
 
 		const result = syncCombatResultToPlayer(player, combatResult)
@@ -90,6 +93,7 @@ describe('syncCombatResultToPlayer', () => {
 			health: 100,
 			magicka: 50,
 			equipment: newEquipment,
+			currentSpiritPoints: 1,
 		}
 
 		const result = syncCombatResultToPlayer(player, combatResult)
@@ -103,6 +107,7 @@ describe('syncCombatResultToPlayer', () => {
 			health: 100,
 			magicka: 50,
 			equipment: player.equipment,
+			currentSpiritPoints: 1,
 		}
 
 		const result = syncCombatResultToPlayer(player, combatResult)
@@ -122,6 +127,7 @@ describe('syncCombatResultToPlayer', () => {
 			health: 80,
 			magicka: 30,
 			equipment: player.equipment,
+			currentSpiritPoints: 1,
 		}
 
 		const result = syncCombatResultToPlayer(player, combatResult)
@@ -131,5 +137,22 @@ describe('syncCombatResultToPlayer', () => {
 		expect(result.level).toBe(5)
 		expect(result.maxHealth).toBe(150)
 		expect(result.notes).toBe('Some notes')
+	})
+
+	it('syncs spirit points from combat result to player', () => {
+		const player = createTestPlayerData({
+			level: 8,
+			currentSpiritPoints: 2, // Started with 2
+		})
+		const combatResult: CombatResult = {
+			health: 75,
+			magicka: 30,
+			equipment: player.equipment,
+			currentSpiritPoints: 1, // Spent 1 during combat
+		}
+
+		const result = syncCombatResultToPlayer(player, combatResult)
+
+		expect(result.currentSpiritPoints).toBe(1)
 	})
 })
