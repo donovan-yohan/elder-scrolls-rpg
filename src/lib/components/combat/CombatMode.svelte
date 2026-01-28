@@ -38,6 +38,7 @@
 	import { ActionType, ConditionType } from '$lib/models/combat'
 	import type { DiceRoll } from '$lib/models/combat'
 	import { DamageType } from '$lib/data/element'
+	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
 
 	interface Props {
 		player: PlayerData
@@ -355,6 +356,21 @@
 
 		showAttackResolver = false
 		selectedAction = null
+	}
+
+	// Handle magicka burst cost
+	function handleMagickaBurst(cost: MagickaBurstCost, acceptedMisfortune: boolean) {
+		if (cost.isBurn) {
+			combatStore.takeMagickaBurnDamage(player.id)
+		} else {
+			combatStore.spendMP(player.id, cost.mpCost)
+		}
+		combatStore.logMagickaBurst(player.id, cost.isBurn, acceptedMisfortune)
+
+		// Track misfortune points when accepting critical failure via magicka burst
+		if (acceptedMisfortune) {
+			combatStore.gainMisfortune(player.id)
+		}
 	}
 
 	// Handle spell resolution
@@ -704,13 +720,16 @@
 		</div>
 	{/if}
 
-	{#if showAttackResolver && selectedAction}
+	{#if showAttackResolver && selectedAction && session}
 		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
 			<AttackResolverModal
 				{player}
 				action={selectedAction}
+				currentMP={session.currentMP}
+				currentHP={session.currentHP}
 				onComplete={handleAttackComplete}
 				onCancel={() => { showAttackResolver = false; selectedAction = null; }}
+				onMagickaBurst={handleMagickaBurst}
 			/>
 		</div>
 	{/if}
