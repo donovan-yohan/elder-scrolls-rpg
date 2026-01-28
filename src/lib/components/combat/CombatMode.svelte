@@ -734,13 +734,16 @@
 		</div>
 	{/if}
 
-	{#if showSpellResolver && selectedAction}
+	{#if showSpellResolver && selectedAction && session}
 		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
 			<SpellResolverModal
 				{player}
 				action={selectedAction}
+				currentMP={session.currentMP}
+				currentHP={session.currentHP}
 				onComplete={handleSpellComplete}
 				onCancel={() => { showSpellResolver = false; selectedAction = null; }}
+				onMagickaBurst={handleMagickaBurst}
 			/>
 		</div>
 	{/if}
@@ -777,8 +780,11 @@
 			{player}
 			weaponId={session.combatEquipment?.weapon?.id ?? player.equipment?.weapon?.id ?? null}
 			currentAP={session.currentAP}
+			currentMP={session.currentMP}
+			currentHP={session.currentHP}
 			onFocus={handleFocusAttack}
 			onClose={handleCloseModal}
+			onMagickaBurst={handleMagickaBurst}
 		/>
 
 		<FocusSpellModal
@@ -786,8 +792,10 @@
 			{player}
 			currentAP={session.currentAP}
 			currentMP={session.currentMP}
+			currentHP={session.currentHP}
 			onFocus={handleFocusSpell}
 			onClose={handleCloseModal}
+			onMagickaBurst={handleMagickaBurst}
 		/>
 
 		<DodgeModal
@@ -795,8 +803,11 @@
 			{player}
 			currentInitiative={session.partyInitiativePool.current}
 			currentMisfortune={session.misfortunePoints}
+			currentMP={session.currentMP}
+			currentHP={session.currentHP}
 			onDodge={handleDodge}
 			onClose={handleCloseModal}
+			onMagickaBurst={handleMagickaBurst}
 		/>
 
 		<BlockModal
@@ -804,9 +815,12 @@
 			{player}
 			shieldId={session.combatEquipment?.offhand?.id ?? player.equipment?.offhand?.id ?? null}
 			currentInitiative={session.partyInitiativePool.current}
+			currentMP={session.currentMP}
+			currentHP={session.currentHP}
 			{hasHeftedShield}
 			onBlock={handleBlock}
 			onClose={handleCloseModal}
+			onMagickaBurst={handleMagickaBurst}
 		/>
 
 		<UseItemModal
