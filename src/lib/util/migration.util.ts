@@ -59,10 +59,14 @@ export function migratePlayerData(player: PlayerData): PlayerData {
 		currentSpiritPoints = Math.min(currentSpiritPoints, maxSpiritPoints)
 	}
 
+	// Migrate complications - add empty array if missing
+	const complications = playerAny.complications ?? []
+
 	return {
 		...player,
 		equipment: migratePlayerEquipment(player.equipment as Equipment | LegacyEquipment),
 		ownedWeapons,
 		currentSpiritPoints,
+		complications,
 	}
 }
