@@ -514,6 +514,23 @@
 		</div>
 	</section>
 
+	<!-- Fortune Points (visible outside combat) -->
+	<section class="card p-4 variant-soft-surface">
+		<h3 class="h4 font-bold mb-3">Fortune & Misfortune</h3>
+		<div class="grid grid-cols-2 gap-4">
+			<div class="text-center">
+				<div class="text-3xl font-bold text-tertiary-500">{player.fortunePoints}</div>
+				<div class="text-sm opacity-75">Fortune Points</div>
+				<div class="text-xs mt-1 opacity-50">Spend to convert any roll into a critical success</div>
+			</div>
+			<div class="text-center">
+				<div class="text-3xl font-bold text-warning-500">{player.misfortunePoints}</div>
+				<div class="text-sm opacity-75">Misfortune Points</div>
+				<div class="text-xs mt-1 opacity-50">GM can invoke at dramatic moments</div>
+			</div>
+		</div>
+	</section>
+
 	<!-- Skills Section -->
 	<section class="grid grid-cols-1 md:grid-cols-3 gap-4">
 		<!-- Major Skills -->

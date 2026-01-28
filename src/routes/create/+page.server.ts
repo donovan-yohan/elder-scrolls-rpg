@@ -46,7 +46,10 @@ export const actions = {
 				accessories: [],
 			},
 			inventory: form.data.inventory ?? [],
+			ownedWeapons: form.data.ownedWeapons ?? [],
 			notes: form.data.notes ?? '',
+			fortunePoints: 0,
+			misfortunePoints: 0,
 			createdAt: now,
 			updatedAt: now,
 		}

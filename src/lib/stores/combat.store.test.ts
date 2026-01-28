@@ -259,3 +259,129 @@ describe('Combat Store - Spirit Points', () => {
 		expect(stateAfter.currentSpiritPoints).toBe(0)
 	})
 })
+
+describe('Combat Store - Fortune System', () => {
+	const mockPlayerData = {
+		id: 'player-1',
+		level: 8,
+		health: 100,
+		magicka: 50,
+		maxActionPoints: 5,
+		currentSpiritPoints: 2,
+		fortunePoints: 2,
+		misfortunePoints: 1,
+	}
+
+	beforeEach(() => {
+		localStorageMock.clear()
+		combatStore.endCombat('player-1')
+	})
+
+	it('should initialize fortune points from player data', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+
+		const state = get(combatStore)
+		const session = state['player-1']
+
+		expect(session.fortunePoints).toBe(2)
+		expect(session.misfortunePoints).toBe(1)
+	})
+
+	it('should default fortune points to 0 if not provided', () => {
+		combatStore.startCombat('player-1', 3, 2, {
+			level: 8,
+			health: 100,
+			magicka: 50,
+			maxActionPoints: 5,
+			currentSpiritPoints: 2,
+		} as any)
+
+		const state = get(combatStore)
+		const session = state['player-1']
+
+		expect(session.fortunePoints).toBe(0)
+		expect(session.misfortunePoints).toBe(0)
+	})
+
+	it('should gain fortune points', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+		combatStore.gainFortune('player-1')
+
+		const state = get(combatStore)
+		expect(state['player-1'].fortunePoints).toBe(3)
+	})
+
+	it('should spend fortune points', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+		const spent = combatStore.spendFortune('player-1')
+
+		const state = get(combatStore)
+		expect(spent).toBe(true)
+		expect(state['player-1'].fortunePoints).toBe(1)
+	})
+
+	it('should not spend fortune when none available', () => {
+		combatStore.startCombat('player-1', 3, 2, { ...mockPlayerData, fortunePoints: 0 } as any)
+		const spent = combatStore.spendFortune('player-1')
+
+		expect(spent).toBe(false)
+	})
+
+	it('should gain misfortune points', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+		combatStore.gainMisfortune('player-1')
+
+		const state = get(combatStore)
+		expect(state['player-1'].misfortunePoints).toBe(2)
+	})
+
+	it('should spend misfortune points', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+		const spent = combatStore.spendMisfortune('player-1')
+
+		const state = get(combatStore)
+		expect(spent).toBe(true)
+		expect(state['player-1'].misfortunePoints).toBe(0)
+	})
+
+	it('should not spend misfortune when none available', () => {
+		combatStore.startCombat('player-1', 3, 2, { ...mockPlayerData, misfortunePoints: 0 } as any)
+		const spent = combatStore.spendMisfortune('player-1')
+
+		expect(spent).toBe(false)
+	})
+
+	it('should return fortune in endCombat result', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+		combatStore.gainFortune('player-1')
+		combatStore.gainMisfortune('player-1')
+
+		const result = combatStore.endCombat('player-1')
+
+		expect(result).toBeDefined()
+		expect(result!.fortunePoints).toBe(3)
+		expect(result!.misfortunePoints).toBe(2)
+	})
+
+	it('should log fortune transactions', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+		const initialLogLength = get(combatStore)['player-1'].log.length
+
+		combatStore.gainFortune('player-1')
+
+		const state = get(combatStore)
+		expect(state['player-1'].log.length).toBe(initialLogLength + 1)
+		expect(state['player-1'].log[state['player-1'].log.length - 1].description).toContain('Fortune')
+	})
+
+	it('should log misfortune transactions', () => {
+		combatStore.startCombat('player-1', 3, 2, mockPlayerData as any)
+		const initialLogLength = get(combatStore)['player-1'].log.length
+
+		combatStore.gainMisfortune('player-1')
+
+		const state = get(combatStore)
+		expect(state['player-1'].log.length).toBe(initialLogLength + 1)
+		expect(state['player-1'].log[state['player-1'].log.length - 1].description).toContain('Misfortune')
+	})
+})

@@ -61,6 +61,8 @@ export type PlayerData = {
 	spiritPoints: number
 	maxSpiritPoints: number
 	complications: Complication[]
+	fortunePoints: number
+	misfortunePoints: number
 	createdAt: string
 	updatedAt: string
 }
@@ -96,6 +98,8 @@ export const defaultPlayerData: Omit<PlayerData, 'id'> = {
 	spiritPoints: 1,
 	maxSpiritPoints: 1,
 	complications: [],
+	fortunePoints: 0,
+	misfortunePoints: 0,
 	createdAt: '',
 	updatedAt: '',
 }

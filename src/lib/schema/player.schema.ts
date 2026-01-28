@@ -62,6 +62,8 @@ export const playerSchema = z
 		ownedWeapons: z.array(ownedWeaponSchema).default([]),
 		// Meta
 		notes: z.string().default(''),
+		fortunePoints: z.number().int().min(0).default(0),
+		misfortunePoints: z.number().int().min(0).default(0),
 		schemaVersion: z.string().default(CHARACTER_SCHEMA_VERSION),
 	})
 	.refine((data) => {
