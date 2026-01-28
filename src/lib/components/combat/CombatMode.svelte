@@ -439,7 +439,6 @@
 		combatStore.removeCondition(player.id, condition.type)
 	}
 
-<<<<<<< HEAD
 	// Fortune/Misfortune handlers
 	function handleFortuneChoice(choice: 'keep' | 'store') {
 		if (!pendingRoll) return

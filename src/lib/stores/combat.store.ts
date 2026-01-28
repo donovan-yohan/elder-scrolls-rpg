@@ -780,44 +780,6 @@ function createCombatStore() {
 		},
 
 		/**
-		 * Add misfortune points (when player stores a critical failure)
-		 */
-		addMisfortune: (playerId: string, amount: number = 1): void => {
-			update((state) => {
-				const session = state[playerId]
-				if (!session) return state
-				return {
-					...state,
-					[playerId]: {
-						...session,
-						misfortunePoints: session.misfortunePoints + amount,
-						log: [...session.log, createCombatLogEntry('system', `Party gained ${amount} Misfortune point${amount > 1 ? 's' : ''}`)]
-					}
-				}
-			})
-		},
-
-		/**
-		 * Spend misfortune points (when GM uses them against party)
-		 */
-		spendMisfortune: (playerId: string, amount: number = 1): void => {
-			update((state) => {
-				const session = state[playerId]
-				if (!session) return state
-				const newAmount = Math.max(0, session.misfortunePoints - amount)
-				const actualSpent = session.misfortunePoints - newAmount
-				return {
-					...state,
-					[playerId]: {
-						...session,
-						misfortunePoints: newAmount,
-						log: [...session.log, createCombatLogEntry('system', `GM spent ${actualSpent} Misfortune point${actualSpent > 1 ? 's' : ''}`)]
-					}
-				}
-			})
-		},
-
-		/**
 		 * Swap weapon during combat (costs 1 AP)
 		 */
 		swapWeapon: (
