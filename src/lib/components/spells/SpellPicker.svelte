@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Spells, getSpellsBySchool, SpellSchool, type Spell } from '$lib/data/spells'
+	import { getSpellsBySchool, SpellSchool, getSpellLevelColor } from '$lib/data/spells'
 
 	interface Props {
 		knownSpells: string[]
@@ -25,19 +25,6 @@
 		}
 	}
 
-	// Get spell level badge color
-	function getSpellLevelColor(level: string): string {
-		switch (level) {
-			case 'Novice': return 'variant-filled-success'
-			case 'Apprentice': return 'variant-filled-secondary'
-			case 'Adept': return 'variant-filled-warning'
-			case 'Expert': return 'variant-filled-error'
-			case 'Master': return 'variant-filled-primary'
-			default: return 'variant-filled'
-		}
-	}
-
-	let selectedCount = $derived(knownSpells.length)
 </script>
 
 <div class="spell-picker">
@@ -46,7 +33,7 @@
 			Select spells your character knows. Click on a spell to add or remove it.
 		</p>
 		<span class="badge variant-soft-tertiary">
-			{selectedCount} spell{selectedCount !== 1 ? 's' : ''} selected
+			{knownSpells.length} spell{knownSpells.length !== 1 ? 's' : ''} selected
 		</span>
 	</div>
 

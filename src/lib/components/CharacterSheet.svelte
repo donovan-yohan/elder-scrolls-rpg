@@ -20,7 +20,7 @@
 	} from '$lib/util/stats.util'
 	import ComplicationsDisplay from './combat/ComplicationsDisplay.svelte'
 	import { camelToTitleCase } from '$lib/util/string.util'
-	import { getSpellById, SpellSchool, type Spell } from '$lib/data/spells'
+	import { getSpellById, getSpellLevelColor, SpellSchool, type Spell } from '$lib/data/spells'
 	import { ArmorTypes } from '$lib/data/armor'
 	import { getItemById } from '$lib/data/items'
 	import { exportCharacter } from '$lib/util/export.util'
@@ -183,11 +183,11 @@
 
 	// Known shouts
 	let knownShoutDetails = $derived(
-		(player.knownShouts ?? [])
+		player.knownShouts
 			.map(id => getShoutById(id))
 			.filter((s): s is Shout => s !== undefined)
 	)
-	let hasShouts = $derived((player.knownShouts ?? []).length > 0)
+	let hasShouts = $derived(player.knownShouts.length > 0)
 
 	// Equipment helpers - using new EquipmentSlot structure with material support
 	let equippedWeapon = $derived(getEquippedWeapon(player.equipment.weapon))
@@ -267,18 +267,6 @@
 	function updateLevel(level: number) {
 		if (onUpdate) {
 			onUpdate({ ...player, level: Math.max(1, Math.min(20, level)) })
-		}
-	}
-
-	// Get spell level badge color
-	function getSpellLevelColor(level: string): string {
-		switch (level) {
-			case 'Novice': return 'variant-filled-success'
-			case 'Apprentice': return 'variant-filled-secondary'
-			case 'Adept': return 'variant-filled-warning'
-			case 'Expert': return 'variant-filled-error'
-			case 'Master': return 'variant-filled-primary'
-			default: return 'variant-filled'
 		}
 	}
 
@@ -701,13 +689,11 @@
 		<section class="card p-4 variant-soft-tertiary">
 			<h3 class="h4 font-bold mb-3 text-tertiary-700 dark:text-tertiary-300">Spells</h3>
 			{#if editMode}
-				<!-- Edit Mode: Show SpellPicker -->
 				<SpellPicker
 					knownSpells={player.knownSpells}
 					onchange={handleSpellsChange}
 				/>
 			{:else}
-				<!-- View Mode: Show spell details -->
 				<Accordion>
 					{#each Object.entries(spellsBySchool) as [school, spells]}
 						<AccordionItem open>
@@ -764,13 +750,11 @@
 				Cost: <span class="font-semibold text-warning-400">1 AP</span> and <span class="font-semibold text-primary-400">2 MP</span> per word
 			</p>
 			{#if editMode}
-				<!-- Edit Mode: Show ShoutPicker -->
 				<ShoutPicker
-					knownShouts={player.knownShouts ?? []}
+					knownShouts={player.knownShouts}
 					onchange={handleShoutsChange}
 				/>
 			{:else}
-				<!-- View Mode: Show shout details -->
 				<div class="space-y-4">
 					{#each knownShoutDetails as shout (shout.id)}
 						<div class="card p-4 variant-ghost-surface">
@@ -811,7 +795,6 @@
 	<section class="card p-4 variant-soft-surface">
 		<h3 class="h4 font-bold mb-3">Equipment</h3>
 		{#if editMode}
-			<!-- Edit Mode: Show EquipmentEditor -->
 			<EquipmentEditor
 				equipment={player.equipment}
 				inventory={player.inventory}
@@ -821,7 +804,6 @@
 				onOwnedWeaponsChange={handleOwnedWeaponsChange}
 			/>
 		{:else}
-			<!-- View Mode: Show equipment with material info -->
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<!-- Weapon -->
 				<div class="card p-3 variant-ghost-surface">
@@ -996,7 +978,7 @@
 					</svelte:fragment>
 					<svelte:fragment slot="content">
 						{#if editMode}
-							<p class="edit-hint" style="font-style: italic; color: var(--text-muted, #666); margin-bottom: 0.75rem;">
+							<p class="text-sm italic text-surface-500 mb-3">
 								Edit inventory items in the Equipment section above (Items tab)
 							</p>
 						{/if}

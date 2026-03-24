@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { shouts, type Shout } from '$lib/data/shouts'
+	import { shouts, getShoutById } from '$lib/data/shouts'
 
 	interface Props {
 		knownShouts: string[]
@@ -16,9 +16,6 @@
 		}
 	}
 
-	function isSelected(shoutId: string): boolean {
-		return knownShouts.includes(shoutId)
-	}
 </script>
 
 <div class="shout-picker space-y-4">
@@ -28,7 +25,7 @@
 
 	<div class="grid grid-cols-1 gap-4">
 		{#each shouts as shout (shout.id)}
-			{@const selected = isSelected(shout.id)}
+			{@const selected = knownShouts.includes(shout.id)}
 			<button
 				type="button"
 				class="card p-4 text-left transition-all {selected ? 'ring-2 ring-tertiary-500 bg-tertiary-500/10' : 'hover:bg-surface-600/50'}"
@@ -86,7 +83,7 @@
 			<div class="text-sm font-semibold mb-2">Selected Shouts ({knownShouts.length})</div>
 			<div class="flex flex-wrap gap-2">
 				{#each knownShouts as shoutId}
-					{@const shout = shouts.find(s => s.id === shoutId)}
+					{@const shout = getShoutById(shoutId)}
 					{#if shout}
 						<span class="badge variant-filled-tertiary">{shout.name}</span>
 					{/if}

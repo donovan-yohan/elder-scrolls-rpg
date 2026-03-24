@@ -8,7 +8,7 @@
 	import { BirthSigns } from '$lib/data/birthSign'
 	import { Race } from '$lib/data/race'
 	import { camelToTitleCase } from '$lib/util/string.util'
-	import { getEquippedWeapon, getEquippedArmor } from '$lib/util/equipment.util'
+	import { getEquippedWeapon, getEquippedArmor, type EquippedWeapon, type EquippedArmor } from '$lib/util/equipment.util'
 
 	export let stepIndex: number = 5
 
@@ -44,15 +44,14 @@
 		? getEquippedArmor(formData.equipment.armor)
 		: null
 
-	// Helper to format equipment name with optional material
-	function formatEquipmentName(
-		equipped: { weapon?: { name: string }; armor?: { name: string }; material: { name: string } | null } | null,
-		type: 'weapon' | 'armor'
-	): string {
+	function formatWeaponName(equipped: EquippedWeapon | null): string {
 		if (!equipped) return 'None'
-		const itemName = type === 'weapon' ? equipped.weapon?.name : equipped.armor?.name
-		if (!itemName) return 'None'
-		return equipped.material ? `${equipped.material.name} ${itemName}` : itemName
+		return equipped.material ? `${equipped.material.name} ${equipped.weapon.name}` : equipped.weapon.name
+	}
+
+	function formatArmorName(equipped: EquippedArmor | null): string {
+		if (!equipped) return 'None'
+		return equipped.material ? `${equipped.material.name} ${equipped.armor.name}` : equipped.armor.name
 	}
 
 	// Validate the review step (always valid if we got here)
@@ -197,15 +196,15 @@
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 				<div>
 					<span class="text-surface-400 text-sm">Weapon</span>
-					<p class="font-semibold">{formatEquipmentName(equippedWeapon, 'weapon')}</p>
+					<p class="font-semibold">{formatWeaponName(equippedWeapon)}</p>
 				</div>
 				<div>
 					<span class="text-surface-400 text-sm">Offhand</span>
-					<p class="font-semibold">{formatEquipmentName(equippedOffhand, 'weapon')}</p>
+					<p class="font-semibold">{formatWeaponName(equippedOffhand)}</p>
 				</div>
 				<div>
 					<span class="text-surface-400 text-sm">Armor</span>
-					<p class="font-semibold">{formatEquipmentName(equippedArmor, 'armor')}</p>
+					<p class="font-semibold">{formatArmorName(equippedArmor)}</p>
 				</div>
 				<div>
 					<span class="text-surface-400 text-sm">Accessories</span>

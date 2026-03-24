@@ -491,3 +491,15 @@ export function getSpellsByLevel(level: SpellLevel): Spell[] {
 export function getSpellById(id: string): Spell | undefined {
 	return Spells.find((spell) => spell.id === id)
 }
+
+// Get spell level badge color
+export function getSpellLevelColor(level: string): string {
+	switch (level) {
+		case 'Novice': return 'variant-filled-success'
+		case 'Apprentice': return 'variant-filled-secondary'
+		case 'Adept': return 'variant-filled-warning'
+		case 'Expert': return 'variant-filled-error'
+		case 'Master': return 'variant-filled-primary'
+		default: return 'variant-filled'
+	}
+}
