@@ -214,27 +214,22 @@ export const ArmorPieces: ArmorPiece[] = [
 	},
 ]
 
-// Helper function to get armor type by category
 export function getArmorTypeByCategory(category: ArmorCategory): ArmorType | undefined {
 	return ArmorTypes.find((armor) => armor.category === category)
 }
 
-// Helper function to get armor pieces by category
 export function getArmorPiecesByCategory(category: ArmorCategory): ArmorPiece[] {
 	return ArmorPieces.filter((piece) => piece.category === category)
 }
 
-// Helper function to get armor pieces by slot
 export function getArmorPiecesBySlot(slot: ArmorSlot): ArmorPiece[] {
 	return ArmorPieces.filter((piece) => piece.slot === slot)
 }
 
-// Helper function to calculate total AC from equipped armor pieces
 export function calculateTotalAC(pieces: ArmorPiece[]): number {
 	return pieces.reduce((total, piece) => total + piece.acContribution, 0)
 }
 
-// Helper function to get the dominant armor category from equipped pieces
 export function getDominantArmorCategory(pieces: ArmorPiece[]): ArmorCategory {
 	if (pieces.length === 0) return ArmorCategory.Unarmored
 

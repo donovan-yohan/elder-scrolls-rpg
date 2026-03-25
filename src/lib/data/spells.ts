@@ -1,5 +1,5 @@
 import { Skill } from '$lib/data/skill'
-import { DamageType, Element } from '$lib/data/element'
+import { DamageType } from '$lib/data/element'
 
 export enum SpellLevel {
 	Novice = 'Novice',
@@ -202,7 +202,7 @@ export const Spells: Spell[] = [
 		effects: [
 			{
 				type: 'summon',
-				element: Element.Fire,
+				element: DamageType.Fire,
 				duration: 10,
 				description: 'Summon Flame Atronach (HP: 5, AP: 4, MP: 3, casts Firebolt)',
 			},
@@ -228,7 +228,7 @@ export const Spells: Spell[] = [
 			{
 				type: 'damage',
 				value: 1,
-				element: Element.Fire,
+				element: DamageType.Fire,
 				description: '1 fire damage',
 			},
 		],
@@ -250,7 +250,7 @@ export const Spells: Spell[] = [
 			{
 				type: 'damage',
 				value: 1,
-				element: Element.Frost,
+				element: DamageType.Frost,
 				description: '1 frost damage',
 			},
 		],
@@ -272,7 +272,7 @@ export const Spells: Spell[] = [
 			{
 				type: 'damage',
 				value: 4,
-				element: Element.Fire,
+				element: DamageType.Fire,
 				description: '4 fire damage',
 			},
 		],
@@ -477,17 +477,14 @@ export const Spells: Spell[] = [
 	},
 ]
 
-// Helper function to get spells by school
 export function getSpellsBySchool(school: SpellSchool): Spell[] {
 	return Spells.filter((spell) => spell.school === school)
 }
 
-// Helper function to get spells by level
 export function getSpellsByLevel(level: SpellLevel): Spell[] {
 	return Spells.filter((spell) => spell.level === level)
 }
 
-// Helper function to get spell by id
 export function getSpellById(id: string): Spell | undefined {
 	return Spells.find((spell) => spell.id === id)
 }

@@ -1,5 +1,3 @@
-import type { DiceRoll } from '$lib/models/combat'
-
 export type CritFailContext =
 	| 'attack'
 	| 'spell'
@@ -13,10 +11,6 @@ export type CritFailContext =
 export interface CritFailConsequences {
 	acceptConsequences: string
 	storedConsequences: string
-}
-
-export function shouldShowCritFailModal(roll: DiceRoll): boolean {
-	return roll.isCriticalFail
 }
 
 /**

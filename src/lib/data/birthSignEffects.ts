@@ -1,5 +1,5 @@
 import { BirthSignName } from './birthSign'
-import { Element } from './element'
+import { DamageType } from './element'
 import {
   EffectTrigger,
   EffectConditionType,
@@ -43,7 +43,7 @@ export const LordEffects: Effect[] = [
     source: createBirthSignSource(BirthSignName.Lord),
     trigger: EffectTrigger.OnSavingThrow,
     conditions: [
-      { type: EffectConditionType.DamageType, damageType: Element.Fire },
+      { type: EffectConditionType.DamageType, damageType: DamageType.Fire },
     ],
     actions: [
       {
@@ -59,7 +59,7 @@ export const LordEffects: Effect[] = [
     source: createBirthSignSource(BirthSignName.Lord),
     trigger: EffectTrigger.OnDamageTaken,
     conditions: [
-      { type: EffectConditionType.DamageType, damageType: Element.Fire },
+      { type: EffectConditionType.DamageType, damageType: DamageType.Fire },
     ],
     actions: [
       {

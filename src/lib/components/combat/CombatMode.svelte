@@ -181,7 +181,7 @@
 
 		// Handle stored misfortune
 		if (result.storedMisfortune) {
-			combatStore.addMisfortune(player.id, 1)
+			combatStore.gainMisfortune(player.id)
 		}
 
 		activeModal = null

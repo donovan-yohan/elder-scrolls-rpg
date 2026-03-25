@@ -1,6 +1,6 @@
 // src/lib/data/conditionEffects.ts
 import { ConditionType } from '$lib/models/combat'
-import { Element } from './element'
+import { DamageType } from './element'
 import {
   EffectTrigger,
   EffectConditionType,
@@ -37,7 +37,7 @@ export function createBurningEffects(level: number): Effect[] {
         {
           type: EffectActionType.Damage,
           value: damage,
-          damageType: Element.Fire,
+          damageType: DamageType.Fire,
         },
       ],
       priority: 5,
@@ -85,7 +85,7 @@ export const WetEffects: Effect[] = [
     trigger: EffectTrigger.OnDamageTaken,
     conditions: [
       { type: EffectConditionType.HasCondition, conditionType: ConditionType.Wet },
-      { type: EffectConditionType.DamageType, damageType: Element.Frost },
+      { type: EffectConditionType.DamageType, damageType: DamageType.Frost },
     ],
     actions: [
       {
@@ -103,7 +103,7 @@ export const WetEffects: Effect[] = [
     trigger: EffectTrigger.OnDamageTaken,
     conditions: [
       { type: EffectConditionType.HasCondition, conditionType: ConditionType.Wet },
-      { type: EffectConditionType.DamageType, damageType: Element.Fire },
+      { type: EffectConditionType.DamageType, damageType: DamageType.Fire },
     ],
     actions: [
       {

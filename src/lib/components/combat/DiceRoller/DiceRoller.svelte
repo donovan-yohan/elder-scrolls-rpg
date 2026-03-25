@@ -4,7 +4,6 @@
 	import type { SubSkill } from '$lib/models/subskill'
 	import { rollD20, isCriticalSuccess, isCriticalFailure, performSkillCheck } from '$lib/util/dice.util'
 	import { getSubskillBonus } from '$lib/util/stats.util'
-	import { shouldShowCritFailModal } from '$lib/util/criticalFail.util'
 	import {
 		canUseMagickaBurst,
 		getMagickaBurstCost,
@@ -102,7 +101,7 @@
 
 	function handleRollResult(roll: DiceRoll, success: boolean, margin: number) {
 		// Check if we should show crit fail modal (but not for magicka burst rerolls)
-		if (enableCritFailModal && onCritFailChoice && shouldShowCritFailModal(roll) && !isMagickaBurstRoll) {
+		if (enableCritFailModal && onCritFailChoice && roll.isCriticalFail && !isMagickaBurstRoll) {
 			pendingRoll = roll
 			pendingSuccess = success
 			pendingMargin = margin

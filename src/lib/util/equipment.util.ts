@@ -1,6 +1,6 @@
 import type { EquipmentSlot } from '$lib/models/player'
-import { getWeaponById, type Weapon } from '$lib/data/weapons'
-import { ArmorTypes, type ArmorType } from '$lib/data/armor'
+import { getWeaponById, Weapons, WeaponSkill, type Weapon } from '$lib/data/weapons'
+import { ArmorTypes, ArmorCategory, type ArmorType } from '$lib/data/armor'
 import {
 	Materials,
 	getMaterialById,
@@ -141,5 +141,39 @@ export function createEquipmentSlot(id: string, materialId?: string): EquipmentS
 	return {
 		id,
 		materialId: materialId ?? null
+	}
+}
+
+export function getWeaponsByCategory(skill: WeaponSkill): Weapon[] {
+	return Weapons.filter((w) => w.skill === skill && !w.isAmmunition)
+}
+
+export function getModifierDisplay(modifier: string): string {
+	switch (modifier) {
+		case 'advantage':
+			return 'Advantage'
+		case 'disadvantage':
+			return 'Disadvantage'
+		case 'disadvantage2':
+			return '2x Disadvantage'
+		case 'none':
+			return 'None'
+		default:
+			return modifier
+	}
+}
+
+export function getArmorCategoryColor(category: ArmorCategory): string {
+	switch (category) {
+		case ArmorCategory.Unarmored:
+			return 'variant-soft-tertiary'
+		case ArmorCategory.Light:
+			return 'variant-soft-success'
+		case ArmorCategory.Medium:
+			return 'variant-soft-warning'
+		case ArmorCategory.Heavy:
+			return 'variant-soft-error'
+		default:
+			return 'variant-soft'
 	}
 }

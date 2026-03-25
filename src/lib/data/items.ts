@@ -426,22 +426,18 @@ export const Items: Item[] = [
 	},
 ]
 
-// Helper function to get items by type
 export function getItemsByType(type: ItemType): Item[] {
 	return Items.filter((item) => item.type === type)
 }
 
-// Helper function to get item by id
 export function getItemById(id: string): Item | undefined {
 	return Items.find((item) => item.id === id)
 }
 
-// Helper function to get potions
 export function getPotions(): Item[] {
 	return Items.filter((item) => item.type === ItemType.Potion)
 }
 
-// Helper function to get health potions
 export function getHealthPotions(): Item[] {
 	return Items.filter(
 		(item) =>
@@ -450,7 +446,6 @@ export function getHealthPotions(): Item[] {
 	)
 }
 
-// Helper function to get magicka potions
 export function getMagickaPotions(): Item[] {
 	return Items.filter(
 		(item) =>
@@ -459,7 +454,6 @@ export function getMagickaPotions(): Item[] {
 	)
 }
 
-// Helper function to get stamina potions
 export function getStaminaPotions(): Item[] {
 	return Items.filter(
 		(item) =>
