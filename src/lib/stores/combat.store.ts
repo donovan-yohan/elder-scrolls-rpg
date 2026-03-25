@@ -238,9 +238,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Gain AP (e.g., from crit refund)
-		 */
 		gainAP: (playerId: string, amount: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -255,9 +252,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Gain MP (e.g., from crit refund)
-		 */
 		gainMP: (playerId: string, amount: number, maxMagicka: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -272,9 +266,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Apply magicka burn damage (when using magicka burst with 0 MP)
-		 */
 		takeMagickaBurnDamage: (playerId: string): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -377,9 +368,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Gain a Fortune point (when storing a critical success)
-		 */
 		gainFortune: (playerId: string): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -413,9 +401,6 @@ function createCombatStore() {
 			return spent
 		},
 
-		/**
-		 * Gain a Misfortune point (when a critical failure is stored or Fortune used on crit fail)
-		 */
 		gainMisfortune: (playerId: string): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -431,9 +416,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Spend a Misfortune point (GM invokes it)
-		 */
 		spendMisfortune: (playerId: string): boolean => {
 			let spent = false
 			update((state) => {

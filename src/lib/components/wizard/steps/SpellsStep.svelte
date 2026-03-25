@@ -1,7 +1,6 @@
 <script lang="ts">
 	import WizardStep from '../WizardStep.svelte'
 	import { wizardStore } from '$lib/stores/wizard.store'
-	import { onMount } from 'svelte'
 	import { getAvailableSpellSlots } from '$lib/util/stats.util'
 	import { SpellSkills, type Skill } from '$lib/data/skill'
 	import { Spells, getSpellsBySchool, SpellSchool, SpellLevel, type Spell } from '$lib/data/spells'
@@ -16,20 +15,13 @@
 
 	let { stepIndex = 3 }: Props = $props()
 
-	// Get spell slots based on current form data
-	$: spellSlots = getAvailableSpellSlots($wizardStore.formData as PlayerData)
+	let spellSlots = $derived(getAvailableSpellSlots($wizardStore.formData as PlayerData))
+	let totalSlots = $derived(Object.values(spellSlots).reduce((sum, slots) => sum + slots, 0))
+	let availableSchools = $derived(Object.keys(spellSlots) as Skill[])
 
-	// Calculate total available spell slots
-	$: totalSlots = Object.values(spellSlots).reduce((sum, slots) => sum + slots, 0)
+	let knownSpells: string[] = $state($wizardStore.formData.knownSpells || [])
 
-	// Get schools that have spell slots
-	$: availableSchools = Object.keys(spellSlots) as Skill[]
-
-	// Initialize known spells from store
-	let knownSpells: string[] = $wizardStore.formData.knownSpells || []
-
-	// Track selected tab
-	let selectedTabIndex: number = 0
+	let selectedTabIndex = $state(0)
 
 	// Get spells for a specific school
 	function getSpellsForSchool(skill: Skill): Spell[] {
@@ -126,19 +118,11 @@
 		}
 	}
 
-	// Calculate total selected spells
-	$: totalSelectedSpells = knownSpells.length
+	let totalSelectedSpells = $derived(knownSpells.length)
+	let isValid = $derived(availableSchools.every((skill) => getSelectedCountForSchool(skill) <= (spellSlots[skill] || 0)))
 
-	// Validate step - valid when we haven't exceeded any school limits
-	$: isValid = availableSchools.every((skill) => getSelectedCountForSchool(skill) <= (spellSlots[skill] || 0))
-
-	// Update store and validation
-	$: {
+	$effect(() => {
 		wizardStore.updateFormData({ knownSpells })
-		wizardStore.setStepValid(stepIndex, isValid)
-	}
-
-	onMount(() => {
 		wizardStore.setStepValid(stepIndex, isValid)
 	})
 </script>

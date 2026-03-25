@@ -6,7 +6,6 @@
 	import { BirthSignName, BirthSigns } from '$lib/data/birthSign'
 	import { Race, RaceName } from '$lib/data/race'
 	import { camelToTitleCase } from '$lib/util/string.util'
-	import { onMount } from 'svelte'
 
 	interface Props {
 		stepIndex?: number
@@ -14,29 +13,14 @@
 
 	let { stepIndex = 0 }: Props = $props()
 
-	// Local form state
-	let characterName = $wizardStore.formData.characterName || ''
-	let race = $wizardStore.formData.race || RaceName.Nord
-	let archetype = $wizardStore.formData.archetype || ArchetypeName.Warrior
-	let birthSign = $wizardStore.formData.birthSign || BirthSignName.Warrior
+	let characterName = $state($wizardStore.formData.characterName || '')
+	let race = $state($wizardStore.formData.race || RaceName.Nord)
+	let archetype = $state($wizardStore.formData.archetype || ArchetypeName.Warrior)
+	let birthSign = $state($wizardStore.formData.birthSign || BirthSignName.Warrior)
 
-	// Validate and update store when form changes
-	$: {
+	$effect(() => {
 		const isValid = characterName.trim().length > 0
-
-		wizardStore.updateFormData({
-			characterName,
-			race,
-			archetype,
-			birthSign,
-		})
-
-		wizardStore.setStepValid(stepIndex, isValid)
-	}
-
-	// Initialize validation on mount
-	onMount(() => {
-		const isValid = characterName.trim().length > 0
+		wizardStore.updateFormData({ characterName, race, archetype, birthSign })
 		wizardStore.setStepValid(stepIndex, isValid)
 	})
 </script>

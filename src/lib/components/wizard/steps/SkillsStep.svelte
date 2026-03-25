@@ -4,7 +4,6 @@
 	import { Skill, SkillLevel, SpellSkills } from '$lib/data/skill'
 	import { camelToTitleCase } from '$lib/util/string.util'
 	import classNames from 'classnames'
-	import { onMount } from 'svelte'
 
 	interface Props {
 		stepIndex?: number
@@ -12,8 +11,7 @@
 
 	let { stepIndex = 1 }: Props = $props()
 
-	// Initialize skill groups from store or default to untrained
-	let skillGroups: Record<Skill, SkillLevel> = Object.values(Skill).reduce(
+	let skillGroups: Record<Skill, SkillLevel> = $state(Object.values(Skill).reduce(
 		(acc, skill) => {
 			// Check if skill is already selected as major or minor
 			if ($wizardStore.formData.majorSkills?.includes(skill)) {
@@ -26,38 +24,28 @@
 			return acc
 		},
 		{} as Record<Skill, SkillLevel>
+	))
+
+	let majorSkills = $derived(
+		Object.entries(skillGroups)
+			.filter(([_, level]) => level === SkillLevel.Major)
+			.map(([skill]) => skill as Skill)
+	)
+	let minorSkills = $derived(
+		Object.entries(skillGroups)
+			.filter(([_, level]) => level === SkillLevel.Minor)
+			.map(([skill]) => skill as Skill)
 	)
 
-	// Derived arrays from skill groups
-	$: majorSkills = Object.entries(skillGroups)
-		.filter(([_, level]) => level === SkillLevel.Major)
-		.map(([skill]) => skill as Skill)
-
-	$: minorSkills = Object.entries(skillGroups)
-		.filter(([_, level]) => level === SkillLevel.Minor)
-		.map(([skill]) => skill as Skill)
-
-	// Validate and update store when skills change
-	$: {
+	$effect(() => {
 		const isValid = majorSkills.length === 6 && minorSkills.length === 6
-
-		wizardStore.updateFormData({
-			majorSkills,
-			minorSkills,
-		})
-
+		wizardStore.updateFormData({ majorSkills, minorSkills })
 		wizardStore.setStepValid(stepIndex, isValid)
-	}
+	})
 
-	// Check if a skill is a magic skill
 	function isMagicSkill(skill: Skill): boolean {
 		return SpellSkills.includes(skill)
 	}
-
-	onMount(() => {
-		const isValid = majorSkills.length === 6 && minorSkills.length === 6
-		wizardStore.setStepValid(stepIndex, isValid)
-	})
 </script>
 
 <WizardStep
