@@ -3,10 +3,10 @@
 	import { getSpellById, SpellDC } from '$lib/data/spells'
 	import type { DiceRoll } from '$lib/models/combat'
 	import type { AvailableAction } from '$lib/models/combatAction'
-	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
+	import type { MagickaBurstCost } from '$lib/util/magickaBurst.util'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
-	import { getSkillBonus } from '$lib/util/combat.util'
+	import { calculateSkillBonus } from '$lib/util/stats.util'
 
 	interface Props {
 		player: PlayerData
@@ -27,7 +27,7 @@
 	let skillCheckRoll = $state<DiceRoll | undefined>(undefined)
 	let spellSuccess = $state(false)
 
-	let skillBonus = $derived(spell ? getSkillBonus(player, spell.skill) : 0)
+	let skillBonus = $derived(spell ? calculateSkillBonus(player, spell.skill) : 0)
 	let spellDC = $derived(spell ? SpellDC[spell.level] : 10)
 
 	function handleSkillCheck(roll: DiceRoll, success: boolean) {

@@ -1,18 +1,10 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte'
-
-	const dispatch = createEventDispatcher<{
-		confirm: void
-		cancel: void
-	}>()
-
-	function handleConfirm() {
-		dispatch('confirm')
+	interface Props {
+		onconfirm?: () => void
+		oncancel?: () => void
 	}
 
-	function handleCancel() {
-		dispatch('cancel')
-	}
+	let { onconfirm, oncancel }: Props = $props()
 </script>
 
 <div class="card p-6 w-full max-w-md">
@@ -26,8 +18,8 @@
 	</p>
 
 	<footer class="flex justify-end gap-2">
-		<button type="button" class="btn variant-ghost" on:click={handleCancel}>Cancel</button>
-		<button type="button" class="btn variant-filled-error" on:click={handleConfirm}
+		<button type="button" class="btn variant-ghost" onclick={oncancel}>Cancel</button>
+		<button type="button" class="btn variant-filled-error" onclick={onconfirm}
 			>End Combat</button
 		>
 	</footer>

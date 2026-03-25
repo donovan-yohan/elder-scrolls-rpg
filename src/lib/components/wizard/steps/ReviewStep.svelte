@@ -10,7 +10,11 @@
 	import { camelToTitleCase } from '$lib/util/string.util'
 	import { getEquippedWeapon, getEquippedArmor, type EquippedWeapon, type EquippedArmor } from '$lib/util/equipment.util'
 
-	export let stepIndex: number = 5
+	interface Props {
+		stepIndex?: number
+	}
+
+	let { stepIndex = 5 }: Props = $props()
 
 	$: formData = $wizardStore.formData as Partial<PlayerData>
 

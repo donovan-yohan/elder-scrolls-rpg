@@ -10,7 +10,7 @@
 		getMagickaBurstCost,
 		processMagickaBurstRoll,
 		type MagickaBurstCost,
-	} from '$lib/util/magicka-burst.util'
+	} from '$lib/util/magickaBurst.util'
 	import RollResult from './RollResult.svelte'
 	import ManualEntry from './ManualEntry.svelte'
 	import SubskillPicker from '$lib/components/subskills/SubskillPicker.svelte'

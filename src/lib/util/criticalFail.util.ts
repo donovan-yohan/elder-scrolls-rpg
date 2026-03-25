@@ -15,9 +15,6 @@ export interface CritFailConsequences {
 	storedConsequences: string
 }
 
-/**
- * Determines if the critical failure modal should be shown for a given roll
- */
 export function shouldShowCritFailModal(roll: DiceRoll): boolean {
 	return roll.isCriticalFail
 }

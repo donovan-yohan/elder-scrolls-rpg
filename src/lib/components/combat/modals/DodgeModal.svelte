@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
-	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
-	import { getSkillBonus } from '$lib/util/combat.util'
+	import type { MagickaBurstCost } from '$lib/util/magickaBurst.util'
+	import { calculateSkillBonus } from '$lib/util/stats.util'
 	import { Skill } from '$lib/data/skill'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
@@ -31,8 +31,8 @@
 
 	let skillBonus = $derived(
 		useAcrobatics
-			? getSkillBonus(player, Skill.Acrobatics)
-			: getSkillBonus(player, Skill.Athletics)
+			? calculateSkillBonus(player, Skill.Acrobatics)
+			: calculateSkillBonus(player, Skill.Athletics)
 	)
 
 	let dodgeSuccess = $derived.by(() => {

@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store'
 import { browser } from '$app/environment'
-import type { CombatSession, CombatLogEntry, ActiveCondition } from '$lib/models/combat'
+import type { CombatSession, CombatLogEntry, ActiveCondition, CombatStartData } from '$lib/models/combat'
 import { CombatDistance, createCombatLogEntry } from '$lib/models/combat'
 import { calculateMaxSpiritPoints } from '$lib/util/spiritPoints.util'
 import { tickConditions } from '$lib/util/combat.util'
@@ -39,7 +39,7 @@ function saveToStorage(state: CombatSessionsState): void {
 
 function createCombatStore() {
 	const initialState = loadFromStorage()
-	const { subscribe, set, update } = writable<CombatSessionsState>(initialState)
+	const { subscribe, update } = writable<CombatSessionsState>(initialState)
 
 	// Auto-persist on changes
 	subscribe((state) => {
@@ -110,23 +110,11 @@ function createCombatStore() {
 	return {
 		subscribe,
 
-		/**
-		 * Start a new combat session for a player
-		 */
 		startCombat: (
 			playerId: string,
 			partyInitiative: number,
 			enemyInitiative: number,
-			playerData: {
-				health: number
-				magicka: number
-				maxActionPoints: number
-				equipment?: Equipment
-				level: number
-				currentSpiritPoints: number
-				fortunePoints?: number
-				misfortunePoints?: number
-			}
+			playerData: CombatStartData
 		): void => {
 			update((state) => {
 				// Create a deep copy of equipment to avoid mutations
@@ -171,9 +159,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * End combat session for a player
-		 */
 		endCombat: (playerId: string): {
 			health: number
 			magicka: number
@@ -211,9 +196,6 @@ function createCombatStore() {
 			return finalState
 		},
 
-		/**
-		 * Add a log entry
-		 */
 		addLogEntry: (playerId: string, entry: CombatLogEntry): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -228,9 +210,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Spend AP
-		 */
 		spendAP: (playerId: string, amount: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -245,9 +224,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Spend MP
-		 */
 		spendMP: (playerId: string, amount: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -282,17 +258,15 @@ function createCombatStore() {
 		/**
 		 * Gain MP (e.g., from crit refund)
 		 */
-		gainMP: (playerId: string, amount: number): void => {
+		gainMP: (playerId: string, amount: number, maxMagicka: number): void => {
 			update((state) => {
 				const session = state[playerId]
 				if (!session) return state
-				// Note: We don't cap at maxMP here as player.maxMagicka isn't available
-				// The caller should handle capping if needed
 				return {
 					...state,
 					[playerId]: {
 						...session,
-						currentMP: session.currentMP + amount
+						currentMP: Math.min(maxMagicka, session.currentMP + amount)
 					}
 				}
 			})
@@ -320,9 +294,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Log a magicka burst reroll
-		 */
 		logMagickaBurst: (playerId: string, usedBurn: boolean, acceptedMisfortune: boolean): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -346,9 +317,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Spend party initiative
-		 */
 		spendInitiative: (playerId: string, amount: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -367,9 +335,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Gain initiative
-		 */
 		gainInitiative: (playerId: string, amount: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -391,9 +356,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Adjust enemy initiative (can be positive or negative)
-		 */
 		adjustEnemyInitiative: (playerId: string, delta: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -433,9 +395,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Spend a Fortune point (when using it on a roll)
-		 */
 		spendFortune: (playerId: string): boolean => {
 			let spent = false
 			update((state) => {
@@ -493,9 +452,6 @@ function createCombatStore() {
 			return spent
 		},
 
-		/**
-		 * Take damage
-		 */
 		takeDamage: (playerId: string, amount: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -605,18 +561,12 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Check if damage would reduce HP to 0 or below
-		 */
 		checkLethalDamage: (playerId: string, damage: number): boolean => {
 			const session = get({ subscribe })[playerId]
 			if (!session) return false
 			return session.currentHP - damage <= 0
 		},
 
-		/**
-		 * Heal HP
-		 */
 		heal: (playerId: string, amount: number, maxHP: number): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -672,9 +622,6 @@ function createCombatStore() {
 			return success
 		},
 
-		/**
-		 * Add a condition
-		 */
 		addCondition: (playerId: string, condition: ActiveCondition): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -690,9 +637,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Remove a condition by type
-		 */
 		removeCondition: (playerId: string, conditionType: string): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -759,41 +703,28 @@ function createCombatStore() {
 				}
 
 				// Execute turn start effects if player data is provided
+				let logEntries: CombatLogEntry[] = []
 				if (player) {
 					const results = executeTurnStartEffects(player, updatedSession)
-					const { updatedSession: finalSession, logEntries } = applyEffectResults(
-						updatedSession,
-						results,
-						player
-					)
-					updatedSession = finalSession
-
-					// Add standard turn start log plus effect logs
-					const turnLog = createCombatLogEntry('turn', `Round ${session.round + 1} - Player turn started`)
-
-					return {
-						...state,
-						[playerId]: {
-							...updatedSession,
-							log: [...updatedSession.log, turnLog, ...logEntries],
-						},
-					}
+					const applied = applyEffectResults(updatedSession, results, player)
+					updatedSession = applied.updatedSession
+					logEntries = applied.logEntries
 				}
 
-				// Fallback if no player provided (backwards compatibility)
 				return {
 					...state,
 					[playerId]: {
 						...updatedSession,
-						log: [...updatedSession.log, createCombatLogEntry('turn', `Round ${session.round + 1} - Player turn started`)],
+						log: [
+							...updatedSession.log,
+							createCombatLogEntry('turn', `Round ${session.round + 1} - Player turn started`),
+							...logEntries,
+						],
 					},
 				}
 			})
 		},
 
-		/**
-		 * Set combat distance
-		 */
 		setDistance: (playerId: string, distance: CombatDistance): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -809,9 +740,6 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Set concentration spell
-		 */
 		setConcentration: (playerId: string, spellId: string | undefined): void => {
 			update((state) => {
 				const session = state[playerId]
@@ -866,16 +794,10 @@ function createCombatStore() {
 			})
 		},
 
-		/**
-		 * Get session for a player
-		 */
 		getSession: (playerId: string): CombatSession | undefined => {
 			return get({ subscribe })[playerId]
 		},
 
-		/**
-		 * Check if player is in combat
-		 */
 		isInCombat: (playerId: string): boolean => {
 			return !!get({ subscribe })[playerId]
 		}
@@ -884,16 +806,10 @@ function createCombatStore() {
 
 export const combatStore = createCombatStore()
 
-/**
- * Derived store to get session for a specific player
- */
 export function getCombatSessionStore(playerId: string) {
 	return derived(combatStore, ($store) => $store[playerId])
 }
 
-/**
- * Derived store to check if player is in combat
- */
 export function getIsInCombatStore(playerId: string) {
 	return derived(combatStore, ($store) => !!$store[playerId])
 }

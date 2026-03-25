@@ -33,53 +33,12 @@ export function getPlayerEffects(player: PlayerData, session: CombatSession): Ef
   return effects
 }
 
-// Trigger-specific effect getters
-export function getTurnStartEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.TurnStart)
-}
-
-export function getTurnEndEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.TurnEnd)
-}
-
-export function getDamageTakenEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.OnDamageTaken)
-}
-
-export function getSpellTargetedEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.OnSpellTargeted)
-}
-
-export function getBlockEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.OnBlock)
-}
-
-export function getSkillCheckEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.OnSkillCheck)
-}
-
-export function getSavingThrowEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.OnSavingThrow)
-}
-
-export function getAttackEffects(player: PlayerData, session: CombatSession): Effect[] {
-  const allEffects = getPlayerEffects(player, session)
-  return getEffectsForTrigger(allEffects, EffectTrigger.OnAttack)
-}
-
 // Effect execution functions
 export function executeTurnStartEffects(
   player: PlayerData,
   session: CombatSession
 ): EffectResult[] {
-  const effects = getTurnStartEffects(player, session)
+  const effects = getEffectsForTrigger(getPlayerEffects(player, session), EffectTrigger.TurnStart)
   const context: EffectContext = { player, session }
   return processEffects(effects, context)
 }
@@ -88,7 +47,7 @@ export function executeTurnEndEffects(
   player: PlayerData,
   session: CombatSession
 ): EffectResult[] {
-  const effects = getTurnEndEffects(player, session)
+  const effects = getEffectsForTrigger(getPlayerEffects(player, session), EffectTrigger.TurnEnd)
   const context: EffectContext = { player, session }
   return processEffects(effects, context)
 }
@@ -99,7 +58,7 @@ export function executeDamageTakenEffects(
   damageAmount: number,
   damageType?: string
 ): EffectResult[] {
-  const effects = getDamageTakenEffects(player, session)
+  const effects = getEffectsForTrigger(getPlayerEffects(player, session), EffectTrigger.OnDamageTaken)
   const context: EffectContext = { player, session, damageAmount, damageType }
   return processEffects(effects, context)
 }
@@ -110,7 +69,7 @@ export function executeSpellTargetedEffects(
   spellId: string,
   spellMPCost: number
 ): EffectResult[] {
-  const effects = getSpellTargetedEffects(player, session)
+  const effects = getEffectsForTrigger(getPlayerEffects(player, session), EffectTrigger.OnSpellTargeted)
   const context: EffectContext = { player, session, spellId, spellMPCost }
   return processEffects(effects, context)
 }
@@ -120,7 +79,7 @@ export function executeBlockEffects(
   session: CombatSession,
   blockMargin: number
 ): EffectResult[] {
-  const effects = getBlockEffects(player, session)
+  const effects = getEffectsForTrigger(getPlayerEffects(player, session), EffectTrigger.OnBlock)
   const context: EffectContext = { player, session, blockMargin }
   return processEffects(effects, context)
 }
@@ -130,7 +89,7 @@ export function executeSkillCheckEffects(
   session: CombatSession,
   skill: string
 ): EffectResult[] {
-  const effects = getSkillCheckEffects(player, session)
+  const effects = getEffectsForTrigger(getPlayerEffects(player, session), EffectTrigger.OnSkillCheck)
   const context: EffectContext = { player, session, skill }
   return processEffects(effects, context)
 }

@@ -47,7 +47,7 @@ export function createImportHandler(options: CreateImportHandlerOptions) {
 
 		if (!result.success) {
 			toastStore.trigger({
-				message: result.error || 'Failed to import file',
+				message: result.error,
 				background: 'variant-filled-error',
 				timeout: 5000,
 			})
@@ -62,8 +62,8 @@ export function createImportHandler(options: CreateImportHandlerOptions) {
 			type: 'component',
 			component: 'importPreviewModal',
 			meta: {
-				player: result.player,
-				players: result.players,
+				player: result.isMultiple ? undefined : result.player,
+				players: result.isMultiple ? result.players : undefined,
 				isMultiple: result.isMultiple,
 				existingIds,
 			},

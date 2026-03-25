@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { PlayerData } from '$lib/models/player'
 	import type { DiceRoll } from '$lib/models/combat'
-	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
+	import type { MagickaBurstCost } from '$lib/util/magickaBurst.util'
 	import { getWeaponById, getShieldBlockAdvantage, type WeaponType } from '$lib/data/weapons'
-	import { getSkillBonus } from '$lib/util/combat.util'
+	import { calculateSkillBonus } from '$lib/util/stats.util'
 	import { Skill } from '$lib/data/skill'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
@@ -25,7 +25,7 @@
 
 	let shield = $derived(shieldId ? getWeaponById(shieldId) : null)
 	let shieldAdvantage = $derived(shield ? getShieldBlockAdvantage(shield.type as WeaponType) : 0)
-	let skillBonus = $derived(getSkillBonus(player, Skill.Blocking))
+	let skillBonus = $derived(calculateSkillBonus(player, Skill.Blocking))
 
 	let step = $state<'setup' | 'roll' | 'result'>('setup')
 	let attackRoll = $state(15)

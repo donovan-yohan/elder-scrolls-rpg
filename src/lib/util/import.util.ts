@@ -1,6 +1,5 @@
 import type { PlayerData } from '$lib/models/player'
 import {
-	APP_VERSION,
 	type ExportedBackup,
 	type ExportedCharacter,
 	isMultipleCharacterExport,
@@ -29,13 +28,10 @@ function sanitizeString(str: string): string {
 /**
  * Result of an import operation
  */
-export interface ImportResult {
-	success: boolean
-	player?: PlayerData
-	players?: PlayerData[]
-	error?: string
-	isMultiple?: boolean
-}
+export type ImportResult =
+	| { success: false; error: string }
+	| { success: true; isMultiple: false; player: PlayerData }
+	| { success: true; isMultiple: true; players: PlayerData[] }
 
 /**
  * Required fields that must be present in a PlayerData object
@@ -53,10 +49,9 @@ const REQUIRED_PLAYER_FIELDS: (keyof PlayerData)[] = [
 /**
  * Result of ownedWeapons validation
  */
-interface OwnedWeaponsValidationResult {
-	valid: boolean
-	error?: string
-}
+type OwnedWeaponsValidationResult =
+	| { valid: true }
+	| { valid: false; error: string }
 
 /**
  * Validate ownedWeapons structure and return any validation errors.

@@ -1,9 +1,13 @@
 <script lang="ts">
 	import type { CombatSession } from '$lib/models/combat'
 
-	export let session: CombatSession
-	export let onEndTurn: () => void
-	export let onStartTurn: () => void
+	interface Props {
+		session: CombatSession
+		onEndTurn: () => void
+		onStartTurn: () => void
+	}
+
+	let { session, onEndTurn, onStartTurn }: Props = $props()
 </script>
 
 <header class="combat-header card p-4 variant-soft-surface">

@@ -10,7 +10,11 @@
 	import { camelToTitleCase } from '$lib/util/string.util'
 	import classNames from 'classnames'
 
-	export let stepIndex: number = 3
+	interface Props {
+		stepIndex?: number
+	}
+
+	let { stepIndex = 3 }: Props = $props()
 
 	// Get spell slots based on current form data
 	$: spellSlots = getAvailableSpellSlots($wizardStore.formData as PlayerData)

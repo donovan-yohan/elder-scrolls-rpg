@@ -8,7 +8,11 @@
 	import { camelToTitleCase } from '$lib/util/string.util'
 	import { onMount } from 'svelte'
 
-	export let stepIndex: number = 0
+	interface Props {
+		stepIndex?: number
+	}
+
+	let { stepIndex = 0 }: Props = $props()
 
 	// Local form state
 	let characterName = $wizardStore.formData.characterName || ''

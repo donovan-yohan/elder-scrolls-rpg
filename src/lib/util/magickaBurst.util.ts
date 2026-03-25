@@ -25,12 +25,7 @@ export interface MagickaBurstRollResult {
  * Cannot reroll if completely burned out (HP = 0)
  */
 export function canUseMagickaBurst(currentMP: number, currentHP: number): boolean {
-  // If has MP, can use it
-  if (currentMP > 0) return true
-  // If no MP but has HP, can take burn damage
-  if (currentHP > 0) return true
-  // Completely burned out
-  return false
+  return currentMP > 0 || currentHP > 0
 }
 
 /**
@@ -68,20 +63,18 @@ export function processMagickaBurstRoll(
   const isCritFail = isCriticalFailure(roll, playerLevel)
 
   if (isMagickaBurst) {
-    // Magicka burst: no crit success, but crit fail allowed
     return {
-      isCritical: false, // Never crit on magicka burst
+      isCritical: false,
       isCriticalFail: isCritFail,
-      success: roll >= targetDC, // Normal success check only
+      success: roll >= targetDC,
       wasDowngradedFromCrit: wouldBeCrit,
     }
   }
 
-  // Normal roll
   return {
     isCritical: wouldBeCrit,
     isCriticalFail: isCritFail,
-    success: roll >= targetDC || wouldBeCrit, // Crit auto-succeeds
+    success: roll >= targetDC || wouldBeCrit,
     wasDowngradedFromCrit: false,
   }
 }

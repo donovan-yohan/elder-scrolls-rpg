@@ -6,7 +6,11 @@
 	import classNames from 'classnames'
 	import { onMount } from 'svelte'
 
-	export let stepIndex: number = 1
+	interface Props {
+		stepIndex?: number
+	}
+
+	let { stepIndex = 1 }: Props = $props()
 
 	// Initialize skill groups from store or default to untrained
 	let skillGroups: Record<Skill, SkillLevel> = Object.values(Skill).reduce(

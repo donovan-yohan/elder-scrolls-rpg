@@ -3,10 +3,11 @@
 	import { getWeaponById } from '$lib/data/weapons'
 	import type { DiceRoll } from '$lib/models/combat'
 	import type { AvailableAction } from '$lib/models/combatAction'
-	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
+	import type { MagickaBurstCost } from '$lib/util/magickaBurst.util'
 	import DiceRoller from '../DiceRoller/DiceRoller.svelte'
 	import RollResult from '../DiceRoller/RollResult.svelte'
-	import { calculateWeaponDamage, getSkillBonus } from '$lib/util/combat.util'
+	import { calculateWeaponDamage } from '$lib/util/combat.util'
+	import { calculateSkillBonus } from '$lib/util/stats.util'
 
 	interface Props {
 		player: PlayerData
@@ -29,7 +30,7 @@
 	let attackSuccess = $state(false)
 	let damageResult = $state<{ baseDamage: number; bonusDamage: number; total: number } | undefined>(undefined)
 
-	let skillBonus = $derived(weapon ? getSkillBonus(player, weapon.relatedSkill) : 0)
+	let skillBonus = $derived(weapon ? calculateSkillBonus(player, weapon.relatedSkill) : 0)
 
 	function handleAttackRoll(roll: DiceRoll, success: boolean) {
 		attackRoll = roll

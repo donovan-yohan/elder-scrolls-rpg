@@ -14,7 +14,13 @@ export const versionResetOccurred = writable<boolean>(false)
 function loadPlayers(): Record<string, PlayerData> {
 	if (!browser) return {}
 
-	const raw = JSON.parse(localStorage.getItem('players') ?? '{}') as Record<string, PlayerData>
+	let raw: Record<string, PlayerData>
+	try {
+		raw = JSON.parse(localStorage.getItem('players') ?? '{}') as Record<string, PlayerData>
+	} catch {
+		localStorage.removeItem('players')
+		return {}
+	}
 
 	// TODO [v1.0.0]: Replace this deletion logic with proper per-character migrations.
 	// Currently we wipe all characters on version mismatch during pre-release development.
