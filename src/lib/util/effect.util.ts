@@ -1,5 +1,4 @@
 import type { PlayerData } from '$lib/models/player'
-import type { CombatSession } from '$lib/models/combat'
 import {
   EffectConditionType,
   EffectActionType,
@@ -12,7 +11,6 @@ import {
   type ActionResult,
 } from '$lib/models/effect'
 
-// Evaluate a single condition against context
 export function evaluateCondition(
   condition: EffectCondition,
   context: EffectContext
@@ -58,7 +56,6 @@ export function evaluateAllConditions(
   return conditions.every(c => evaluateCondition(c, context))
 }
 
-// Calculate the value for an action
 export function calculateActionValue(
   action: EffectAction,
   context: EffectContext
@@ -126,7 +123,6 @@ export function formatEffectMessage(
   return `${actionDesc} (${sourceName})`
 }
 
-// Process a single effect
 export function processEffect(
   effect: Effect,
   context: EffectContext
@@ -169,7 +165,6 @@ export function processEffects(
   return sorted.map(effect => processEffect(effect, context))
 }
 
-// Filter effects by trigger type
 export function getEffectsForTrigger(
   effects: Effect[],
   trigger: EffectTrigger

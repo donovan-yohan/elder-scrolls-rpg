@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { playersStore, versionResetOccurred } from '$lib/stores/persisted.store'
 	import { getModalStore, getToastStore } from '@skeletonlabs/skeleton'
-	import { createImportHandler, createExportHandler } from '$lib/util/importExportHandlers'
+	import { createImportHandler, createExportHandler } from '$lib/util/importExport.util'
 	import { onMount } from 'svelte'
 
 	let showVersionWarning = false

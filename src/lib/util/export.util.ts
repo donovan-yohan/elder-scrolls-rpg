@@ -84,6 +84,10 @@ function downloadFile(content: string, filename: string): void {
  * Generates filename: characterName-YYYY-MM-DD.esrpg
  */
 export function exportCharacter(player: PlayerData): void {
+	if (!player) {
+		throw new Error('No character to export')
+	}
+
 	const exportData: ExportedCharacter = {
 		version: APP_VERSION,
 		exportedAt: new Date().toISOString(),

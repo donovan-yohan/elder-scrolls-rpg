@@ -18,9 +18,6 @@ export enum DamageType {
 	Magic = 'Magic', // Generic magical damage for spell resistance
 }
 
-// Keep Element as an alias for backwards compatibility
-export const Element = DamageType
-
 // Helper to check if damage type is elemental
 export function isElementalDamage(type: DamageType): boolean {
 	return type === DamageType.Fire || type === DamageType.Frost || type === DamageType.Shock

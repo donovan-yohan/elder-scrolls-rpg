@@ -19,6 +19,9 @@
 		createEquipmentSlot,
 		getEquippedWeapon,
 		getEquippedArmor,
+		getWeaponsByCategory,
+		getModifierDisplay,
+		getArmorCategoryColor,
 		DEFAULT_ARMOR_VALUE,
 		DEFAULT_ARMOR_WEIGHT,
 	} from '$lib/util/equipment.util'
@@ -36,11 +39,6 @@
 
 	// Tab tracking
 	let selectedTabIndex = $state(0)
-
-	// Get weapons by skill category (excluding ammunition)
-	function getWeaponsByCategory(skill: WeaponSkill): Weapon[] {
-		return Weapons.filter((w) => w.skill === skill && !w.isAmmunition)
-	}
 
 	// Get one-handed weapons (non-shields)
 	function getOneHandedWeapons(): Weapon[] {
@@ -194,38 +192,6 @@
 				return 'Ranged'
 			default:
 				return range
-		}
-	}
-
-	// Get armor modifier display
-	function getModifierDisplay(modifier: string): string {
-		switch (modifier) {
-			case 'advantage':
-				return 'Advantage'
-			case 'disadvantage':
-				return 'Disadvantage'
-			case 'disadvantage2':
-				return '2x Disadvantage'
-			case 'none':
-				return 'None'
-			default:
-				return modifier
-		}
-	}
-
-	// Get armor category color
-	function getArmorCategoryColor(category: ArmorCategory): string {
-		switch (category) {
-			case ArmorCategory.Unarmored:
-				return 'variant-soft-tertiary'
-			case ArmorCategory.Light:
-				return 'variant-soft-success'
-			case ArmorCategory.Medium:
-				return 'variant-soft-warning'
-			case ArmorCategory.Heavy:
-				return 'variant-soft-error'
-			default:
-				return 'variant-soft'
 		}
 	}
 

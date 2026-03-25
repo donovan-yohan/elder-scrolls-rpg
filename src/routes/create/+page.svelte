@@ -60,8 +60,7 @@
 	]
 
 	// Handle wizard completion
-	function handleComplete(event: CustomEvent<{ formData: Partial<PlayerData> }>) {
-		const formData = event.detail.formData
+	function handleComplete({ formData }: { formData: Partial<PlayerData> }) {
 
 		// Calculate derived stats
 		const now = new Date().toISOString()
@@ -141,7 +140,7 @@
 <div class="container mx-auto p-4 h-full">
 	<Wizard
 		{steps}
-		on:complete={handleComplete}
-		on:cancel={handleCancel}
+		oncomplete={handleComplete}
+		oncancel={handleCancel}
 	/>
 </div>

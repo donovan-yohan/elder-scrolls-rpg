@@ -7,9 +7,6 @@ import { RaceName } from '$lib/data/race'
 import { Level } from '$lib/data/level'
 import { calculateMaxSpiritPoints } from './spiritPoints.util'
 
-// Re-export for backwards compatibility
-export { calculateMaxSpiritPoints }
-
 /**
  * Calculate subskill bonus based on player level.
  * Formula: floor(level / 2), minimum 1
@@ -113,13 +110,8 @@ export function calculateMaxAP(player: PlayerData): number {
 export function calculateSkillBonus(player: PlayerData, skill: Skill): number {
 	const levelData = Level[player.level] ?? Level[1]!
 
-	// Determine if skill is major, minor, or untrained
-	if (player.majorSkills.includes(skill)) {
-		return levelData.majorSkillBonus
-	} else if (player.minorSkills.includes(skill)) {
-		return levelData.minorSkillBonus
-	}
-	// Untrained skills get 0 base bonus
+	if (player.majorSkills.includes(skill)) return levelData.majorSkillBonus
+	if (player.minorSkills.includes(skill)) return levelData.minorSkillBonus
 	return 0
 }
 

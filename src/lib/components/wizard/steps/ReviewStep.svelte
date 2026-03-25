@@ -1,48 +1,55 @@
 <script lang="ts">
 	import WizardStep from '../WizardStep.svelte'
 	import { wizardStore } from '$lib/stores/wizard.store'
-	import { onMount } from 'svelte'
 	import { calculateMaxHealth, calculateMaxMagicka, calculateMaxAP, hasMagicSkills, getAvailableSpellSlots } from '$lib/util/stats.util'
 	import type { PlayerData } from '$lib/models/player'
-	import { Archetypes } from '$lib/data/archetype'
-	import { BirthSigns } from '$lib/data/birthSign'
-	import { Race } from '$lib/data/race'
 	import { camelToTitleCase } from '$lib/util/string.util'
 	import { getEquippedWeapon, getEquippedArmor, type EquippedWeapon, type EquippedArmor } from '$lib/util/equipment.util'
 
-	export let stepIndex: number = 5
+	interface Props {
+		stepIndex?: number
+	}
 
-	$: formData = $wizardStore.formData as Partial<PlayerData>
+	let { stepIndex = 5 }: Props = $props()
 
-	// Calculate derived stats
-	$: maxHealth = formData.race && formData.archetype && formData.birthSign
-		? calculateMaxHealth(formData as PlayerData)
-		: 0
-	$: maxMagicka = formData.race && formData.archetype && formData.birthSign
-		? calculateMaxMagicka(formData as PlayerData)
-		: 0
-	$: maxAP = formData.race && formData.archetype && formData.birthSign
-		? calculateMaxAP(formData as PlayerData)
-		: 0
+	let formData = $derived($wizardStore.formData as Partial<PlayerData>)
 
-	$: hasMagic = formData.majorSkills && formData.minorSkills
-		? hasMagicSkills(formData as PlayerData)
-		: false
+	let maxHealth = $derived(
+		formData.race && formData.archetype && formData.birthSign
+			? calculateMaxHealth(formData as PlayerData)
+			: 0
+	)
+	let maxMagicka = $derived(
+		formData.race && formData.archetype && formData.birthSign
+			? calculateMaxMagicka(formData as PlayerData)
+			: 0
+	)
+	let maxAP = $derived(
+		formData.race && formData.archetype && formData.birthSign
+			? calculateMaxAP(formData as PlayerData)
+			: 0
+	)
 
-	$: spellSlots = formData.majorSkills && formData.minorSkills
-		? getAvailableSpellSlots(formData as PlayerData)
-		: {}
+	let hasMagic = $derived(
+		formData.majorSkills && formData.minorSkills
+			? hasMagicSkills(formData as PlayerData)
+			: false
+	)
+	let spellSlots = $derived(
+		formData.majorSkills && formData.minorSkills
+			? getAvailableSpellSlots(formData as PlayerData)
+			: {}
+	)
 
-	// Equipment display helpers
-	$: equippedWeapon = formData.equipment?.weapon
-		? getEquippedWeapon(formData.equipment.weapon)
-		: null
-	$: equippedOffhand = formData.equipment?.offhand
-		? getEquippedWeapon(formData.equipment.offhand)
-		: null
-	$: equippedArmor = formData.equipment?.armor
-		? getEquippedArmor(formData.equipment.armor)
-		: null
+	let equippedWeapon = $derived(
+		formData.equipment?.weapon ? getEquippedWeapon(formData.equipment.weapon) : null
+	)
+	let equippedOffhand = $derived(
+		formData.equipment?.offhand ? getEquippedWeapon(formData.equipment.offhand) : null
+	)
+	let equippedArmor = $derived(
+		formData.equipment?.armor ? getEquippedArmor(formData.equipment.armor) : null
+	)
 
 	function formatWeaponName(equipped: EquippedWeapon | null): string {
 		if (!equipped) return 'None'
@@ -54,12 +61,7 @@
 		return equipped.material ? `${equipped.material.name} ${equipped.armor.name}` : equipped.armor.name
 	}
 
-	// Validate the review step (always valid if we got here)
-	$: {
-		wizardStore.setStepValid(stepIndex, true)
-	}
-
-	onMount(() => {
+	$effect(() => {
 		wizardStore.setStepValid(stepIndex, true)
 	})
 </script>

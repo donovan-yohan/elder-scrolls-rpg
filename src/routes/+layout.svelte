@@ -21,7 +21,7 @@
 
 	// Import/Export utilities
 	import { playersStore } from '$lib/stores/persisted.store'
-	import { createImportHandler, createExportHandler } from '$lib/util/importExportHandlers'
+	import { createImportHandler, createExportHandler } from '$lib/util/importExport.util'
 
 	initializeStores()
 

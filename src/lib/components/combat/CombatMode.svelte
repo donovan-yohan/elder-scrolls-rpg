@@ -38,7 +38,7 @@
 	import { ActionType, ConditionType } from '$lib/models/combat'
 	import type { DiceRoll } from '$lib/models/combat'
 	import { DamageType } from '$lib/data/element'
-	import type { MagickaBurstCost } from '$lib/util/magicka-burst.util'
+	import type { MagickaBurstCost } from '$lib/util/magickaBurst.util'
 
 	interface Props {
 		player: PlayerData
@@ -181,7 +181,7 @@
 
 		// Handle stored misfortune
 		if (result.storedMisfortune) {
-			combatStore.addMisfortune(player.id, 1)
+			combatStore.gainMisfortune(player.id)
 		}
 
 		activeModal = null
@@ -386,7 +386,7 @@
 				combatStore.gainAP(player.id, apRefund)
 			}
 			// Refund full MP
-			combatStore.gainMP(player.id, result.mpSpent)
+			combatStore.gainMP(player.id, result.mpSpent, effectiveMaxMP)
 			combatStore.gainInitiative(player.id, 1)
 		}
 
@@ -702,8 +702,8 @@
 	{#if showEndCombatModal}
 		<div class="fixed inset-0 bg-surface-backdrop-token z-50 flex items-center justify-center p-4">
 			<EndCombatModal
-				on:confirm={handleCombatEnded}
-				on:cancel={() => showEndCombatModal = false}
+				onconfirm={handleCombatEnded}
+				oncancel={() => showEndCombatModal = false}
 			/>
 		</div>
 	{/if}

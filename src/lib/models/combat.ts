@@ -1,5 +1,16 @@
 import type { Equipment } from './player'
 
+export interface CombatStartData {
+	health: number
+	magicka: number
+	maxActionPoints: number
+	equipment?: Equipment
+	level: number
+	currentSpiritPoints: number
+	fortunePoints?: number
+	misfortunePoints?: number
+}
+
 export enum CombatDistance {
   Immediate = 'Immediate', // Same space
   Adjacent = 'Adjacent', // 1-5 feet

@@ -248,37 +248,30 @@ export const Materials: Material[] = [
 	},
 ]
 
-// Helper function to get material by name
 export function getMaterialByName(name: MaterialName): Material | undefined {
 	return Materials.find((material) => material.id === name.toLowerCase().replace(/\s/g, '-'))
 }
 
-// Helper function to get material by id
 export function getMaterialById(id: string): Material | undefined {
 	return Materials.find((material) => material.id === id)
 }
 
-// Helper function to get materials by tier
 export function getMaterialsByTier(tier: number): Material[] {
 	return Materials.filter((material) => material.tier === tier)
 }
 
-// Helper function to get materials by spell tier
 export function getMaterialsBySpellTier(spellTier: SpellLevel): Material[] {
 	return Materials.filter((material) => material.spellTier === spellTier)
 }
 
-// Helper function to calculate modified value
 export function calculateMaterialValue(baseValue: number, material: Material): number {
 	return Math.floor(baseValue * material.valueMultiplier)
 }
 
-// Helper function to calculate modified weight
 export function calculateMaterialWeight(baseWeight: number, material: Material): number {
 	return Math.round(baseWeight * material.weightMultiplier * 10) / 10
 }
 
-// Helper function to compare material tiers for damage calculation
 export function compareMaterialTiers(
 	attackerMaterial: Material,
 	defenderMaterial: Material

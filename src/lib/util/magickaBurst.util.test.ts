@@ -3,9 +3,7 @@ import {
   canUseMagickaBurst,
   getMagickaBurstCost,
   processMagickaBurstRoll,
-  type MagickaBurstState,
-  type MagickaBurstCost,
-} from '$lib/util/magicka-burst.util'
+} from '$lib/util/magickaBurst.util'
 
 describe('canUseMagickaBurst', () => {
   it('returns true when player has MP > 0', () => {

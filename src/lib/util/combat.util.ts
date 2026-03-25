@@ -3,20 +3,7 @@ import type { CombatSession, ActiveCondition } from '$lib/models/combat'
 import { ActionType, ConditionType, CombatDistance } from '$lib/models/combat'
 import type { AvailableAction } from '$lib/models/combatAction'
 import { getWeaponById, type Weapon } from '$lib/data/weapons'
-import { getSpellById, type Spell } from '$lib/data/spells'
-import { type Skill } from '$lib/data/skill'
-import { Level } from '$lib/data/level'
-
-/**
- * Get skill bonus based on player level and whether the skill is major/minor
- */
-export function getSkillBonus(player: PlayerData, skill: Skill): number {
-  const levelData = Level[player.level]
-  if (!levelData) return 0
-  if (player.majorSkills.includes(skill)) return levelData.majorSkillBonus
-  if (player.minorSkills.includes(skill)) return levelData.minorSkillBonus
-  return 0
-}
+import { getSpellById } from '$lib/data/spells'
 
 /**
  * Distance order for calculating movement costs

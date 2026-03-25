@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import {
-	calculateMaxSpiritPoints,
 	calculateEffectiveMaxHealth,
 	calculateEffectiveMaxMagicka,
 	calculateEffectiveMaxAP,
@@ -8,6 +7,7 @@ import {
 	isEquipmentDamaged,
 	getDamagedEquipmentSlots,
 } from './stats.util'
+import { calculateMaxSpiritPoints } from './spiritPoints.util'
 import type { PlayerData, Complication } from '$lib/models/player'
 import { defaultPlayerData } from '$lib/models/player'
 import { ArchetypeName } from '$lib/data/archetype'

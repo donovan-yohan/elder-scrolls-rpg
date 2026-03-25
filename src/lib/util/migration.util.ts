@@ -47,10 +47,8 @@ export function migratePlayerData(player: PlayerData): PlayerData {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const playerAny = player as any
 
-	// Migrate ownedWeapons - add empty array if missing
 	const ownedWeapons = playerAny.ownedWeapons ?? []
 
-	// Migrate spirit points - add max if missing, cap if over max
 	const maxSpiritPoints = calculateMaxSpiritPoints(player.level)
 	let currentSpiritPoints = playerAny.currentSpiritPoints
 	if (currentSpiritPoints === undefined) {
@@ -59,14 +57,11 @@ export function migratePlayerData(player: PlayerData): PlayerData {
 		currentSpiritPoints = Math.min(currentSpiritPoints, maxSpiritPoints)
 	}
 
-	// Migrate complications - add empty array if missing
 	const complications = playerAny.complications ?? []
 
-	// Migrate fortune/misfortune points - add defaults if missing
 	const fortunePoints = playerAny.fortunePoints ?? 0
 	const misfortunePoints = playerAny.misfortunePoints ?? 0
 
-	// Migrate knownShouts - add empty array if missing
 	const knownShouts = playerAny.knownShouts ?? []
 
 	return {

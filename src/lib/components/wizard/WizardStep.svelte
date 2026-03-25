@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { wizardStore } from '$lib/stores/wizard.store'
 
-	export let title: string
-	export let description: string = ''
-	export let stepIndex: number = 0
+	interface Props {
+		title: string
+		description?: string
+		stepIndex?: number
+	}
 
-	$: isValid = $wizardStore.stepValidation[stepIndex] ?? false
-	$: hasError = $wizardStore.stepValidation[stepIndex] === false
+	let { title, description = '', stepIndex = 0 }: Props = $props()
+
+	let isValid = $derived($wizardStore.stepValidation[stepIndex] ?? false)
+	let hasError = $derived($wizardStore.stepValidation[stepIndex] === false)
 </script>
 
 <div class="wizard-step flex flex-col gap-6 h-full">

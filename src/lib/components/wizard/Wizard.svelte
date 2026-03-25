@@ -2,34 +2,30 @@
 	import { ProgressBar } from '@skeletonlabs/skeleton'
 	import { wizardStore, wizardProgress, canProceed } from '$lib/stores/wizard.store'
 	import type { WizardStepConfig } from './types'
-	import { createEventDispatcher, onMount } from 'svelte'
-	import { hasMagicSkills } from '$lib/util/stats.util'
 	import type { PlayerData } from '$lib/models/player'
 
-	export let steps: WizardStepConfig[] = []
+	interface Props {
+		steps?: WizardStepConfig[]
+		oncomplete?: (data: { formData: Partial<PlayerData> }) => void
+		oncancel?: () => void
+	}
 
-	const dispatch = createEventDispatcher<{
-		complete: { formData: Partial<PlayerData> }
-		cancel: void
-	}>()
+	let { steps = [], oncomplete, oncancel }: Props = $props()
 
-	// Filter steps based on conditions
-	$: visibleSteps = steps.filter((step) => {
+	let visibleSteps = $derived(steps.filter((step) => {
 		if (!step.isConditional) return true
 		if (!step.showIf) return true
 		return step.showIf($wizardStore.formData)
-	})
+	}))
 
-	$: currentStepIndex = $wizardStore.currentStep
-	$: currentStep = visibleSteps[currentStepIndex]
-	$: isFirstStep = currentStepIndex === 0
-	$: isLastStep = currentStepIndex === visibleSteps.length - 1
+	let currentStepIndex = $derived($wizardStore.currentStep)
+	let currentStep = $derived(visibleSteps[currentStepIndex])
+	let isFirstStep = $derived(currentStepIndex === 0)
+	let isLastStep = $derived(currentStepIndex === visibleSteps.length - 1)
 
-	// Calculate progress based on visible steps
-	$: progress = visibleSteps.length > 0 ? Math.round(((currentStepIndex + 1) / visibleSteps.length) * 100) : 0
+	let progress = $derived(visibleSteps.length > 0 ? Math.round(((currentStepIndex + 1) / visibleSteps.length) * 100) : 0)
 
-	// Mobile sidebar toggle
-	let sidebarOpen = false
+	let sidebarOpen = $state(false)
 
 	function handleStepClick(stepIndex: number) {
 		// Only allow navigating to completed steps or the next available step
@@ -46,8 +42,7 @@
 		wizardStore.completeStep(currentStepIndex)
 
 		if (isLastStep) {
-			// Dispatch complete event with form data
-			dispatch('complete', { formData: $wizardStore.formData })
+			oncomplete?.({ formData: $wizardStore.formData })
 		} else {
 			wizardStore.nextStep()
 		}
@@ -60,7 +55,7 @@
 	}
 
 	function handleCancel() {
-		dispatch('cancel')
+		oncancel?.()
 	}
 
 	function toggleSidebar() {
@@ -92,10 +87,9 @@
 		return 'disabled'
 	}
 
-	// Reactive array of step statuses - updates when currentStepIndex or completedSteps change
-	$: stepStatuses = visibleSteps.map((_, index) =>
+	let stepStatuses = $derived(visibleSteps.map((_, index) =>
 		getStepStatus(index, currentStepIndex, $wizardStore.completedSteps)
-	)
+	))
 </script>
 
 <div class="wizard-container flex flex-col lg:flex-row h-full min-h-[600px] gap-4 lg:gap-0">
@@ -108,7 +102,7 @@
 		<button
 			type="button"
 			class="btn btn-sm variant-ghost-surface"
-			on:click={toggleSidebar}
+			onclick={toggleSidebar}
 			aria-label="Toggle step menu"
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -154,7 +148,7 @@
 								{status === 'completed' ? 'text-success-400 hover:bg-surface-700' : ''}
 								{status === 'upcoming' ? 'text-surface-300 hover:bg-surface-700' : ''}
 								{status === 'disabled' ? 'text-surface-600 cursor-not-allowed' : 'cursor-pointer'}"
-							on:click={() => handleStepClick(index)}
+							onclick={() => handleStepClick(index)}
 							disabled={status === 'disabled'}
 						>
 							<!-- Step Indicator -->
@@ -192,7 +186,7 @@
 			<button
 				type="button"
 				class="btn variant-ghost-error w-full"
-				on:click={handleCancel}
+				onclick={handleCancel}
 			>
 				Cancel
 			</button>
@@ -204,7 +198,7 @@
 		<button
 			type="button"
 			class="fixed inset-0 bg-black/50 z-30 lg:hidden"
-			on:click={() => (sidebarOpen = false)}
+			onclick={() => (sidebarOpen = false)}
 			aria-label="Close sidebar"
 		/>
 	{/if}
@@ -229,7 +223,7 @@
 				<button
 					type="button"
 					class="btn variant-ghost-surface"
-					on:click={handleBack}
+					onclick={handleBack}
 					disabled={isFirstStep}
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -247,7 +241,7 @@
 				<button
 					type="button"
 					class="btn {isLastStep ? 'variant-filled-success' : 'variant-filled-primary'}"
-					on:click={handleNext}
+					onclick={handleNext}
 					disabled={!$canProceed}
 				>
 					{#if isLastStep}

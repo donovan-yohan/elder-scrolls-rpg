@@ -351,17 +351,14 @@ export const Weapons: Weapon[] = [
 	},
 ]
 
-// Helper function to get weapons by type
 export function getWeaponsByType(type: WeaponType): Weapon[] {
 	return Weapons.filter((weapon) => weapon.type === type)
 }
 
-// Helper function to get weapons by skill
 export function getWeaponsBySkill(skill: WeaponSkill): Weapon[] {
 	return Weapons.filter((weapon) => weapon.skill === skill)
 }
 
-// Helper function to get weapon by id
 export function getWeaponById(id: string): Weapon | undefined {
 	return Weapons.find((weapon) => weapon.id === id)
 }
